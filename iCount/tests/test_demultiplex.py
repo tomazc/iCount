@@ -29,7 +29,7 @@ if not os.path.exists(test_output_folder):
     os.makedirs(test_output_folder)
 
 
-class TestiCLIP(unittest.TestCase):
+class TestDemultiplex(unittest.TestCase):
 
     def setUp(self):
         if os.path.isdir(test_output_folder):
@@ -38,32 +38,32 @@ class TestiCLIP(unittest.TestCase):
             print('Creating folder: {:s}'.format(test_output_folder))
             os.makedirs(test_output_folder)
 
-    def test_iCLIP(self):
+    def test_demultiplex(self):
         in_fastq_fname = os.path.join(test_data.test_data_folder,
                                       'LUjh03_reduced.fq.gz')
 
         # extract
         # list all experiment barcodes
         barcodes = [
-            ('NNNGGTTNN', ''),
-            ('NNNTTGTNN', ''),
-            ('NNNCAATNN', ''),
-            ('NNNACCTNN', ''),
-            ('NNNGGCGNN', ''),
+            'NNNGGTTNN',
+            'NNNTTGTNN',
+            'NNNCAATNN',
+            'NNNACCTNN',
+            'NNNGGCGNN',
         ]
-        adapter = 'AGATCGGAAGAGCGGTTCAG'  # 'AGATCGGAAG_1,AGCGGTTCAG_2'
+#        adapter = 'AGATCGGAAGAGCGGTTCAG'  # 'AGATCGGAAG_1,AGCGGTTCAG_2'
 
-        map_to = [
-            'hg19',
-            'hg19',
-            'hg19',
-            'hg19',
-            'hg19',
-        ]
+        out_fastq_fnames = []
+        for bc in barcodes:
+            out_fastq_fnames.append(
+                os.path.join(test_output_folder, 'demulti.{}.fastq'.format(bc))
+            )
+        not_matching_fastq_fname = os.path.join(test_output_folder,
+                                                'nomatch.fastq')
 
-        iCount.analysis.iCLIP.process_lib(in_fastq_fname, barcodes, adapter,
-                                          map_to,
-                                          out_folder=test_output_folder)
+        iCount.demultiplex.demultiplex(in_fastq_fname, out_fastq_fnames,
+                                       not_matching_fastq_fname, barcodes)
+
 
 
 if __name__ == '__main__':

@@ -19,6 +19,7 @@ from ._version import __version__
 # working folder by default.
 genomes_root = '.'
 output_root = '.'
+tmp_root = '/tmp/iCount'
 
 # Paths can be specified with environment variables.
 ICOUNT_GENOMES_ROOT_VAR = 'ICOUNT_GENOMES_ROOT'
@@ -39,3 +40,8 @@ if not os.path.exists(output_root):
     print("Output root folder does not exist. Will create it at: "
           "{0:s}".format(output_root))
     os.makedirs(output_root)
+
+if not os.path.exists(tmp_root):
+    print("tmp root folder does not exist. Will create it at: "
+          "{0:s}".format(tmp_root))
+    os.makedirs(tmp_root)

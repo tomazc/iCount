@@ -34,7 +34,7 @@ subparsers = parser.add_subparsers(title='Pipeline commands')
 #   options:
 #       - outdir: where to store file(s)
 #       - filename: store into file with given name
-#           (default: species.release.gtf)
+#           (default: species.release.gtf.gz)
 
 # genome: download genome sequence for given release and species
 #   input: release

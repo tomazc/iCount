@@ -1,12 +1,11 @@
 import os
 import cProfile
 
-
 # time and profile iCLIP flows
 import iCount.analysis.iCLIP
 
 in_fastq_fname = os.path.join(
-        iCount.storage_root,
+        iCount.tmp_root,
         '20101116_LUjh03/SLX-2605.CRIRUN_501.s_4.sequence.txt.gz'
 )
 

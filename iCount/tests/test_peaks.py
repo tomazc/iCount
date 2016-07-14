@@ -2,7 +2,7 @@ import unittest
 
 import os
 import shutil
-import test_data
+from . import test_data
 import iCount
 
 files_to_get = [

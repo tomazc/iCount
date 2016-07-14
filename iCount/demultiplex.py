@@ -91,8 +91,7 @@ def extract(seqs, barcodes):
     # at each barcode position, map nucleotide to corresponding exp_id
     p2n2i = {}
     i2start_pos = {}
-    for bi, (bar5, index1) in enumerate(barcodes):
-        # ignore index1 for now
+    for bi, bar5 in enumerate(barcodes):
         for p, n in enumerate(bar5):
             if n == 'N':
                 ns = ['A', 'T', 'C', 'G']

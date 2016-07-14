@@ -8,7 +8,7 @@ import os
 import urllib.request
 import iCount
 
-test_folder = os.path.join(iCount.storage_root, 'tests')
+test_folder = os.path.join(iCount.tmp_root, 'tests')
 if not os.path.exists(test_folder):
     print("Test folder does not exist. Will create it at: "
           "{0:s}".format(test_folder))
