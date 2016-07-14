@@ -18,22 +18,31 @@ subparsers = parser.add_subparsers(title='Pipeline commands')
 
 # ### genomes and annotation
 
-# species: list all species available on ensembl
+# releases: list all releases available on ensembl's FTP
+#   Releases older than version 59 are not reported.
 
-# assemblies: list all assemblies for a given species
-#   input: species
-#   output: list of assemblies for given species
+# species: list all species available on ensembl FTP
+#   input: release
+#   output: list of species for given release
 
-# annotation: download annotation for given assembly and annotation version
+# annotation: download genome annotation for given release and species
 #   (prepares a set of derived annotations used for annotating,
 #    summarizations and analyses)
 #
-#   input: assembly
-#   output: list of annotations or specific annotation
+#   input: release
+#   input: species
 #   options:
-#       - annotation: download annotation for specified version
+#       - outdir: where to store file(s)
 #       - filename: store into file with given name
-#           (defult: assembly_annotationversion.gtf)
+#           (default: species.release.gtf)
+
+# genome: download genome sequence for given release and species
+#   input: release
+#   input: species
+#   options:
+#       - outdir: where to store file(s)
+#       - filename: store into file with given name
+#           (default: species.release.fa.gz)
 
 # examples: download example FASTQ files with iCLIP data
 #   options:
