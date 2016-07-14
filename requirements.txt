@@ -1,0 +1,7 @@
+jupyter
+cutadapt
+cython
+numpy
+pandas
+pysam
+pybedtools

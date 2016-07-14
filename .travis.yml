@@ -1,0 +1,41 @@
+language: python
+
+sudo: false   # use container-based infrastructure
+
+python:
+    - "3.4"
+    - "3.5"
+
+addons:
+    apt:
+        packages:
+            - gfortran
+            - libblas-dev
+            - liblapack-dev
+
+cache:
+    apt: true   # does not work for public repos
+    directories:
+        - $HOME/.cache/pip
+        - $HOME/.ccache
+
+before_cache:   # prevent logs from caching
+    - rm -f $HOME/.cache/pip/log/debug.log
+
+before_install:
+    - pip install -U setuptools pip wheel
+    - pip install codecov
+
+install:
+    - travis_wait pip install -r requirements.txt
+    - pip install -e .
+
+script:
+    - coverage run setup.py test
+
+after_success:
+#    - bash <(curl -s https://codecov.io/bash) -t
+#    - codecov
+
+notifications:
+    email: false

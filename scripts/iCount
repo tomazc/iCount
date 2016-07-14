@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+
+# autoargs?
+# https://github.com/metaperture/autoargs
+
+import argparse
+
+import iCount
+
+parser = argparse.ArgumentParser(
+    description='iCount - computational analysis of iCLIP data.',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+)
+parser.add_argument('--version', action='version',
+                    version='%%(prog)s %s' % iCount.__version__)
+subparsers = parser.add_subparsers(title='Pipeline commands')
+
+
+# ### genomes and annotation
+
+# species: list all species available on ensembl
+
+# assemblies: list all assemblies for a given species
+#   input: species
+#   output: list of assemblies for given species
+
+# annotation: download annotation for given assembly and annotation version
+#   (prepares a set of derived annotations used for annotating,
+#    summarizations and analyses)
+#
+#   input: assembly
+#   output: list of annotations or specific annotation
+#   options:
+#       - annotation: download annotation for specified version
+#       - filename: store into file with given name
+#           (defult: assembly_annotationversion.gtf)
+
+# examples: download example FASTQ files with iCLIP data
+#   options:
+#       - outdir: folder where to store downloaded files
+
+
+# ### demultiplexing
+
+# demultiplex
+#   input: FASTQ file with multiplexed (barcoded) samples
+#   output: multiple FASTQ files, one for each sample
+#   options:
+#       - barcodes: comma-separated list of sample barcodes (including
+#                   information on randomer positions)
+#       - prefix: prefix of demultiplexed files
+#       - mismatches: number of allowed mismatches in barcodes
+#       - adapter: 3' adapter sequence to trim (default: AGATCGGAAGAGCGGTTCAG)
+#       - outdir: output folder
+def demultiplex(args):
+    print(args)
+
+parser_demux = iCount.analysis.params_to_argparse(subparsers,
+                                                  iCount.demultiplex)
+parser_demux.set_defaults(func=demultiplex)
+
+
+# ### mapping
+
+# mapindex: prepare index for given genome assembly and annotation
+#   input: genome sequence, annotation gtf
+#   output: genome index files stored in genome index folder
+#   options:
+#       - genome index folder
+
+# map: call STAR and generate bam file
+#   input: genome index, FASTQ file
+#   output: bam file
+#   options:
+#       - number of allowed mismatches
+
+# bam2bed: interpret bam and generate bedGraph with data on identified sites
+#   options:
+#       -group: start, middle, end
+
+# filter:
+#    input: set of bam files
+#    output: set of reduced bam files (erroneous reads are removed)
+
+
+
+# ### analyses
+# annotate
+
+
+# summary
+
+
+# group (bedGraphs)
+
+
+# peak identification
+def peak(args):
+    print(args)
+
+parser_peak = iCount.analysis.params_to_argparse(subparsers,
+                                                 iCount.analysis.peaks)
+parser_peak.set_defaults(func=peak)
+
+
+# clusters
+def cluster(args):
+    print(args)
+
+parser_cluster = iCount.analysis.params_to_argparse(subparsers,
+                                                    iCount.analysis.clusters)
+parser_peak.set_defaults(func=cluster)
+
+
+# kmer enrichment
+def kmer(args):
+    print(args)
+
+parser_kmer = iCount.analysis.params_to_argparse(subparsers,
+                                                 iCount.analysis.kmers)
+parser_kmer.set_defaults(func=kmer)
+
+
+# RNA maps
+def rnamap(args):
+    print(args)
+
+parser_rnamap = iCount.analysis.params_to_argparse(subparsers,
+                                                   iCount.analysis.rnamaps)
+parser_rnamap.set_defaults(func=rnamap)
+
+
+# ### parse and run it
+parsed_args = parser.parse_args()
+if not vars(parsed_args):
+    parser.print_help()
+    parser.exit(1)
+parsed_args.func(parsed_args)
