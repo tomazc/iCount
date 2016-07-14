@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/tomazc/iCount.svg?token=MxKtDvsXZMsCDvfFpmd6&branch=master)](https://travis-ci.com/tomazc/iCount)
 # iCount processing of iCLIP protein-RNA interaction data
 
 This is the command-line interface (CLI) to the iCount pipeline.
