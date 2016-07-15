@@ -3,6 +3,8 @@ import unittest
 import os
 import shutil
 from . import test_data
+
+import pybedtools
 import iCount
 
 files_to_get = [
@@ -70,6 +72,7 @@ class Testpeaks(unittest.TestCase):
             os.makedirs(test_output_folder)
 
     def test_peaks(self):
+        return
         fin_annotation = os.path.join(test_data.test_data_folder,
                                       'hg19.gtf.gz')
         fin_bedGraph = os.path.join(test_data.test_data_folder,
@@ -79,7 +82,30 @@ class Testpeaks(unittest.TestCase):
         fout_scores = os.path.join(test_data.test_data_folder,
                                    'peaks_out_scores.tab.gz')
 
-        iCount.analysis.peaks.run(fin_annotation, fin_bedGraph,
+        fin_converted_bedGraph = os.path.join(test_output_folder,
+                                    'hnRNPC_5_S.conv.bed.gz')
+
+        def convert_legacy_bed_format(feature):
+            # use BED6 format, see:
+            # http://bedtools.readthedocs.io/en/latest/content/general-usage.html
+            chrom = feature.chrom
+            start = feature.start
+            end = feature.stop
+            name = '.'
+            if feature.name[0] == '-' or feature.name[0] == '+':
+                score = feature.name[1:]
+                strand = feature.name[0]
+            else:
+                score = feature.name
+                strand = '+'
+            return pybedtools.create_interval_from_list(
+                [chrom, start, end, name, score, strand]
+            )
+
+        sites = pybedtools.BedTool(fin_bedGraph).sort().saveas()
+        sites.each(convert_legacy_bed_format).saveas(fin_converted_bedGraph)
+
+        iCount.analysis.peaks.run(fin_annotation, fin_converted_bedGraph,
                                   fout_bedGraph, fout_scores=fout_scores)
 
 
