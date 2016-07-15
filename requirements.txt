@@ -1,5 +1,5 @@
 jupyter
-cutadapt
+cutadapt==1.10
 cython
 numpy
 pandas
