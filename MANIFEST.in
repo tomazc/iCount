@@ -1,0 +1,5 @@
+include requirements.txt
+include README.md
+include CHANGES.md
+include LICENSE
+include setup.py

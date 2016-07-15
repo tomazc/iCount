@@ -1,10 +1,9 @@
 import os
-import importlib.machinery
 
 from setuptools import setup, find_packages
 from subprocess import check_output, CalledProcessError
 
-VERSION = "2.0.0"
+VERSION = '2.0.0'
 ISRELEASED = False
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -55,7 +54,6 @@ if not ISRELEASED:
     except (CalledProcessError, FileNotFoundError) as e:
         print('Could not query git: {0}'.format(e))
         print('Please, add a proper version file: iCount/_version.py')
-        exit(1)
 
 # store version to file
 open('iCount/_version.py', 'w').write(
