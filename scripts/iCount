@@ -73,6 +73,24 @@ parser_species.set_defaults(func=species)
 #       - outdir: folder where to store downloaded files
 
 
+# segment: segment genome based on annotation file and save it into annotation
+#   files
+#   input: gtf file
+#   output: gtf file with genetic regions
+def segment(args):
+    print('Reading genome annotation from {:s}'.format(args.annotation))
+    iCount.genomes.segment.get_genes(gtf_in=args.annotation,
+                                     gtf_out_genes=args.segmentation_genes,
+                                     f_type = args.feature,
+                                     a_gene_name = args.attribute)
+    print('Segmentation stored into {:s}'.format(args.segmentation_genes))
+
+parser_segment = iCount.analysis.params_to_argparse(subparsers,
+                                                    iCount.genomes.segment)
+
+parser_segment.set_defaults(func=segment)
+
+
 # ### demultiplexing
 
 # demultiplex
