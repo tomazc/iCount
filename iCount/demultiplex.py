@@ -13,7 +13,7 @@ import iCount.externals
 
 # description and parameters needed for the analysis
 analysis_name = 'demultiplex'
-analysis_description_short = 'demultiplexing'
+analysis_description_short = 'demultiplex FASTQ file'
 analysis_description = 'Split input FASTQ file into separate files, one for ' \
                        'each barcode, and additional file for non-matching ' \
                        'barcodes.'

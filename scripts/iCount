@@ -20,10 +20,34 @@ subparsers = parser.add_subparsers(title='Pipeline commands')
 
 # releases: list all releases available on ensembl's FTP
 #   Releases older than version 59 are not reported.
+def releases(args):
+    rel_list = iCount.genomes.releases.get()
+    # TODO Jure: remove this line, when ensembl returns sorted list of releases
+    rel_list = sorted(rel_list, reverse=True)
+    print('There are {:d} releases available: {:s}'.\
+          format(len(rel_list), ','.join(rel_list)))
+
+
+parser_releases = iCount.analysis.params_to_argparse(subparsers,
+                                                     iCount.genomes.releases)
+parser_releases.set_defaults(func=releases)
+
 
 # species: list all species available on ensembl FTP
 #   input: release
 #   output: list of species for given release
+def species(args):
+    spe_list = iCount.genomes.species.get(release=args.release)
+    # TODO Jure: remove this line, when ensembl returns sorted list of species
+    spe_list = sorted(spe_list)
+    print('There are {:d} species available: {:s}'.\
+          format(len(spe_list), ','.join(spe_list)))
+
+
+parser_species = iCount.analysis.params_to_argparse(subparsers,
+                                                    iCount.genomes.species)
+parser_species.set_defaults(func=species)
+
 
 # annotation: download genome annotation for given release and species
 #   (prepares a set of derived annotations used for annotating,
@@ -36,7 +60,7 @@ subparsers = parser.add_subparsers(title='Pipeline commands')
 #       - filename: store into file with given name
 #           (default: species.release.gtf.gz)
 
-# genome: download genome sequence for given release and species
+# sequence: download genome sequence for given release and species
 #   input: release
 #   input: species
 #   options:

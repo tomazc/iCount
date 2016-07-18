@@ -12,6 +12,9 @@ import shutil
 
 BASE_URL = 'ftp.ensembl.org'
 
+MIN_RELEASE_SUPPORTED = 59
+MAX_RELEASE_SUPPORTED = 84
+
 
 def get_ftp_instance():
     """
@@ -32,11 +35,15 @@ def get_release_list():
     :return: list of available releases - elements are numbers of type str
     :rtype: list
     """
+    # TODO Jure: list should be sorted by decreasing version (latest first)
+    # TODO Jure: limit releases from ensembl 59 (including) onwards
+    # TODO Jure: limit upwards as well, use MIN_RELEASE_SUPPORTED and MAX_RELEASE_SUPPORTED
     ftp = get_ftp_instance()
     # set current working directory
     ftp.cwd('pub')
     # ftp.nlst() returns a list of all files/folders in cwd
-    return [item.strip('release-') for item in ftp.nlst() if re.match(r'release-\d+', item)]
+    return [item.strip('release-') for item in ftp.nlst()
+            if re.match(r'release-\d+', item)]
 
 
 def get_species_list(release):
@@ -54,7 +61,7 @@ def get_species_list(release):
     if species_list:
         return species_list
     else:
-        raise ValueError("No specias found for release {}".format(release))
+        raise ValueError('No specias found for release {}'.format(release))
 
 
 def download_annotation(release, species, target_dir=None, target_fname=None):
@@ -66,9 +73,12 @@ def download_annotation(release, species, target_dir=None, target_fname=None):
     :param str/path target_dir: download location
     :param str target_fname: desired name of downloaded file (must have .gz file extension)
 
-    :rtype: None
+    :return: filename of downloaded file
+    :rtype: str
     :raises ValueError: if provided target_dir does not exist
     """
+
+    # TODO Jure: return None if file not found on FTP
 
     if not target_dir:
         target_dir = os.getcwd()
@@ -91,12 +101,16 @@ def download_annotation(release, species, target_dir=None, target_fname=None):
     if not target_fname:
         target_fname = '{}.{}.gtf.gz'.format(species, release)
 
+    saveas_fname = os.path.join(target_dir, target_fname)
+
     # Download to file on disk
-    with open(os.path.join(target_dir, target_fname), 'wb') as fhandle:
+    with open(saveas_fname, 'wb') as fhandle:
         ftp.retrbinary('RETR ' + annotation_file, fhandle.write)
+    return saveas_fname
 
 
-def download_genome(release, species, target_dir=None, target_fname=None, tempdir=None):
+def download_sequence(release, species, target_dir=None, target_fname=None,
+                      tempdir=None):
     """
     Downloads whole genome file for given release and species
 
@@ -111,8 +125,10 @@ def download_genome(release, species, target_dir=None, target_fname=None, tempdi
     :param str species: the species latin name
     :param str/path target_dir: download location
     :param str target_fname: desired name of downloaded file (must have .gz file extension)
+    :param str tempdir: location of temp. folder and files
 
-    :rtype: None
+    :return: filename of downloaded file
+    :rtype: str
     :raises ValueError: if provided target_dir does not exist
     """
 
@@ -132,12 +148,14 @@ def download_genome(release, species, target_dir=None, target_fname=None, tempdi
     filterd_files = []
 
     # Recognize all "whole-chromosme" files
-    regex = r'{}\.[\w\d]+\.(\d+\.)*dna\.chromosome\.[\dXYMT]+\.fa\.gz'.format(species.capitalize())
+    regex = r'{}\.[\w\d]+\.(\d+\.)*dna\.chromosome\.' \
+            r'[\dXYMT]+\.fa\.gz'.format(species.capitalize())
     for fasta_file in all_fasta_files:
         if re.match(regex, fasta_file):
             filterd_files.append(fasta_file)
 
     # Make sure there is temporary directory to store temporary files
+    # TODO Jure: there could be other stuff in the specified tempdir, always create a temporary subfolder in the tempdir
     if not tempdir:
         # gnerate ranodm folder name to avoid clashes with existing folders:
         tempdir = os.path.join(os.getcwd(), str(uuid.uuid4()))
@@ -148,7 +166,7 @@ def download_genome(release, species, target_dir=None, target_fname=None, tempdi
         key = name.split('.')[-3]
         if key.isdigit():
             return int(key)
-        elif key == "MT":
+        elif key == 'MT':
             return 'ZZ'  # this makes mitohondrial "chromosome" the last one
         return key
     # Sort the filtered_files in correct order of chromosomes:
@@ -161,7 +179,8 @@ def download_genome(release, species, target_dir=None, target_fname=None, tempdi
             ftp.retrbinary('RETR ' + fname, fhandle.write)
 
         # Write the content into final file (target_fname)
-        with gzip.open(tempfile, 'rb') as f_in, gzip.open(target_path, 'ab') as f_out:
+        with gzip.open(tempfile, 'rb') as f_in, \
+             gzip.open(target_path, 'ab') as f_out:
             shutil.copyfileobj(f_in, f_out)
 
     # Clean up: delete temporary files:
@@ -170,7 +189,7 @@ def download_genome(release, species, target_dir=None, target_fname=None, tempdi
 
 # #############################################################
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
     releases = get_release_list()
     release84 = releases[-2]
