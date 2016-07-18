@@ -4,10 +4,10 @@ Functions to querry and download data from ENSEMBL ftp site
 
 import os
 import re
-import uuid
 import ftplib
 import gzip
 import shutil
+import tempfile
 
 
 BASE_URL = 'ftp.ensembl.org'
@@ -35,15 +35,15 @@ def get_release_list():
     :return: list of available releases - elements are numbers of type str
     :rtype: list
     """
-    # TODO Jure: list should be sorted by decreasing version (latest first)
-    # TODO Jure: limit releases from ensembl 59 (including) onwards
-    # TODO Jure: limit upwards as well, use MIN_RELEASE_SUPPORTED and MAX_RELEASE_SUPPORTED
     ftp = get_ftp_instance()
     # set current working directory
     ftp.cwd('pub')
-    # ftp.nlst() returns a list of all files/folders in cwd
-    return [item.strip('release-') for item in ftp.nlst()
-            if re.match(r'release-\d+', item)]
+
+    out = [item.strip('release-') for item in ftp.nlst() if
+           re.match(r'release-\d+', item) and
+           int(item.strip('release-')) >= MIN_RELEASE_SUPPORTED and
+           int(item.strip('release-')) <= MAX_RELEASE_SUPPORTED]
+    return sorted(out, reverse=True)
 
 
 def get_species_list(release):
@@ -78,8 +78,6 @@ def download_annotation(release, species, target_dir=None, target_fname=None):
     :raises ValueError: if provided target_dir does not exist
     """
 
-    # TODO Jure: return None if file not found on FTP
-
     if not target_dir:
         target_dir = os.getcwd()
     if not os.path.isdir(target_dir):
@@ -96,6 +94,9 @@ def download_annotation(release, species, target_dir=None, target_fname=None):
     for file_ in server_files:
         if re.match(regex, file_):
             annotation_file = file_
+
+    if not annotation_file:
+        return None
 
     # Process filename
     if not target_fname:
@@ -154,12 +155,7 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
         if re.match(regex, fasta_file):
             filterd_files.append(fasta_file)
 
-    # Make sure there is temporary directory to store temporary files
-    # TODO Jure: there could be other stuff in the specified tempdir, always create a temporary subfolder in the tempdir
-    if not tempdir:
-        # gnerate ranodm folder name to avoid clashes with existing folders:
-        tempdir = os.path.join(os.getcwd(), str(uuid.uuid4()))
-        os.mkdir(tempdir)
+    tempdir = tempfile.mkdtemp(dir=tempdir)
 
     def sorting_func(name):
         """Helper function for sorting files named by chromosome"""
@@ -174,12 +170,12 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
 
     for fname in filterd_files:
         # Download all files to tempdir:
-        tempfile = os.path.join(tempdir, fname)
-        with open(tempfile, 'wb') as fhandle:
+        temp_file = os.path.join(tempdir, fname)
+        with open(temp_file, 'wb') as fhandle:
             ftp.retrbinary('RETR ' + fname, fhandle.write)
 
         # Write the content into final file (target_fname)
-        with gzip.open(tempfile, 'rb') as f_in, \
+        with gzip.open(temp_file, 'rb') as f_in, \
              gzip.open(target_path, 'ab') as f_out:
             shutil.copyfileobj(f_in, f_out)
 
