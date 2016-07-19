@@ -3,9 +3,9 @@
 
 # iCount processing of iCLIP protein-RNA interaction data
 
-This is the command-line interface (CLI) to the iCount pipeline.
-The pipeline provides all the commands needed to process FASTQ iCLIP
-data and generate:
+iCount is a Python module and associated command-line interface (CLI),
+which provides all the commands needed to process iCLIP data and 
+generate:
  
 + Demultiplexed and adapter-trimmed FASTQ files.
 + BAM files with mapped iCLIP reads.
