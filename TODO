@@ -1,3 +1,10 @@
 TODO unit tests
 TODO get genome sequence and annotation from ensembl
 TODO scan and automatically get iCLIP data from archives (ERA, ENCODE, any URL, ...)
+TODO Jure: CLI for annotation command
+TODO Jure: CLI for sequence command
+TODO Jure: unit test for ensembl and associated species, releases,
+           annotation and sequence modules
+TODO Jure: write test script to test iCount.genomes.segment.get_genes on all
+           supported releases for human and mouse, report number of genes and
+           number of regions
