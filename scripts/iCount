@@ -22,8 +22,6 @@ subparsers = parser.add_subparsers(title='Pipeline commands')
 #   Releases older than version 59 are not reported.
 def releases(args):
     rel_list = iCount.genomes.releases.get()
-    # TODO Jure: remove this line, when ensembl returns sorted list of releases
-    rel_list = sorted(rel_list, reverse=True)
     print('There are {:d} releases available: {:s}'.\
           format(len(rel_list), ','.join(rel_list)))
 
@@ -38,8 +36,6 @@ parser_releases.set_defaults(func=releases)
 #   output: list of species for given release
 def species(args):
     spe_list = iCount.genomes.species.get(release=args.release)
-    # TODO Jure: remove this line, when ensembl returns sorted list of species
-    spe_list = sorted(spe_list)
     print('There are {:d} species available: {:s}'.\
           format(len(spe_list), ','.join(spe_list)))
 
@@ -59,6 +55,20 @@ parser_species.set_defaults(func=species)
 #       - outdir: where to store file(s)
 #       - filename: store into file with given name
 #           (default: species.release.gtf.gz)
+def annotation(args):
+    gtf_file = iCount.genomes.annotation.get(
+        release=args.release,
+        species=args.species
+        target_dir=args.target_dir,
+        target_fname=args.target_fname)
+
+    print('Downloading annotation file: {:s}'.format(gtf_file))
+
+parser_annotation = iCount.analysis.params_to_argparse(
+    subparsers, iCount.genomes.annotation)
+
+parser_annotation.set_defaults(func=annotation)
+
 
 # sequence: download genome sequence for given release and species
 #   input: release
@@ -71,6 +81,19 @@ parser_species.set_defaults(func=species)
 # examples: download example FASTQ files with iCLIP data
 #   options:
 #       - outdir: folder where to store downloaded files
+def sequence(args):
+    fasta_file = iCount.genomes.sequence.get(
+        release=args.release,
+        species=args.species
+        target_dir=args.target_dir,
+        target_fname=args.target_fname)
+
+    print('Downloading FASTA file: {:s}'.format(fasta_file))
+
+parser_annotation = iCount.analysis.params_to_argparse(
+    subparsers, iCount.genomes.sequence)
+
+parser_annotation.set_defaults(func=sequence)
 
 
 # segment: segment genome based on annotation file and save it into annotation

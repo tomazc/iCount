@@ -59,9 +59,7 @@ def get_species_list(release):
     ftp.cwd('pub/' + 'release-' + str(release) + '/fasta/')
     species_list = [item for item in ftp.nlst()]
     if species_list:
-        return species_list
-    else:
-        raise ValueError('No specias found for release {}'.format(release))
+        return sorted(species_list)
 
 
 def download_annotation(release, species, target_dir=None, target_fname=None):
