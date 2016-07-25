@@ -9,6 +9,9 @@ RUN useradd -m -d /home/icuser icuser
 # update system
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
+    build-essential \
+    gfortran \
+    libatlas-base-dev \
     wget \
     g++ \
     zlib1g-dev \
@@ -17,12 +20,21 @@ RUN apt-get update && apt-get upgrade -y && \
     python3 \
     python3-pip \
     python3-setuptools \
+    python3-matplotlib \
     python-virtualenv \
     python-pip \
     git
 
 RUN apt-get autoclean -y && \
     apt-get autoremove -y
+
+# matplotlib
+RUN apt-get install -y \
+    pkg-config \
+    libfreetype6-dev \
+    libpng12-dev \
+    zlib1g-dev \
+    python3-matplotlib
 
 
 #################
