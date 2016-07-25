@@ -43,6 +43,8 @@ def get_release_list():
            re.match(r'release-\d+', item) and
            int(item.strip('release-')) >= MIN_RELEASE_SUPPORTED and
            int(item.strip('release-')) <= MAX_RELEASE_SUPPORTED]
+
+    ftp.quit()
     return sorted(out, reverse=True)
 
 
@@ -58,6 +60,8 @@ def get_species_list(release):
     ftp = get_ftp_instance()
     ftp.cwd('pub/' + 'release-' + str(release) + '/fasta/')
     species_list = [item for item in ftp.nlst()]
+
+    ftp.quit()
     if species_list:
         return sorted(species_list)
 
@@ -105,11 +109,13 @@ def download_annotation(release, species, target_dir=None, target_fname=None):
     # Download to file on disk
     with open(saveas_fname, 'wb') as fhandle:
         ftp.retrbinary('RETR ' + annotation_file, fhandle.write)
+
+    ftp.quit()
     return saveas_fname
 
 
 def download_sequence(release, species, target_dir=None, target_fname=None,
-                      tempdir=None):
+                      tempdir=None, chromosomes=[]):
     """
     Downloads whole genome file for given release and species
 
@@ -117,6 +123,7 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
 
         * querry for list off all FASTA files for given release and specias
         * filter this list to get only whole chromosome files
+        * if chromosomes paramter is given, take only specified chromosomes
         * sort list of these files to have the correct order
         * download each file and write it to target_fname
 
@@ -125,6 +132,7 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
     :param str/path target_dir: download location
     :param str target_fname: desired name of downloaded file (must have .gz file extension)
     :param str tempdir: location of temp. folder and files
+    :param list chromosomes: a subset of chromosomes to download
 
     :return: filename of downloaded file
     :rtype: str
@@ -137,36 +145,48 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
         raise ValueError('Directory "{}" does not exist'.format(target_dir))
     if not target_fname:
         target_fname = '{}.{}.fa.gz'.format(species, release)
-    target_path = os.path.join(target_dir, target_fname)
 
     ftp = get_ftp_instance()
     server_dir = '/pub/release-{}/fasta/{}/dna'.format(release, species)
     ftp.cwd(server_dir)
     all_fasta_files = ftp.nlst()
 
-    filterd_files = []
+    filtered_files = []
 
     # Recognize all "whole-chromosme" files
     regex = r'{}\.[\w\d]+\.(\d+\.)*dna\.chromosome\.' \
             r'[\dXYMT]+\.fa\.gz'.format(species.capitalize())
     for fasta_file in all_fasta_files:
         if re.match(regex, fasta_file):
-            filterd_files.append(fasta_file)
-
-    tempdir = tempfile.mkdtemp(dir=tempdir)
+            filtered_files.append(fasta_file)
 
     def sorting_func(name):
         """Helper function for sorting files named by chromosome"""
         key = name.split('.')[-3]
-        if key.isdigit():
-            return int(key)
-        elif key == 'MT':
+        if key == 'MT':
             return 'ZZ'  # this makes mitohondrial "chromosome" the last one
         return key
     # Sort the filtered_files in correct order of chromosomes:
-    filterd_files.sort(key=sorting_func)
+    filtered_files.sort(key=sorting_func)
 
-    for fname in filterd_files:
+    # If parameter chromosomes is given, take only a subset of all chromosomes
+    if chromosomes:
+        subset_list = []
+        for file_ in filtered_files:
+            for chromosome in chromosomes:
+                regex = r'.*chromosome\.{}\.fa\.gz'.format(str(chromosome))
+                if re.match(regex, file_):
+                    subset_list.append(file_)
+                else:
+                    pass
+        filtered_files = subset_list
+        target_fname = target_fname.rstrip('.fa.gz') + '.chr' + \
+            '_'.join(map(str, chromosomes)) + '.fa.gz'
+
+    tempdir = tempfile.mkdtemp(dir=tempdir)
+    target_path = os.path.join(target_dir, target_fname)
+
+    for fname in filtered_files:
         # Download all files to tempdir:
         temp_file = os.path.join(tempdir, fname)
         with open(temp_file, 'wb') as fhandle:
@@ -178,7 +198,10 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
             shutil.copyfileobj(f_in, f_out)
 
     # Clean up: delete temporary files:
+    ftp.quit()
     shutil.rmtree(tempdir)
+
+    return target_path
 
 
 # #############################################################
