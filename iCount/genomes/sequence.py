@@ -17,10 +17,16 @@ params_opt = [
     ('target_dir', 'string', None, False, 'Target directory.'),
 
     ('target_fname', 'string', None, False, 'Target filename.'),
+
+    ('tempdir', 'string', None, False, 'Temporary folder.'),
+
+    ('chromosomes', 'str_list', [], False, 'Chromosome subset.'),
 ]
 
 params_pos = []
 
 
-def get(release, species, target_dir=None, target_fname=None):
-    return ensembl.download_sequence(release, species, target_dir=target_dir, target_fname=target_fname)
+def get(release, species, target_dir=None, target_fname=None,
+        tempdir=None, chromosomes=[]):
+    return ensembl.download_sequence(
+        release, species, target_dir=target_dir, target_fname=target_fname, tempdir=tempdir, chromosomes=chromosomes)
