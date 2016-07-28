@@ -74,17 +74,46 @@ def _fix_proper_bed6_format(feature):
     )
 
 
-def get_genes(gtf_in, gtf_out_genes, f_type='gene', a_gene_name='gene_name'):
-    """Return gene coordinates in proper BED6 format.
-
-    Extract only regions that describe genes.
-    Merge overlapping regions and record associated gene names.
-    All other annotation is skipped.
-
+def get_genes(gtf_in, gtf_out, attribute='gene_name'):
     """
-    gs = pybedtools.BedTool(gtf_in).filter(lambda r: r[2] == f_type).saveas()
-    gs1 = gs.each(_rename_to_gene_name, a_gene_name=a_gene_name).saveas()
-    gs2 = gs1.sort().saveas()
-    gs3 = gs2.merge(s=True, d=0, c='4', o='distinct').saveas()
-    gs4 = gs3.each(_fix_proper_bed6_format).saveas(gtf_out_genes)
-    return gs4
+    Extract largest possible gene segments from input gtf file.
+
+    Each gene can have multiple entries: for exons, introns, UTR...
+    We wish to get a "maximal frame" of it's coordinates for given gene
+    name, chromosome and strand.
+
+    :param str gtf_in: absolute path to gtf input file
+    :param str gtf_out: absolute path to gtf output file
+    :return: sorted largest possible gene segments
+    :rtype: pybedtools.BedTool
+    """
+
+    data = {}
+
+    for interval in pybedtools.BedTool(gtf_in):
+        gene_name = interval.attrs[attribute]
+        chromosome = interval.chrom
+        strand = interval.strand
+        # Generate unique slug, since same gene name can appear on
+        # multiple chromosomes or on oppsite strands.
+        gene_unique_slug = '-'.join([gene_name, chromosome, strand])
+
+        # TODO: Numerically optimze this procedure
+
+        if gene_unique_slug in data:
+            if interval.start < data[gene_unique_slug][1]:
+                data[gene_unique_slug][1] = interval.start
+
+            if interval.stop > data[gene_unique_slug][2]:
+                data[gene_unique_slug][2] = interval.stop
+
+        else:
+            data[gene_unique_slug] = [interval.chrom, interval.start,
+                                      interval.stop, interval.name,
+                                      interval.strand]
+
+    gs = pybedtools.BedTool(pybedtools.create_interval_from_list(
+        [chrom, start, end, name, '1', strand])
+        for chrom, start, end, name, strand in data.values()).saveas()
+
+    return gs.sort().saveas(gtf_out)
