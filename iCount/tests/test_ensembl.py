@@ -53,6 +53,9 @@ class TestEnsemblDownload(unittest.TestCase):
 
         self.assertTrue(os.path.isfile(
             os.path.join(self.tempdir, 'homo_sapiens.84.chrMT.fa.gz')))
+        # Confirm that chrom_length file was created!
+        self.assertTrue(os.path.isfile(
+            os.path.join(self.tempdir, 'homo_sapiens.84.chrMT.fa.gz.chrom_length.txt')))
 
     def tearDown(self):
         files = os.listdir(self.tempdir)

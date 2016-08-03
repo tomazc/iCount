@@ -8,6 +8,7 @@ import ftplib
 import gzip
 import shutil
 import tempfile
+import subprocess
 
 
 BASE_URL = 'ftp.ensembl.org'
@@ -114,6 +115,49 @@ def download_annotation(release, species, target_dir=None, target_fname=None):
     return saveas_fname
 
 
+def chrom_length(fasta_in, txt_out=None):
+    """
+    Compute chromosome lengths to a file
+
+    Output file has one line per each chromosome::
+
+        chr1    249250621
+        chr2    243199373
+        ...
+
+    :param string fasta_in: path to genome fasta file (can be *.gz file)
+    :param string txt_out: output *.txt file
+    :return: absoulute path to output file
+    :rtype: str
+    """
+    if fasta_in.endswith('.gz'):
+        f2 = tempfile.NamedTemporaryFile(delete=False)
+        with gzip.open(fasta_in, 'rb') as f1:
+            shutil.copyfileobj(f1, f2)
+        f2.close()
+        temp = f2.name
+    else:
+        temp = fasta_in
+
+    command = ['samtools', 'faidx', temp]
+    subprocess.check_call(command)
+    # This command makes fai file:
+    fai_file = temp + '.fai'
+
+    if not txt_out:
+        txt_out = fasta_in + '.chrom_length.txt'
+
+    with open(fai_file, 'r') as f1, open(txt_out, 'wt') as f2:
+        for line in f1:
+            chrom, length = line.strip().split()[:2]
+            f2.write('{}\t{}\n'.format(chrom, length))
+
+    # Clean up:
+    os.remove(fai_file)
+
+    return os.path.abspath(txt_out)
+
+
 def download_sequence(release, species, target_dir=None, target_fname=None,
                       tempdir=None, chromosomes=[]):
     """
@@ -200,6 +244,9 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
     # Clean up: delete temporary files:
     ftp.quit()
     shutil.rmtree(tempdir)
+
+    # Conpute chromosome lengths:
+    _ = chrom_length(target_path)
 
     return target_path
 
