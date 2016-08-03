@@ -12,6 +12,7 @@ addons:
             - gfortran
             - libblas-dev
             - liblapack-dev
+            - samtools
 
 cache:
     apt: true   # does not work for public repos
