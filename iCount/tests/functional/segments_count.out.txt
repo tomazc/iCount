@@ -1,0 +1,2 @@
+species	        release	gene	transcript	CDS	UTR3	UTR5	intron	ncRNA	intergenic
+homo_sapiens	84	    60504	199004    	702206	131670	136295	977436	348623	49327
