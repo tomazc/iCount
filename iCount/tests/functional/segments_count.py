@@ -35,11 +35,9 @@ class TestSegmentation(unittest.TestCase):
 
         self.releases_list = ensembl.get_release_list()
         self.species_list = ['homo_sapiens', 'mus_musculus']
-        self.releases_list = [84]
-        self.species_list = ['homo_sapiens']
 
         self.order = ['gene', 'transcript', 'CDS', 'UTR3', 'UTR5', 'intron',
-                      'ncRNA', 'intergenic']
+                      'stop_codon', 'ncRNA', 'intergenic']
         header = '\t'.join(map(str, ['species', 'release'] + [o for o in self.order]))
 
         self.current_results = [header]
@@ -79,6 +77,9 @@ class TestSegmentation(unittest.TestCase):
 
                     # Now we surely have gtf_base and chrom_length to produce gtf_regions:
                     gtf_regions = segment.get_regions(gtf_base, gtf_regions, chrom_length)
+                    # When multiple-cpu usage is supported in get_regions, one can
+                    # speed up the test by using multiple cpus like this:
+                    # gtf_regions = segment.get_regions(gtf_base, gtf_regions, chrom_length, cores=6)
 
                 result = Counter(i[2] for i in pybedtools.BedTool(gtf_regions))
 
