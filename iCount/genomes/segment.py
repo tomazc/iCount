@@ -69,20 +69,6 @@ def _rename_to_gene_name(feature, a_gene_name='gene_name'):
     )
 
 
-def _fix_proper_bed6_format(feature):
-    chrom = feature.chrom
-    start = feature.start
-    end = feature.stop
-    name = feature.score
-    score = '1'
-    strand = feature.name
-    # use BED6 format, see:
-    # http://bedtools.readthedocs.io/en/latest/content/general-usage.html
-    return pybedtools.create_interval_from_list(
-        [chrom, start, end, name, score, strand]
-    )
-
-
 def get_genes(gtf_in, gtf_out, attribute='gene_name'):
     """
     Extract largest possible gene segments from input gtf file.

@@ -54,8 +54,8 @@ params_pos = [
         '(input) BED6 file with cross-linked sites.'
     ),
     (
-        'peaks', 'bedGraph', 'out',
-        '(output) bedGraph with significant cross-linked sites.'
+        'peaks', 'BED6', 'out',
+        '(output) BED6 with significant cross-linked sites.'
     ),
     (
         'scores', 'tab', 'out',
