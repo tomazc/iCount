@@ -256,3 +256,4 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
     fout_peaks.close()
     if fout_scores is not None:
         fout_scores.close()
+    print('done')
