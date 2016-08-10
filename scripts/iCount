@@ -58,7 +58,7 @@ parser_species.set_defaults(func=species)
 def annotation(args):
     gtf_file = iCount.genomes.annotation.get(
         release=args.release,
-        species=args.species
+        species=args.species,
         target_dir=args.target_dir,
         target_fname=args.target_fname)
 
@@ -84,7 +84,7 @@ parser_annotation.set_defaults(func=annotation)
 def sequence(args):
     fasta_file = iCount.genomes.sequence.get(
         release=args.release,
-        species=args.species
+        species=args.species,
         target_dir=args.target_dir,
         target_fname=args.target_fname)
 
@@ -169,30 +169,41 @@ parser_demux.set_defaults(func=demultiplex)
 
 
 # peak identification
-def peak(args):
-    print(args)
+def peaks(args):
+    print('Performing peak analysis on {:s}'.format(args.sites))
+    print('using annotation from {:s}'.format(args.annotation))
+    print('parameter values:')
+    print('   hw={:d}'.format(args.hw))
+    print('   fdr={:f}'.format(args.fdr))
+    print('   perms={:d}'.format(args.perms))
+    iCount.analysis.peaks.run(args.annotation, args.sites, args.peaks,
+                              fout_scores=args.scores,
+                              hw=args.hw, fdr=args.fdr, perms=args.perms) #,
+                              #regions=args.regions)
+    print('Bed file with significant peaks saved to {:s}'.format(args.peaks))
+    print('Scores for each cross-linked position saved to {:s}'.format(args.scores))
 
-parser_peak = iCount.analysis.params_to_argparse(subparsers,
+parser_peaks = iCount.analysis.params_to_argparse(subparsers,
                                                  iCount.analysis.peaks)
-parser_peak.set_defaults(func=peak)
+parser_peaks.set_defaults(func=peaks)
 
 
 # clusters
-def cluster(args):
+def clusters(args):
     print(args)
 
-parser_cluster = iCount.analysis.params_to_argparse(subparsers,
+parser_clusters = iCount.analysis.params_to_argparse(subparsers,
                                                     iCount.analysis.clusters)
-parser_peak.set_defaults(func=cluster)
+parser_clusters.set_defaults(func=clusters)
 
 
 # kmer enrichment
-def kmer(args):
+def kmers(args):
     print(args)
 
-parser_kmer = iCount.analysis.params_to_argparse(subparsers,
+parser_kmers = iCount.analysis.params_to_argparse(subparsers,
                                                  iCount.analysis.kmers)
-parser_kmer.set_defaults(func=kmer)
+parser_kmers.set_defaults(func=kmers)
 
 
 # RNA maps

@@ -23,37 +23,43 @@ analysis_description = 'Determine local clusters of significantly ' \
 
 params_opt = [
     (
-        'size', 'int_range', (3, 1, 200), False,
-        'Peak width.'
+        'hw', 'int_range', (3, 0, 200), False,
+        'Half-window size.'
     ),
     (
         'fdr', 'float_range', (0.05, 0.01, 0.25), False,
         'Significance threshold.'
     ),
     (
-        'rnd', 'int_range', (100, 10, 250), False,
+        'perms', 'int_range', (100, 10, 1000), False,
         'Number of random permutations needed to determine statistical '
         'significance.'
     ),
-    (
-        'regions', 'choice-single', ('one', ['one', 'separately']),  False,
-        'Determine significance based on entire gene or withing each '
-        'segment (exons, introns, UTRs, ...).'
-    )
+# TODO: ignore for now, until change of annotation format from BED6 to GTF.
+#    (
+#        'regions', 'str_list', ['gene'],  False,
+#        'Calculate enrichment for cross-links within these types (as given
+#    # in '
+#        '3rd column in GTF).'
+#    )
 ]
 
 params_pos = [
     (
-        'annotation', 'GTF', 'in',
-        '(input) GTF file with gene models.'
+        'annotation', 'BED6', 'in',
+        '(input) BED6 file with gene regions.'
     ),
     (
-        'sites', 'bedGraph', 'in',
-        '(input) bedGraph with cross-linked sites.'
+        'sites', 'BED6', 'in',
+        '(input) BED6 file with cross-linked sites.'
     ),
     (
         'peaks', 'bedGraph', 'out',
         '(output) bedGraph with significant cross-linked sites.'
+    ),
+    (
+        'scores', 'tab', 'out',
+        '(output) tab-separated table with scores for each cross-linked site.'
     ),
 ]
 
@@ -169,7 +175,7 @@ def get_avg_rnd_distrib(size, total_hits, w, perms=100):
 
 
 def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
-        fdr=0.05, perms=100, regions='one'):
+        fdr=0.05, perms=100): #, regions=['gene']):
     """Calculate FDR of interaction at each cross-linked site.
 
     """
@@ -182,7 +188,11 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
     overlaps = annotation.intersect(sites, sorted=True, s=True, wo=True).saveas()
     hits_by_name = {}
     name_sizes = {}
+#    skip_cn = 0
     for feature in overlaps:
+#        if feature.type not in regions:
+#            skip_cn += 1
+#            continue
         chrom = feature.chrom
         start = feature.start
         end = feature.stop
@@ -194,7 +204,6 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         hits_by_name.setdefault((chrom, strand, name), []).append((site_pos,
                                                                    site_score))
         name_sizes.setdefault((chrom, strand, name), set()).add((start, end))
-#        if len(hits_by_name) > 100: break
 
     # calculate total length of each region
     name_sizes = dict(
@@ -202,12 +211,18 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
     )
     # calculate and assign FDRs to each cross-linked site
     out_recs_scores = []
+    all_recs = len(hits_by_name)
+    cur_perc = 0
     while hits_by_name:
         gid, hits = hits_by_name.popitem()
         region_size = name_sizes[gid]
         chrom, strand, name = gid
         region_hits = sum([v for _, v in hits])
-        print(len(hits_by_name), gid, region_hits, region_size)
+        new_perc = 100.0*(1.0 - len(hits_by_name) / all_recs) // 5
+        new_perc = int(new_perc*5)
+        if new_perc != cur_perc:
+            cur_perc = new_perc
+            print('{:d}% '.format(cur_perc), end="", flush=True),
         true_ps, hits_extended = cum_prob_within_window(hits, region_hits, hw)
         rnd_ps = get_avg_rnd_distrib(region_size, region_hits, hw, perms=perms)
         assert len(rnd_ps) == len(rnd_ps)
@@ -221,7 +236,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
     out_recs_scores.sort()
 
     fout_peaks = iCount.files.gz_open(fout_peaks, 'wt')
-    if fout_scores:
+    if fout_scores is not None:
         fout_scores = iCount.files.gz_open(fout_scores, 'wt')
 
     for (chrom, p, name, score, strand, val_extended, fdr_score) in \
@@ -234,10 +249,10 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         if fdr_score < fdr:
             fout_peaks.write('{:s}\n'.format(o_str))
 
-        if fout_scores:
+        if fout_scores is not None:
             fout_scores.write('{:s}\t{:s}\t{:f}\n'.format(o_str,
                                                           str(val_extended),
                                                           fdr_score))
     fout_peaks.close()
-    if fout_scores:
+    if fout_scores is not None:
         fout_scores.close()
