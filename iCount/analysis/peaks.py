@@ -54,8 +54,8 @@ params_pos = [
         '(input) BED6 file with cross-linked sites.'
     ),
     (
-        'peaks', 'bedGraph', 'out',
-        '(output) bedGraph with significant cross-linked sites.'
+        'peaks', 'BED6', 'out',
+        '(output) BED6 with significant cross-linked sites.'
     ),
     (
         'scores', 'tab', 'out',
@@ -175,7 +175,7 @@ def get_avg_rnd_distrib(size, total_hits, w, perms=100):
 
 
 def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
-        fdr=0.05, perms=100): #, regions=['gene']):
+        fdr=0.05, perms=100, rnd_seed=42): #, regions=['gene']):
     """Calculate FDR of interaction at each cross-linked site.
 
     """
@@ -205,24 +205,25 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
                                                                    site_score))
         name_sizes.setdefault((chrom, strand, name), set()).add((start, end))
 
+    numpy.random.seed(rnd_seed)
     # calculate total length of each region
     name_sizes = dict(
         ((n, sum([e-s for s, e in v])) for n, v in name_sizes.items())
     )
     # calculate and assign FDRs to each cross-linked site
     out_recs_scores = []
+    hits_by_name = sorted(hits_by_name.items())
     all_recs = len(hits_by_name)
     cur_perc = 0
     while hits_by_name:
-        gid, hits = hits_by_name.popitem()
+        gid, hits = hits_by_name.pop()
         region_size = name_sizes[gid]
         chrom, strand, name = gid
         region_hits = sum([v for _, v in hits])
-        new_perc = 100.0*(1.0 - len(hits_by_name) / all_recs) // 5
-        new_perc = int(new_perc*5)
+        new_perc = '\r{:.1f}%'.format(100.0*(1.0-len(hits_by_name)/all_recs))
         if new_perc != cur_perc:
             cur_perc = new_perc
-            print('{:d}% '.format(cur_perc), end="", flush=True),
+            print(cur_perc, end="", flush=True),
         true_ps, hits_extended = cum_prob_within_window(hits, region_hits, hw)
         rnd_ps = get_avg_rnd_distrib(region_size, region_hits, hw, perms=perms)
         assert len(rnd_ps) == len(rnd_ps)
@@ -256,4 +257,4 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
     fout_peaks.close()
     if fout_scores is not None:
         fout_scores.close()
-    print('done')
+    print('\ndone')

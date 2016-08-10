@@ -190,7 +190,11 @@ parser_peaks.set_defaults(func=peaks)
 
 # clusters
 def clusters(args):
-    print(args)
+    print('Performing cluster analysis on {:s}'.format(args.sites))
+    print('parameter values:')
+    print('   dist={:d}'.format(args.dist))
+    iCount.analysis.clusters.run(args.sites, args.clusters, dist=args.dist)
+    print('Bed file with clusters saved to {:s}'.format(args.clusters))
 
 parser_clusters = iCount.analysis.params_to_argparse(subparsers,
                                                     iCount.analysis.clusters)
