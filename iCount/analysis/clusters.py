@@ -9,7 +9,6 @@ Return BED file with clusters' coordinates.
 
 """
 
-import gzip
 import pybedtools
 
 # description and parameters needed for the analysis
