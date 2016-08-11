@@ -159,18 +159,16 @@ def _check_consistency(intervals):
     can_follow = {
         '+': {
             'UTR5': ['intron', 'CDS'],
-            'CDS': ['intron', 'stop_codon', 'UTR3'],
-            'intron': ['CDS', 'ncRNA', 'UTR3', 'UTR5', 'stop_codon'],
+            'CDS': ['intron', 'UTR3'],
+            'intron': ['CDS', 'ncRNA', 'UTR3', 'UTR5'],
             'UTR3': ['intron'],
-            'ncRNA': ['intron'],
-            'stop_codon': ['UTR3', 'intron']},
+            'ncRNA': ['intron']},
         '-': {
-            'UTR3': ['intron', 'stop_codon', 'CDS'],
+            'UTR3': ['intron', 'CDS'],
             'CDS': ['intron', 'UTR5'],
-            'intron': ['CDS', 'ncRNA', 'UTR3', 'UTR5', 'stop_codon'],
+            'intron': ['CDS', 'ncRNA', 'UTR3', 'UTR5'],
             'UTR5': ['intron'],
-            'ncRNA': ['intron'],
-            'stop_codon': ['CDS', 'intron']}}
+            'ncRNA': ['intron']}}
     intervals = intervals.copy()
     index = next(i for i in range(len(intervals)) if intervals[i][2] == 'transcript')
     transcript_interval = intervals.pop(index)
@@ -189,40 +187,30 @@ def _get_non_cds_exons(cdses, exons, intervals):
     Identify (parts of) exons that are not CDS and classify them
 
     The intervals in the output list of this function should have
-    "UTR3" or "UTR5" or "stop_codon" in their third field.
+    "UTR3" or "UTR5" in their third field.
 
-    Note: There can be 0, 1 or 2 stop codons in transcript that has CDS exons:
-        * 0 - GTF file does not contain stop_codon info. In this case, we
-          assume that the stop codon is spanning the last three codons in
-          last CDS region. But in this case stop codon in not included in
-          result list.
-        * 1 - "normal" case
-        * 2 - case where split between two exons is located on stop codon.
+    First, all stop codons and CDS regions are merged where posssible.
+    For each stop codon there two options:
+        * touching CDS - merge them
+        * NOT touching CDS - rename to CDS
+        * stop_codon and CDS overlap completely - ignore stop codon
 
-    For *each* exon, many cases (10, each marked with #x) are posssible.
-    Here is a "tree" of all possible cases for positive strand:
+    For *each* exon, many cases are posssible. Here is a "tree" of all
+    possible cases for positive strand:
 
     * CDS inside exon
-        * CDS and exon overlap perfectly  #1
-            * Already handled by CDS intervals in input GTF file
+        * CDS and exon overlap perfectly  #1 - no UTR here
         * CDS and exon do NOT overlap perfectly
             * cds.start != exon.start & cds.stop == exon.stop
                 * exon = utr5 + cds  #2
             * cds.start == exon.start & cds.stop != exon.stop
-                * exon = cds + stop + utr3  #3
-                * exon = cds + stop  #4
-                * exon = cds + stop(just part of it)  #5
+                * exon = cds + utr3  #3
             * cds.start != exon.start & cds.stop != exon.stop
-                * exon = utr5 + cds + stop + utr3  #6
-                * exon = utr5 + cds + stop  #7
-                * exon = utr5 + cds + stop(just part of it)  #8
+                * exon = utr5 + cds + utr3  #4
     * CDS not inside exon
-        * any of the stop codons in exon
-            * exon is UTR, but juts the remaining part. Determine UTR3/UTR5  #9
-        * none of the stop codons in exon
-            * exon completely UTR, just determine wheather UTR3 or UTR5  #10
+        * exon completely UTR, just determine wheather UTR3 or UTR5  #5
 
-    Currently, all 10 cases are covered.
+    Currently, all 5 cases are covered.
 
     :param list cdses: list of all CDS in transcript group
     :param list exons: list of all exons in transcript group
@@ -234,61 +222,50 @@ def _get_non_cds_exons(cdses, exons, intervals):
     int0 = intervals[0]
     strand = int0.strand
     stop_codons = [i for i in intervals if i.fields[2] == 'stop_codon']
+    cdses = cdses.copy()
 
-    if not stop_codons:
-        # If no stop codon is given, pretend as the last part of last cds is stop codon
-        if strand == '+':
-            stop = max([c.stop for c in cdses])
-            start = stop - 2
+    # Merge stop_codons with cds where posssible:
+    replace_cds_indexes = []
+    replace_cdses = []
+    new_cdses = []
+    for stop_codon in stop_codons:
+        touching_cds = next((
+            cds for cds in enumerate(cdses) if
+            stop_codon.stop == cds[1].start or
+            cds[1].stop == stop_codon.start), None)
+        # in some GTF files stop_codon is also cds, identify such cases:
+        complete_overlap = any(cds.start == stop_codon.start and cds.stop == stop_codon.stop for cds in cdses)
+        if complete_overlap:
+            continue  # in this case stop_codon is already turned in cds...
+        elif touching_cds:
+            cds_index, cds = touching_cds
+            replace_cds_indexes.append(cds_index)
+            start = min(cds.start, stop_codon.start) + 1
+            stop = max(cds.stop, stop_codon.stop)
+            replace_cdses.append(create_interval_from_list(
+                cds[:3] + [start, stop] + cds[5:]))
         else:
-            start = min([c.start for c in cdses]) + 1
-            stop = start + 2
-        stop_codons = [create_interval_from_list(
-            int0[:2] + ['stop_codon', start, stop, '.', strand, '.', int0[8]])]
-    else:
-        # Include stop codons only if they are not part of CDS!
-        utrs.extend(stop_codons)
+            new_cdses.append(create_interval_from_list(
+                stop_codon[:2] + ['CDS'] + stop_codon[3:]))
+    for index, cds in zip(replace_cds_indexes, replace_cdses):
+        cdses[index] = cds
+    cdses.extend(new_cdses)
 
     for exon in exons:
         if not any(_a_in_b(cds, exon) for cds in cdses):
-            # no CDS in exon
-            if not any(_a_in_b(sc, exon) for sc in stop_codons):
-                # no stop codon in exon! - completely UTR!
-                start = exon.start + 1
-                stop = exon.stop
-            else:
-                # identify the stop codon and determine UTR region
-                stop_codon = next(c for c in stop_codons if _a_in_b(c, exon))
-                if stop_codon.start == exon.start and stop_codon.stop == exon.stop:
-                    # If exon == stop codon, just go on, since the
-                    # stop_codon in already included in regions
-                    continue
-                start = stop_codon.stop + 1 if exon.strand == '+' else exon.start + 1
-                stop = exon.stop if exon.strand == '+' else stop_codon.start
-
-            # Now just determine UTR3/UTR5:
-            if ((exon.strand == '+' and exon.stop >= max([i.stop for i in stop_codons])) or
-                    (exon.strand == '-' and exon.start <= min([i.start for i in stop_codons]))):
+            # no CDS in exon - completely UTR! Just determine UTR3/UTR5:
+            if ((exon.strand == '+' and exon.stop >= max([i.stop for i in cdses])) or
+                    (exon.strand == '-' and exon.start <= min([i.start for i in cdses]))):
                 mode = "UTR3"
             else:
                 mode = "UTR5"
-
             utrs.append(create_interval_from_list(
-                exon[:2] + [mode, start, stop, '.', strand, '.', exon[8]]))
+                exon[:2] + [mode, exon.start + 1, exon.stop, '.', strand, '.', exon[8]]))
 
         else:
-            # CDS in exons! Identify which cds:
+            # CDS in exons! Identify which one:
             cds = next((c for c in cdses if _a_in_b(c, exon)), None)
             assert(cds is not None)
-            # If stop_codon inside, identify it:
-            stop_codon = next((i for i in stop_codons if _a_in_b(i, exon)), None)
-            if stop_codon:
-                start = min(stop_codon.start, cds.start) + 1
-                stop = max(stop_codon.stop, cds.stop)
-                # Pretend as if cds includes also stop_codon - it will
-                # simplify the UTR coordinates calculation. This works
-                # even if stop codon is already in cds (can happen...)
-                cds = create_interval_from_list(cds[:3] + [start, stop] + cds[5:])
 
             if cds.start != exon.start:
                 # UTR in the beggining:
@@ -301,7 +278,7 @@ def _get_non_cds_exons(cdses, exons, intervals):
                 utrs.append(create_interval_from_list(
                     exon[:2] + [mode, cds.stop + 1, exon.stop, '.', strand, '.', exon[8]]))
 
-    return utrs
+    return cdses, utrs
 
 
 def filter_col8(interval, keys=None):
@@ -361,7 +338,6 @@ def _process_transcript_group(intervals):
         * intron
         * UTR3
         * UTR5
-        * stop_codon
         * ncRNA
 
     :param list intervals:
@@ -406,16 +382,12 @@ def _process_transcript_group(intervals):
         # check that all CDSs are within exons:
         for cds in cdses:
             assert(any([_a_in_b(cds, exon) for exon in exons]))
-            # if any stop_codon == cds, remove cds, to avoid having two overlapping intervals:
-            for stop_codon in [i for i in intervals if i.fields[2] == 'stop_codon']:
-                if stop_codon.start == cds.start and stop_codon.stop == cds.stop:
-                    index = [i for i in range(len(cdses)) if cdses[i].stop == cds.stop][0]
-                    cdses.pop(index)
 
-        # Include CDS regions:
-        regions.extend(cdses)
-        # Include UTR regions:
-        regions.extend(_get_non_cds_exons(cdses, exons, intervals))
+        # Determine UTR regions and new_cds (cds joined with stop
+        # codons where possible):
+        new_cdses, utrs = _get_non_cds_exons(cdses, exons, intervals)
+        regions.extend(utrs)
+        regions.extend(new_cdses)
 
     # check the consistency of regions and make a report if check fails:
     try:

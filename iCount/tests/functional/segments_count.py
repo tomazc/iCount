@@ -37,7 +37,7 @@ class TestSegmentation(unittest.TestCase):
         self.species_list = ['homo_sapiens', 'mus_musculus']
 
         self.order = ['gene', 'transcript', 'CDS', 'UTR3', 'UTR5', 'intron',
-                      'stop_codon', 'ncRNA', 'intergenic']
+                      'ncRNA', 'intergenic']
         header = '\t'.join(map(str, ['species', 'release'] + [o for o in self.order]))
 
         self.current_results = [header]
