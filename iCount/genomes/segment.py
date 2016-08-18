@@ -22,8 +22,9 @@ import multiprocessing
 
 import pybedtools
 
-from pybedtools import create_interval_from_list
+from collections import Counter
 
+from pybedtools import create_interval_from_list
 
 # description and parameters needed for the analysis
 analysis_name = 'segment'
@@ -124,6 +125,52 @@ def _a_in_b(a, b):
     :rtype: bool
     """
     return a.start >= b.start and a.stop <= b.stop
+
+
+def _add_biotype_attribute(gene_content_):
+    """
+    Add `biotype` attribute to all intervals in gene_content
+
+    biotype attribute is equal to transcript_biotype value if present,
+    else gene_biotype if present else value in column 2 (index 1). The
+    last option can happen in some of early releases.
+
+    :param dict gene_content_: intervals in gene separated by transcript id
+    :return: same gene_content_ object with added `biotype` attributes
+    :rtype: dict
+    """
+    gene_content = gene_content_.copy()
+
+    # Determine gene biotype:
+    gbiotype = gene_content['gene'].attrs.get('gene_biotype', None)
+
+    # List to keep track of all possible biotypes in gene:
+    gene_biotypes = [gbiotype] if gbiotype else []
+
+    for transcript_id, transcript_intervals in gene_content.items():
+        if transcript_id == 'gene':
+            continue
+        new_intervals = []
+
+        exon = [i for i in transcript_intervals if i[2] in ['CDS', 'ncRNA']][0]
+        gbiotype = exon.attrs.get('gene_biotype', None)
+        tbiotype = exon.attrs.get('transcript_biotype', None)
+        biotype = tbiotype if tbiotype else (gbiotype if gbiotype else exon[1])
+        gene_biotypes.append(biotype)
+        for interval in transcript_intervals:
+            new_intervals.append(create_interval_from_list(
+                interval[:8] + [interval[8] + ' biotype "{}";'.format(biotype)]))
+        gene_content[transcript_id] = new_intervals
+
+    # Finally, make also gene biotype: a list of all biotypes in
+    # gene, sorted by frequency:
+    biotype = ', '.join([i[0] for i in sorted(
+        Counter(gene_biotypes).items(), key=lambda x: x[1], reverse=True)])
+    interval = gene_content['gene']
+    gene_content['gene'] = create_interval_from_list(
+        interval[:8] + [interval[8] + ' biotype "[{}]";'.format(biotype)])
+
+    return gene_content
 
 
 def _check_consistency(intervals):
@@ -561,10 +608,27 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
         chromosomes = [line.strip().split()[0] for line in gfile]
 
     def process_gene(gene_content):
+        """
+        Process each group of intervals belonging to gene
+
+        Process each transcript_group in gene_content, add 'biotype'
+        attribute to all intervals and include them in `data`.
+        """
         assert('gene' in gene_content)
-        data.append(gene_content.pop('gene'))
-        for transcript_group in gene_content.values():
-            data.extend(_process_transcript_group(transcript_group))
+
+        for id_, transcript_group in gene_content.items():
+            if id_ == 'gene':
+                continue
+            gene_content[id_] = _process_transcript_group(transcript_group)
+
+        # Add biotype attribute to all intervals:
+        gene_content = _add_biotype_attribute(gene_content)
+
+        for id_, transcript_group in gene_content.items():
+            if id_ == 'gene':
+                continue
+            data.extend(transcript_group)
+        data.append(gene_content['gene'])
 
     for gene_content in _get_gene_content(gtf_in, chromosomes, show_progress):
         process_gene(gene_content)
