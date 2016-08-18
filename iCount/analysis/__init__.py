@@ -5,6 +5,7 @@ from . import iCLIP
 from . import kmers
 from . import peaks
 from . import rnamaps
+from . import summary
 
 
 class IntRangeParser:
