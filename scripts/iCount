@@ -203,12 +203,28 @@ parser_mapreads.set_defaults(func=mapreads)
 #    output: set of reduced bam files (erroneous reads are removed)
 
 
-
 # ### analyses
 # annotate
 
 
-# summary
+# summary: make summary report form annotation and cross-link file
+#   input: annotation_file
+#   input: cross_links_file
+#   input: out_file
+#   input: types_length_file
+
+def summary(args):
+    out_file = iCount.analysis.summary.make_summary_report(
+        annotation_file=args.annotation_file,
+        cross_links_file=args.cross_links_file,
+        out_file=args.out_file,
+        types_length_file=args.types_length_file)
+
+parser_annotation = iCount.analysis.params_to_argparse(
+    subparsers, iCount.analysis.summary)
+
+parser_annotation.set_defaults(func=summary)
+
 
 
 # group (bedGraphs)
