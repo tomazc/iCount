@@ -89,6 +89,8 @@ USER icuser
 
 RUN mkdir /home/icuser/storage
 
+ENV PATH /home/icuser/bin:$PATH
+
 EXPOSE 6543
 
 CMD ["/bin/bash"]

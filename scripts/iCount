@@ -84,7 +84,8 @@ def sequence(args):
         release=args.release,
         species=args.species,
         target_dir=args.target_dir,
-        target_fname=args.target_fname)
+        target_fname=args.target_fname,
+        chromosomes=args.chromosomes)
 
     print('Downloading FASTA file: {:s}'.format(fasta_file))
 
@@ -153,6 +154,20 @@ parser_demux.set_defaults(func=demultiplex)
 #   output: genome index files stored in genome index folder
 #   options:
 #       - genome index folder
+def mapindex(args):
+    if not os.path.isdir(args.outdir):
+        print('Error, output folder does not exist: {:s}'.format(args.outdir))
+        print('Make sure that output folder exists.')
+        return 1
+    return iCount.mapping.mapindex.run(args.genome, args.outdir,
+                                       annotation_fname=args.annotation,
+                                       overhang=args.overhang,
+                                       threads=args.threads)
+
+parser_mapindex = iCount.analysis.params_to_argparse(subparsers,
+                                                     iCount.mapping.mapindex)
+parser_mapindex.set_defaults(func=mapindex)
+
 
 # map: call STAR and generate bam file
 #   input: genome index, FASTQ file
