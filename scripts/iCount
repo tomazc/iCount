@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-# autoargs?
-# https://github.com/metaperture/autoargs
-
+import os
 import argparse
 
 import iCount
@@ -127,7 +125,21 @@ parser_segment.set_defaults(func=segment)
 #       - adapter: 3' adapter sequence to trim (default: AGATCGGAAGAGCGGTTCAG)
 #       - outdir: output folder
 def demultiplex(args):
-    print(args)
+    if not os.path.isdir(args.outdir):
+        print('Error, output folder does not exist: {:s}'.format(args.outdir))
+        print('Make sure that output folder exists.')
+        return 1
+    print('Demultiplexing file {:s}'.format(args.sequences))
+    print('looking for barcodes {:s}'.format(', '.join(args.barcodes)))
+    if args.adapter:
+        print('trimming adapter {:s}'.format(args.adapter))
+    print('allowing for {:d} mismatches'.format(args.mismatches))
+    out_fns = iCount.demultiplex.run(args.sequences, args.barcodes,
+                                     args.adapter, args.mismatches,
+                                     args.prefix, args.outdir)
+    print('saved to files:')
+    for fn in out_fns:
+        print('   {:s}'.format(fn))
 
 parser_demux = iCount.analysis.params_to_argparse(subparsers,
                                                   iCount.demultiplex)
