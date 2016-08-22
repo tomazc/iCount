@@ -205,6 +205,19 @@ parser_mapreads.set_defaults(func=mapreads)
 
 # ### analyses
 # annotate
+#   input: annotation_file
+#   input: cross_links_file
+#   input: out_file
+def annotate(args):
+    out_file = iCount.analysis.annotate.annotate_cross_links(
+        annotation_file=args.annotation_file,
+        cross_links_file=args.cross_links_file,
+        out_file=args.out_file)
+
+parser_annotation = iCount.analysis.params_to_argparse(
+    subparsers, iCount.analysis.annotate)
+
+parser_annotation.set_defaults(func=annotate)
 
 
 # summary: make summary report form annotation and cross-link file
