@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.com/tomazc/iCount.svg?token=MxKtDvsXZMsCDvfFpmd6&branch=master)](https://travis-ci.com/tomazc/iCount)
 [![codecov](https://codecov.io/gh/tomazc/iCount/branch/master/graph/badge.svg?token=JhUJ66rnJ3)](https://codecov.io/gh/tomazc/iCount)
-
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bb21b3cc5fcd420c885ed12bf8393065)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tomazc/iCount&amp;utm_campaign=Badge_Grade)
 
 # iCount processing of iCLIP protein-RNA interaction data
 
