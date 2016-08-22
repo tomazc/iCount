@@ -51,7 +51,6 @@ class TestDemultiplex(unittest.TestCase):
             'NNNACCTNN',
             'NNNGGCGNN',
         ]
-#        adapter = 'AGATCGGAAGAGCGGTTCAG'  # 'AGATCGGAAG_1,AGCGGTTCAG_2'
 
         out_fastq_fnames = []
         for bc in barcodes:
@@ -62,7 +61,8 @@ class TestDemultiplex(unittest.TestCase):
                                                 'nomatch.fastq')
 
         iCount.demultiplex.demultiplex(in_fastq_fname, out_fastq_fnames,
-                                       not_matching_fastq_fname, barcodes)
+                                       not_matching_fastq_fname, barcodes,
+                                       mismatches=1)
 
 
 
