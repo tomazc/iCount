@@ -135,9 +135,13 @@ def demultiplex(args):
     if args.adapter:
         print('trimming adapter {:s}'.format(args.adapter))
     print('allowing for {:d} mismatches'.format(args.mismatches))
+    print('discarding trimmed sequences shorter than {:d}'.format(
+        args.minimum_length))
     out_fns = iCount.demultiplex.run(args.sequences, args.barcodes,
                                      args.adapter, args.mismatches,
-                                     args.prefix, args.outdir)
+                                     minimum_length=args.minimum_length,
+                                     prefix=args.prefix,
+                                     outdir=args.outdir)
     print('saved to files:')
     for fn in out_fns:
         print('   {:s}'.format(fn))

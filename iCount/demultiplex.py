@@ -36,6 +36,10 @@ params_opt = [
         'Number of tolerated mismatches when comparing barcodes.'
     ),
     (
+        'minimum_length', 'int_range', (15, 0, 100), False,
+        'Minimum length of trimmed sequence to keep.'
+    ),
+    (
         'prefix', 'string', 'exp', False,
         'Prefix of generated FASTQ files.'
     ),
@@ -53,7 +57,8 @@ params_pos = [
 ]
 
 
-def run(fastq_fn, barcodes, adapter, mismatches, prefix='demux', outdir='.'):
+def run(fastq_fn, barcodes, adapter, mismatches,
+        minimum_length=15, prefix='demux', outdir='.'):
     assert os.path.isdir(outdir)
     out_fn_prefix = []
     for bc in ['nomatch'] + barcodes:
@@ -68,21 +73,23 @@ def run(fastq_fn, barcodes, adapter, mismatches, prefix='demux', outdir='.'):
         out_fns = ['{:s}.fastq.gz'.format(fn) for fn in out_fn_prefix]
 
     # demultiplex
-    demultiplex(fastq_fn, out_fns[1:], out_fns[0], barcodes, mismatches)
+    demultiplex(fastq_fn, out_fns[1:], out_fns[0], barcodes, mismatches,
+                minimum_length)
 
     # remove adapter, if requested
     if adapter:
         out_fns_intermediate = out_fns
         out_fns = ['{:s}.fastq.gz'.format(fn) for fn in out_fn_prefix]
         for fn_in, fn_out in zip(out_fns_intermediate, out_fns):
-            iCount.externals.cutadapt.run(fn_in, fn_out, adapter)
+            iCount.externals.cutadapt.run(fn_in, fn_out, adapter,
+                                          minimum_length=minimum_length)
             os.remove(fn_in)
 
     return out_fns
 
 
 def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
-                barcodes, mismatches=1):
+                barcodes, mismatches=1, minimum_length=15):
     """Extract reads and save to individual FASTQ files.
 
     All non-matching reads are stored in FASTQ file not_matching_fastq_fname.
@@ -102,7 +109,8 @@ def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
                  out_fastq_fnames + [not_matching_fastq_fname]]
     reader = iCount.files.fastq.Reader(in_fastq_fname)
     for r_id, exp_id, r_randomer, r_seq, r_plus, r_qual in \
-            extract(reader, barcodes, mismatches=mismatches):
+            extract(reader, barcodes, mismatches=mismatches,
+                    minimum_length=minimum_length):
         if r_randomer:
             r_id = "%s:%s" % (r_id, r_randomer)
 
@@ -113,7 +121,7 @@ def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
     return out_fastq_fnames
 
 
-def extract(seqs, barcodes, mismatches=1):
+def extract(seqs, barcodes, mismatches=1, minimum_length=15):
     """Return iterator that returns experiment, randomer, and remaining
     sequence.
 
@@ -175,10 +183,12 @@ def extract(seqs, barcodes, mismatches=1):
             r_seq = r.r_seq[ps:]
             r_qual = r.r_qual[ps:]
 
-        yield r.r_id, exp_id, r_randomer, r_seq, r.r_plus, r_qual
+        if len(r_seq) >= minimum_length:
+            yield r.r_id, exp_id, r_randomer, r_seq, r.r_plus, r_qual
 
 
-def remove_adapter(in_fastq, out_fastq, adapter, qual_trim=10):
+def remove_adapter(in_fastq, out_fastq, adapter, qual_trim=10,
+                   minimum_length=15):
     """
 
     :param in_fastq: FASTQ file with sequences
@@ -189,4 +199,5 @@ def remove_adapter(in_fastq, out_fastq, adapter, qual_trim=10):
     """
 
     return iCount.externals.cutadapt.run(in_fastq, out_fastq, adapter,
-                                         qual_trim=qual_trim)
+                                         qual_trim=qual_trim,
+                                         minimum_length=minimum_length)
