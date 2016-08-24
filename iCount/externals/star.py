@@ -74,6 +74,7 @@ def map_reads(sequences_fname, genomedir, outdir, annotation='',
         # otherwise soft-clipping of the starts and ends may produce too
         # many multiple hits
         '--outSAMtype', 'BAM', 'SortedByCoordinate',
+        '--outSAMunmapped', 'Within', 'KeepPairs',
     ])
     if annotation:
         annotation2 = iCount.files.temp.decompress_to_tempfile(annotation,
