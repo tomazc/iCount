@@ -174,10 +174,25 @@ parser_mapindex.set_defaults(func=mapindex)
 
 
 # map: call STAR and generate bam file
-#   input: genome index, FASTQ file
+#   input: genome index, annotation, FASTQ file
 #   output: bam file
 #   options:
 #       - number of allowed mismatches
+def mapreads(args):
+    if not os.path.isdir(args.outdir):
+        print('Error, output folder does not exist: {:s}'.format(args.outdir))
+        print('Make sure that output folder exists.')
+        return 1
+    return iCount.mapping.map.run(args.sequences, args.genome, args.outdir,
+                                  annotation_fname=args.annotation,
+                                  multimax=args.multimax,
+                                  mismatches=args.mismatches,
+                                  threads=args.threads)
+
+parser_mapreads = iCount.analysis.params_to_argparse(subparsers,
+                                                     iCount.mapping.map)
+parser_mapreads.set_defaults(func=mapreads)
+
 
 # bam2bed: interpret bam and generate bedGraph with data on identified sites
 #   options:

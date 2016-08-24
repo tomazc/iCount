@@ -38,7 +38,8 @@ params_opt = [
     ),
     (
         'overhang', 'int_range', (100, 30, 300), False,
-        '.'
+        'Sequence length around annotated junctions to be used by STAR when '
+        'constructing splice junction database.'
     ),
 ]
 
@@ -50,9 +51,9 @@ params_pos = [
 ]
 
 
-def run(genome_fname, outdir, annotation_fname='', overhang=100,
-        threads=1):
+def run(genome_fname, outdir, annotation_fname='', overhang=100, threads=1):
     assert os.path.isdir(outdir)
-    return iCount.externals.star.run(genome_fname, outdir,
-                                     annotation=annotation_fname,
-                                     overhang=overhang, threads=threads)
+    return iCount.externals.star.build_index(genome_fname, outdir,
+                                             annotation=annotation_fname,
+                                             overhang=overhang,
+                                             threads=threads)
