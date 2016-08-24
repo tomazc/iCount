@@ -134,7 +134,7 @@ def demultiplex(args):
     print('looking for barcodes {:s}'.format(', '.join(args.barcodes)))
     if args.adapter:
         print('trimming adapter {:s}'.format(args.adapter))
-    print('allowing for {:d} mismatches'.format(args.mismatches))
+    print('allowing for {:d} mismatches in barcodes'.format(args.mismatches))
     print('discarding trimmed sequences shorter than {:d}'.format(
         args.minimum_length))
     out_fns = iCount.demultiplex.run(args.sequences, args.barcodes,
@@ -194,9 +194,43 @@ parser_mapreads = iCount.analysis.params_to_argparse(subparsers,
 parser_mapreads.set_defaults(func=mapreads)
 
 
-# bam2bed: interpret bam and generate bedGraph with data on identified sites
+# xlsites: interpret bam and generate BED with data on identified sites
 #   options:
 #       -group: start, middle, end
+def xlsites(args):
+    print('Reading BAM file {:s}'.format(args.bam))
+    print('grouping reads by their {:s}'.format(args.groupby))
+    print('allowing {:d} mismatches in randomers'.format(args.mismatches))
+    print('ignore reads with more than {:d} hits'.format(args.multimax))
+    print('report on *{:s}* counts'.format(args.quant))
+    s = iCount.mapping.xlsites.run(args.bam, args.unique, args.multi,
+                                   group_by=args.groupby,
+                                   quant=args.quant,
+                                   randomer_mismatches=args.mismatches,
+                                   multimax=args.multimax)
+
+    all_recs, notmapped_recs, mapped_recs, lowmapq_recs, used_recs, \
+    invalidrandomer_recs, norandomer_recs, bc_cn = s
+    print('all records in BAM file: {:d}'.format(all_recs))
+    print('reads not mapped: {:d}'.format(notmapped_recs))
+    print('mapped reads records (hits): {:d}'.format(mapped_recs))
+    print('hits ignored because with low MAPQ {:d}'.format(lowmapq_recs))
+    print('records used for qunatification: {:d}'.format(used_recs))
+    print('records with invalid randomer info in header: {:d}'.format(invalidrandomer_recs))
+    print('records with no randomer info: {:d}'.format(norandomer_recs))
+    print('ten most frequent randomers:')
+    bc_cn = sorted([(cn, bc) for bc, cn in bc_cn.items()], reverse=True)
+    for cn, bc in bc_cn[:10]:
+        print('   {:s}: {:d}'.format(bc, cn))
+
+
+    print('saved to BED file (uniquely mapped reads) {:s}'.format(args.unique))
+    print('saved to BED file (multi-mapped reads) {:s}'.format(args.multi))
+
+parser_xlsites = iCount.analysis.params_to_argparse(subparsers,
+                                                    iCount.mapping.xlsites)
+parser_xlsites.set_defaults(func=xlsites)
+
 
 # filter:
 #    input: set of bam files

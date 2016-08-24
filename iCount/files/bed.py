@@ -31,7 +31,7 @@ def _convert_legacy_bed_format(feature):
     )
 
 
-def convert_legacy(bedGraph_legacy, bed_converted):
+def convert_legacy(bedgraph_legacy, bed_converted):
     """Convert legacy iCount's four-column format into proper BED6 format.
 
     Old iCount legacy format: chrome, start, end, [+-]value
@@ -43,7 +43,7 @@ def convert_legacy(bedGraph_legacy, bed_converted):
     /general-usage.html).
 
     """
-    sites = pybedtools.BedTool(bedGraph_legacy).sort().saveas()
+    sites = pybedtools.BedTool(bedgraph_legacy).sort().saveas()
     sites1 = sites.each(_convert_legacy_bed_format).saveas(bed_converted)
     return sites1
 
@@ -84,3 +84,32 @@ def merge_bed(files, outfile):
         i[:3] + ['.', i[4], i[3]]) for i in merged).saveas(outfile)
 
     return os.path.abspath(result.fn)
+
+
+def _f2s(f):
+    """Return string representation of float without trailing decimal zeros"""
+    return '{:.4f}'.format(f).rstrip('0').rstrip('.')
+
+
+def _iter_bedgraph_dict(bedgraph, val_index=None):
+    if val_index is not None:
+        for (chrome, strand), by_pos in bedgraph.items():
+            for pos, val in by_pos.items():
+                val = val[val_index]
+                yield pybedtools.create_interval_from_list(
+                    [chrome, pos, pos+1, '.', _f2s(val), strand]
+                )
+    else:
+        for (chrome, strand), by_pos in bedgraph.items():
+            for pos, val in by_pos.items():
+                yield pybedtools.create_interval_from_list(
+                    [chrome, pos, pos+1, '.', _f2s(val), strand]
+                )
+
+
+def save_dict(bedgraph, out_fname, val_index=None):
+    sites = pybedtools.BedTool(
+        _iter_bedgraph_dict(bedgraph, val_index=val_index)
+    ).saveas()
+    sites1 = sites.sort().saveas(out_fname)
+    return sites1
