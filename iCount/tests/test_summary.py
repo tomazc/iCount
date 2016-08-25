@@ -1,0 +1,208 @@
+import os
+import unittest
+import tempfile
+
+import pybedtools
+
+from iCount.analysis import summary
+
+
+def make_file_from_list(data, bedtool=True):
+    """Return path to file with the content from `data` (list of lists)"""
+    tfile = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+    if bedtool:
+        pybedtools.BedTool(pybedtools.create_interval_from_list(list_)
+                           for list_ in data).saveas(tfile.name)
+    else:
+        for list_ in data:
+            tfile.write('\t'.join(map(str, list_)) + '\n')
+    tfile.close()
+    return os.path.abspath(tfile.name)
+
+
+def make_list_from_file(fname, fields_separator=None):
+    """Read file to list of lists"""
+    data = []
+    with open(fname) as file_:
+        for line in file_:
+            data.append(line.strip().split(fields_separator))
+    return data
+
+
+def test_make_types_length(annotation):
+    """
+    Run function `make_types_length_file` with data from `annotation`
+    """
+    annotation_file = make_file_from_list(annotation)
+    out_file = tempfile.NamedTemporaryFile(delete=False).name
+    return make_list_from_file(summary.make_types_length_file(
+        annotation_file, out_file), fields_separator='\t')
+
+
+def test_make_summary_report(annotation, cross_links, chrom_lengths):
+    """
+    Run function `make_summary_report` with input/output data as lists.
+    """
+    annotation_file = make_file_from_list(annotation)
+    cross_links_file = make_file_from_list(cross_links)
+    chrom_length_file = make_file_from_list(chrom_lengths, bedtool=False)
+    out_file = tempfile.NamedTemporaryFile(delete=False).name
+
+    return make_list_from_file(summary.make_summary_report(
+        annotation_file, cross_links_file, out_file, chrom_length_file),
+        fields_separator='\t')
+
+
+class TestMakeTypesLengthFile(unittest.TestCase):
+
+    def test_merge_same_types(self):
+        """
+        Test that merging same type is done as expected
+
+        Confirm that:
+
+            * same interval is not counted twice
+            * overlapping/touching intervals are merged and only then counted
+        """
+        annotation = [
+            ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '15', '25', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '20', '29', '.', '+', '.', 'biotype "A";']]
+        expected = [
+            ['CDS A', '20']]
+
+        self.assertEqual(expected, test_make_types_length(annotation))
+
+    def test_merge_respect_strand(self):
+        """
+        Test that merging is sensitive to strand
+
+        Intervals differing only in strand are counted separately
+        """
+        annotation = [
+            ['1', '.', 'CDS', '10', '19', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '10', '19', '.', '-', '.', 'biotype "A";']]
+        expected = [
+            ['CDS A', '20']]
+
+        self.assertEqual(expected, test_make_types_length(annotation))
+
+    def test_mixed_types(self):
+        """Defect different types in same position correctly"""
+        annotation = [
+            ['1', '.', 'intron', '10', '20', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'intron', '20', '30', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'intron', '10', '20', '.', '+', '.', 'biotype "B";'],
+            ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "C";']]
+        expected = [
+            ['intron A', '21'],
+            ['intron B', '11'],
+            ['ncRNA A', '11'],
+            ['ncRNA C', '11']]
+
+        self.assertEqual(expected, test_make_types_length(annotation))
+
+    def test_shuffled_input(self):
+        """Unsorted input does not make difference."""
+        annotation = [
+            ['20', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "B";'],
+            ['1', '.', 'intron', '10', '19', '.', '+', '.', 'biotype "A";'],
+            ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'biotype "C";']]
+        expected = [
+            ['intron A', '20'],
+            ['intron B', '10'],
+            ['ncRNA C', '10']]
+
+        self.assertEqual(expected, test_make_types_length(annotation))
+
+
+class TestMakeSummaryReport(unittest.TestCase):
+
+    def setUp(self):
+        self.chrom_lengths = [['1', '100']]
+        self.header = ['type', 'length', 'length %',
+                       'sites #', 'sites %', 'sites enrichment',
+                       'events #', 'events %', 'events enrichment']
+
+    def test_diff_chromosome_naming(self):
+        """Exception is raised if chromosome naming is inconsistent."""
+        cross_links = [
+            ['chr1', '15', '16', '.', '5', '+']]
+        annotation = [
+            ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "A";']]
+        message = r"No intersections found. This may be caused by .*"
+        with self.assertRaisesRegex(ValueError, message):
+            test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+
+    def test_diff_only_strand1(self):
+        """Same coords but diff strand and same type."""
+        cross_links = [
+            ['1', '5', '6', '.', '3', '+'],
+            ['1', '5', '6', '.', '2', '-']]
+        annotation = [
+            ['1', '.', 'CDS', '1', '10', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '1', '10', '.', '-', '.', 'biotype "A";']]
+        expected = [
+            self.header,
+            ['CDS A', '20', '0.1', '2', '1.0', '10.0', '5', '1.0', '10.0']]
+
+        out = test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+        self.assertEqual(out, expected)
+
+    def test_diff_only_strand2(self):
+        """Same coords but diff strand and diff type."""
+        cross_links = [
+            ['1', '5', '6', '.', '3', '+'],
+            ['1', '5', '6', '.', '1', '-']]
+        annotation = [
+            ['1', '.', 'CDS', '1', '10', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '1', '10', '.', '-', '.', 'biotype "B";']]
+        expected = [
+            self.header,
+            ['CDS A', '10', '0.05', '1', '0.5', '10.0', '3', '0.75', '15.0'],
+            ['CDS B', '10', '0.05', '1', '0.5', '10.0', '1', '0.25', '5.0']]
+
+        out = test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+        self.assertEqual(out, expected)
+
+    def test_many_regions(self):
+        """Multiple annotation regions intersecting one crosslink"""
+        cross_links = [
+            ['1', '5', '6', '.', '1', '+']]
+        annotation = [
+            ['1', '.', 'CDS', '1', '10', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '1', '20', '.', '+', '.', 'biotype "B";'],
+            ['1', '.', 'ncRNA', '1', '10', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'ncRNA', '1', '20', '.', '+', '.', 'biotype "C";']]
+        expected = [
+            self.header,
+            ['CDS A', '10', '0.05', '1', '0.25', '5.0', '1', '0.25', '5.0'],
+            ['CDS B', '20', '0.1', '1', '0.25', '2.5', '1', '0.25', '2.5'],
+            ['ncRNA A', '10', '0.05', '1', '0.25', '5.0', '1', '0.25', '5.0'],
+            ['ncRNA C', '20', '0.1', '1', '0.25', '2.5', '1', '0.25', '2.5']]
+
+        out = test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+        self.assertEqual(out, expected)
+
+    def test_unsorted_input(self):
+        """Unsoreted input should make no difference."""
+        cross_links = [
+            ['1', '7', '8', '.', '2', '+'],
+            ['1', '5', '6', '.', '1', '-']]
+        annotation = [
+            ['1', '.', 'CDS', '20', '29', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '6', '10', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '1', '10', '.', '-', '.', 'biotype "A";']]
+        expected = [
+            self.header,
+            ['CDS A', '25', '0.125', '2', '1.0', '8.0', '3', '1.0', '8.0']]
+
+        out = test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+        self.assertEqual(out, expected)
+
+
+if __name__ == '__main__':
+    unittest.main()

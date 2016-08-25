@@ -30,6 +30,11 @@ before_install:
 install:
     - travis_wait pip install -r requirements.txt
     - pip install .
+    - wget https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2.26.0.tar.gz
+    - tar -zxvf bedtools-2.26.0.tar.gz
+    - pushd bedtools2 && make && popd
+    - export PATH=$PATH:$PWD/bedtools2/bin/
+
 
 script:
     - coverage run setup.py test
