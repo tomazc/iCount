@@ -29,13 +29,12 @@ def make_types_length_file(annotation_file, out_file=None):
 
     :param str annotation_file: path to annotation file (should be GTF and include biotype attribute)
     :param str out_file: path to output file (if None it is determined automatically)
-
     :return: absolute path to out_file
     :return: str
     """
     excluded_types = ['transcript', 'gene']
     annotation = pybedtools.BedTool(annotation_file).filter(
-        lambda x: x[2] not in excluded_types).saveas()
+        lambda x: x[2] not in excluded_types).sort().saveas()
 
     if out_file is None:
         match = re.match(r'([\w_]+\.\d+.).*', os.path.basename(annotation_file))
@@ -60,14 +59,14 @@ def make_types_length_file(annotation_file, out_file=None):
 
     # Write results to file:
     with open(out_file, 'wt') as outfile:
-        for type_, length in type_lengths.items():
+        for type_, length in sorted(type_lengths.items()):
             outfile.write('{}\t{}\n'.format(type_, length))
 
     return os.path.abspath(out_file)
 
 
 def make_summary_report(annotation_file, cross_links_file, out_file,
-                        chrom_length_file, types_length_file=None):
+                        chrom_length_file, types_length_file=None, ndigits=8):
     """
     Make summary report from cross-link and annotation data.
 
@@ -93,9 +92,9 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
     """
 
     excluded_types = ['transcript', 'gene']
-    cross_links = pybedtools.BedTool(cross_links_file)
+    cross_links = pybedtools.BedTool(cross_links_file).sort().saveas()
     annotation = pybedtools.BedTool(annotation_file).filter(
-        lambda x: x[2] not in excluded_types).saveas()
+        lambda x: x[2] not in excluded_types).sort().saveas()
 
     # If not given/present, make file with cumulative length for each type:
     if not types_length_file or not os.path.isfile(types_length_file):
@@ -108,9 +107,6 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
             parts = line.strip().split()
             type_lengths[' '.join(parts[:-1])] = int(parts[-1])
 
-    # Assure that input files arre sorted and compute intersections:
-    cross_links = cross_links.sort().saveas()
-    annotation = annotation.sort().saveas()
     # sorted=True - invokes memory efficient algorithm for large files
     # s=True - only report hits in B that overlap A on the same strand
     # wb=True - Write the original entry in B for each overlap
@@ -118,7 +114,7 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
     try:
         # this will raise TypeError if overlaps is empty:
         overlaps[0]
-    except TypeError:
+    except (IndexError, TypeError):
         raise ValueError('No intersections found. This may be caused by '
                          'different naming of chromosomes in annotation and '
                          'cross-links file (example: "chr1" vs. "1")')
@@ -164,6 +160,7 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
             line = [type_, type_lengths[type_], length_percent,
                     sites, site_percent, site_enrichment,
                     events, event_percent, event_enrichment]
+            line = line[:1] + [round(i, ndigits) for i in line[1:]]
             out.write('\t'.join(map(str, line)) + '\n')
 
     return os.path.abspath(out_file)
