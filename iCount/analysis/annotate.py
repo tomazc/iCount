@@ -14,11 +14,15 @@ params_opt = [
     ('annotation_file', 'string', None, True, 'Annotation file.'),
     ('cross_links_file', 'string', None, True, 'Cross-link file (BED6).'),
     ('out_file', 'string', None, True, 'Output filename.'),
+    ('subtype', 'string', 'biotype', False, 'Attribute defining subtype'),
+    ('excluded_types', 'str_list', ['transcript', 'gene'], False, 'Types form third column to exclude from analysis'),
 ]
 params_pos = []
 
 
-def annotate_cross_links(annotation_file, cross_links_file, out_file):
+def annotate_cross_links(annotation_file, cross_links_file, out_file,
+                         subtype='biotype',
+                         excluded_types=None):
     """
     Annotate each cross-link site with all region types that intersect it.
 
@@ -27,20 +31,20 @@ def annotate_cross_links(annotation_file, cross_links_file, out_file):
     link file and include all these types in 4th column.
 
     In the context of this report "type" equals to the combination of 3rd column
-    and attribute "biotype" from annotation file (GTF). Regions/intervals are
+    and attribute `subtype` from annotation file (GTF). Regions/intervals are
     parts of transcript (UTR, CDS, introns...) that "non- intersectingly" span
     the whole transcript. However, since transcripts can overlap, also intervals
     belonging to different transcripts can overlap. Intergenic regions are also
     considered as region. Each region has one and only one type.
 
-    :param string annotation_file: path to annotation file (should be GTF and include biotype attribute)
+    :param string annotation_file: path to annotation file (should be GTF and include `subtype` attribute)
     :param string cross_links_file: path to cross_links_file (should be BED6)
     :param string out_file: path to output file
     :returns: path to summary report file (should be equal to out_file parameter)
     :rtype: string
     """
 
-    excluded_types = ['transcript', 'gene']
+    excluded_types = excluded_types or []
     cross_links = pybedtools.BedTool(cross_links_file).sort().saveas()
     annotation = pybedtools.BedTool(annotation_file).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
@@ -68,8 +72,11 @@ def annotate_cross_links(annotation_file, cross_links_file, out_file):
         if interval.start != previous_interval.start or interval.strand != previous_interval.strand:
             finalize(site_types, previous_interval)
             site_types = []
-        biotype = re.match(r'.*biotype "(.*)";', interval[-1])  # Extract biotype attribute
-        site_types.append('{} {}'.format(interval[8], biotype.group(1) if biotype else '.'))
+        if subtype:
+            stype = re.match(r'.*{} "(.*?)";'.format(subtype), interval[-1])  # Extract subtype attribute
+            site_types.append('{} {}'.format(interval[8], stype.group(1) if stype else '.'))
+        else:
+            site_types.append(interval[8])
         previous_interval = interval
     finalize(site_types, previous_interval)
 

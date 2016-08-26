@@ -16,23 +16,28 @@ params_opt = [
     ('out_file', 'string', None, True, 'Output filename.'),
     ('chrom_length_file', 'string', None, True, 'File with chromosome lengths.'),
     ('types_length_file', 'string', None, False, 'File with lengths for each type.'),
+    ('ndigits', 'string', '8', False, 'Number of decimal places in results'),
+    ('subtype', 'string', 'biotype', False, 'Attribute defining subtype'),
+    ('excluded_types', 'str_list', [], False, 'Types from third column to exclude from analysis'),
 ]
 params_pos = []
 
 
-def make_types_length_file(annotation_file, out_file=None):
+def make_types_length_file(annotation_file, out_file=None, subtype='biotype',
+                           excluded_types=None):
     """
     Calculate the number of non-overlapping base pairs of each "type".
 
     In the context of this function "type" equals to the combination of 3rd
-    column and attribute "biotype" from annotation file (GTF).
+    column and attribute subtype from annotation file (GTF).
 
-    :param str annotation_file: path to annotation file (should be GTF and include biotype attribute)
+    :param str annotation_file: path to annotation file (should be GTF and
+    include subtype attribute)
     :param str out_file: path to output file (if None it is determined automatically)
     :return: absolute path to out_file
     :return: str
     """
-    excluded_types = ['transcript', 'gene']
+    excluded_types = excluded_types or []
     annotation = pybedtools.BedTool(annotation_file).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
 
@@ -45,7 +50,10 @@ def make_types_length_file(annotation_file, out_file=None):
 
     data = {}
     for interval in annotation:
-        type_ = '{} {}'.format(interval[2], interval.attrs.get('biotype', '.'))
+        if subtype:
+            type_ = '{} {}'.format(interval[2], interval.attrs.get(subtype, '.'))
+        else:
+            type_ = interval[2]
         if type_ not in data:
             data[type_] = []
         data[type_].append(create_interval_from_list(interval.fields))
@@ -66,12 +74,14 @@ def make_types_length_file(annotation_file, out_file=None):
 
 
 def make_summary_report(annotation_file, cross_links_file, out_file,
-                        chrom_length_file, types_length_file=None, ndigits=8):
+                        chrom_length_file, types_length_file=None, ndigits='8',
+                        subtype='biotype',
+                        excluded_types=None):
     """
     Make summary report from cross-link and annotation data.
 
     In the context of this report "type" equals to the combination of 3rd
-    column and attribute "biotype" from annotation file (GTF).
+    column and attribute `subtype` from annotation file (GTF).
     "Regions" are parts of transcript (UTR, CDS, introns...) that "non-
     intersectingly" span the whole transcript. Intergenic regions are also
     considered as region. Each region has one and only one type.
@@ -82,23 +92,27 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
     some type (multiple events can happen on each cross link). Col5 is
     numerical value in 5th column of cross-link file.
 
-    :param string annotation_file: path to annotation file (should be GTF and include biotype attribute)
+    :param string annotation_file: path to annotation file (should be GTF and
+    include subtype attribute)
     :param string cross_links_file: path to cross_links_file (should be BED6)
     :param string out_file: path to output file
     :param string chrom_length_file: path to file with chromosome lengths
     :param string types_length_file: path to file with lengths of each type
+    :param string ndigits: Number of decimal places in results
+    :param string subtype: name of attribute to be used as subtype
+    :param list excluded_types: types in 3rd column to exclude form analysis
     :returns: path to summary report file (should be equal to out_file parameter)
     :rtype: string
     """
-
-    excluded_types = ['transcript', 'gene']
+    excluded_types = excluded_types or []
     cross_links = pybedtools.BedTool(cross_links_file).sort().saveas()
     annotation = pybedtools.BedTool(annotation_file).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
 
     # If not given/present, make file with cumulative length for each type:
     if not types_length_file or not os.path.isfile(types_length_file):
-        types_length_file = make_types_length_file(annotation_file)
+        types_length_file = make_types_length_file(
+            annotation_file, subtype=subtype, excluded_types=excluded_types)
 
     # read the file to dict, named type_lengths
     type_lengths = {}
@@ -135,8 +149,11 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
         if segment.start != previous_segment.start or segment.strand != previous_segment.strand:
             finalize(site_types, previous_segment)
             site_types = []
-        biotype = re.match(r'.*biotype "(.*)";', segment[-1])  # Extract biotype attribute
-        site_types.append('{} {}'.format(segment[8], biotype.group(1) if biotype else '.'))
+        if subtype:
+            stype = re.match(r'.*{} "(.*)";'.format(subtype), segment[-1])  # Extract subtype attribute
+            site_types.append('{} {}'.format(segment[8], stype.group(1) if stype else '.'))
+        else:
+            site_types.append(segment[8])
         previous_segment = segment
     finalize(site_types, previous_segment)
 
@@ -160,7 +177,7 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
             line = [type_, type_lengths[type_], length_percent,
                     sites, site_percent, site_enrichment,
                     events, event_percent, event_enrichment]
-            line = line[:1] + [round(i, ndigits) for i in line[1:]]
+            line = line[:1] + [round(i, int(ndigits)) for i in line[1:]]
             out.write('\t'.join(map(str, line)) + '\n')
 
     return os.path.abspath(out_file)

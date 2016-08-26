@@ -29,17 +29,19 @@ def make_list_from_file(fname, fields_separator=None):
     return data
 
 
-def test_make_types_length(annotation):
+def test_make_types_length(annotation, subtype='biotype', excluded_types=None):
     """
     Run function `make_types_length_file` with data from `annotation`
     """
     annotation_file = make_file_from_list(annotation)
     out_file = tempfile.NamedTemporaryFile(delete=False).name
     return make_list_from_file(summary.make_types_length_file(
-        annotation_file, out_file), fields_separator='\t')
+        annotation_file, out_file, subtype=subtype,
+        excluded_types=excluded_types), fields_separator='\t')
 
 
-def test_make_summary_report(annotation, cross_links, chrom_lengths):
+def test_make_summary_report(annotation, cross_links, chrom_lengths,
+                             subtype='biotype', excluded_types=None):
     """
     Run function `make_summary_report` with input/output data as lists.
     """
@@ -49,8 +51,8 @@ def test_make_summary_report(annotation, cross_links, chrom_lengths):
     out_file = tempfile.NamedTemporaryFile(delete=False).name
 
     return make_list_from_file(summary.make_summary_report(
-        annotation_file, cross_links_file, out_file, chrom_length_file),
-        fields_separator='\t')
+        annotation_file, cross_links_file, out_file, chrom_length_file,
+        subtype=subtype, excluded_types=excluded_types), fields_separator='\t')
 
 
 class TestMakeTypesLengthFile(unittest.TestCase):
@@ -117,6 +119,41 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['ncRNA C', '10']]
 
         self.assertEqual(expected, test_make_types_length(annotation))
+
+    def test_subtype_param1(self):
+        """Subtype parameter can be empty: type is just 3rd column."""
+        annotation = [
+            ['20', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "A";'],
+            ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'biotype "C";']]
+        expected = [
+            ['intron', '10'],
+            ['ncRNA', '10']]
+
+        self.assertEqual(expected, test_make_types_length(
+            annotation, subtype=None))
+
+    def test_subtype_param2(self):
+        """Subtype can have any value - not just the default biotype."""
+        annotation = [
+            ['20', '.', 'intron', '20', '29', '.', '+', '.', 'attr42 "A";'],
+            ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'attr42 "C";']]
+        expected = [
+            ['intron A', '10'],
+            ['ncRNA C', '10']]
+
+        self.assertEqual(expected, test_make_types_length(
+            annotation, subtype='attr42'))
+
+    def test_excluded_types(self):
+        """Exclude some annotation intervals by 3rd column value."""
+        annotation = [
+            ['20', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "A";'],
+            ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'biotype "C";']]
+        expected = [
+            ['ncRNA C', '10']]
+
+        self.assertEqual(expected, test_make_types_length(
+            annotation, excluded_types=['intron']))
 
 
 class TestMakeSummaryReport(unittest.TestCase):
@@ -203,6 +240,53 @@ class TestMakeSummaryReport(unittest.TestCase):
         out = test_make_summary_report(annotation, cross_links, self.chrom_lengths)
         self.assertEqual(out, expected)
 
+    def test_subtype_param1(self):
+        """Subtype parameter can be empty: type is just 3rd column."""
+        cross_links = [
+            ['1', '5', '6', '.', '1', '+']]
+        annotation = [
+            ['1', '.', 'CDS', '1', '10', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'CDS', '2', '10', '.', '+', '.', 'biotype "B";']]
+        expected = [
+            self.header,
+            ['CDS', '10', '0.05', '1', '1.0', '20.0', '1', '1.0', '20.0']]
+
+        out = test_make_summary_report(annotation, cross_links,
+                                       self.chrom_lengths, subtype=None)
+        self.assertEqual(out, expected)
+
+    def test_subtype_param2(self):
+        """Subtype can have any value - not just the default biotype."""
+        cross_links = [
+            ['1', '5', '6', '.', '1', '+']]
+        annotation = [
+            ['1', '.', 'CDS', '1', '10', '.', '+', '.', 'attr42 "A";'],
+            ['1', '.', 'CDS', '1', '10', '.', '+', '.', 'attr42 "B";'],
+            ['1', '.', 'intron', '7', '10', '.', '+', '.', 'attr42 "B";']]
+        expected = [
+            self.header,
+            ['CDS A', '10', '0.05', '1', '0.5', '10.0', '1', '0.5', '10.0'],
+            ['CDS B', '10', '0.05', '1', '0.5', '10.0', '1', '0.5', '10.0'],
+            ['intron B', '4', '0.02', '0', '0.0', '0.0', '0', '0.0', '0.0']]
+
+        out = test_make_summary_report(annotation, cross_links,
+                                       self.chrom_lengths, subtype='attr42')
+        self.assertEqual(out, expected)
+
+    def test_excluded_types(self):
+        """Exclude some annotation intervals by 3rd column value."""
+        cross_links = [
+            ['1', '5', '6', '.', '1', '+']]
+        annotation = [
+            ['1', '.', 'intron', '1', '20', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'ncRNA', '1', '20', '.', '+', '.', 'biotype "C";']]
+        expected = [
+            self.header,
+            ['ncRNA C', '20', '0.1', '1', '1.0', '10.0', '1', '1.0', '10.0']]
+
+        out = test_make_summary_report(annotation, cross_links,
+                                       self.chrom_lengths, excluded_types=['intron'])
+        self.assertEqual(out, expected)
 
 if __name__ == '__main__':
     unittest.main()
