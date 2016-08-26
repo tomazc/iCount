@@ -59,7 +59,10 @@ def str_list(string):
 
 
 def str_list_to_str(lst):
-    return ",".join([str(x) for x in lst])
+    if lst:
+        return ",".join([str(x) for x in lst])
+    else:
+        return []
 
 
 class IntervalsListParser:

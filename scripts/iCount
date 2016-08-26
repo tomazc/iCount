@@ -241,8 +241,26 @@ parser_annotation = iCount.analysis.params_to_argparse(
 parser_annotation.set_defaults(func=summary)
 
 
-
 # group (bedGraphs)
+#   input: BED6 files to be merged (with scores in 5th column)
+#   output: one joined BED6 file (with summed scores for same sites)
+#   options:
+#       - outfile: filename to which the output should be written. If
+#                    not given, write to stdout
+
+def group(args):
+    print("Grouping files:")
+    for filename in args.files:
+        print('\t* {}'.format(filename))
+    out_file = iCount.analysis.group.run(
+        files=args.files,
+        outfile=args.outfile)
+    if args.outfile:
+        print("Results written to {}.".format(args.outfile))
+
+parser_annotation = iCount.analysis.params_to_argparse(
+    subparsers, iCount.analysis.group)
+parser_annotation.set_defaults(func=group)
 
 
 # peak identification
