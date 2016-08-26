@@ -20,12 +20,17 @@ params_pos = []
 
 def annotate_cross_links(annotation_file, cross_links_file, out_file):
     """
-    Report types of regions that intersect with each cross link site.
+    Annotate each cross-link site with all region types that intersect it.
 
-    In the context of this report "type" equals to the combination of 3rd
-    column and attribute "biotype" from annotation file (GTF).
-    "Regions" are parts of transcript (UTR, CDS, introns...) that "non-
-    intersectingly" span the whole transcript. Intergenic regions are also
+    Each cross link can overlap/intersect with many intervals in annotation
+    file. Each of these intervals has a given type. Make a copy of cross
+    link file and include all these types in 4th column.
+
+    In the context of this report "type" equals to the combination of 3rd column
+    and attribute "biotype" from annotation file (GTF). Regions/intervals are
+    parts of transcript (UTR, CDS, introns...) that "non- intersectingly" span
+    the whole transcript. However, since transcripts can overlap, also intervals
+    belonging to different transcripts can overlap. Intergenic regions are also
     considered as region. Each region has one and only one type.
 
     :param string annotation_file: path to annotation file (should be GTF and include biotype attribute)
@@ -44,7 +49,7 @@ def annotate_cross_links(annotation_file, cross_links_file, out_file):
     try:
         # this will raise TypeError if overlaps is empty:
         overlaps[0]
-    except TypeError:
+    except (IndexError, TypeError):
         raise ValueError('No intersections found. This may be caused by '
                          'different naming of chromosomes in annotation and'
                          'cross_links file ("chr1" vs. "1")')
