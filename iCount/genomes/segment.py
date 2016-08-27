@@ -56,21 +56,7 @@ params_pos = [
 ]
 
 
-def _rename_to_gene_name(feature, a_gene_name='gene_name'):
-    chrom = feature.chrom
-    start = feature.start
-    end = feature.stop
-    name = feature.attrs[a_gene_name]
-    score = '1'
-    strand = feature.strand
-    # use BED6 format, see:
-    # http://bedtools.readthedocs.io/en/latest/content/general-usage.html
-    return pybedtools.create_interval_from_list(
-        [chrom, start, end, name, score, strand]
-    )
-
-
-def get_genes(gtf_in, gtf_out, attribute='gene_name'):
+def get_genes(gtf_in, gtf_out, name='gene', attribute='gene_id'):
     """
     Extract largest possible gene segments from input gtf file.
 
@@ -79,7 +65,9 @@ def get_genes(gtf_in, gtf_out, attribute='gene_name'):
     name, chromosome and strand.
 
     :param str gtf_in: absolute path to gtf input file
-    :param str gtf_out: absolute path to gtf output file
+    :param str gtf_out: absolute path to BED6 output file
+    :param str name: name for the 3rd column of output intervals
+    :param str attribute: attribute to use as unique identifier for output intervals
     :return: sorted largest possible gene segments
     :rtype: pybedtools.BedTool
     """
@@ -87,14 +75,12 @@ def get_genes(gtf_in, gtf_out, attribute='gene_name'):
     data = {}
 
     for interval in pybedtools.BedTool(gtf_in):
-        gene_name = interval.attrs[attribute]
+        gene_id = interval.attrs[attribute]
         chromosome = interval.chrom
         strand = interval.strand
         # Generate unique slug, since same gene name can appear on
         # multiple chromosomes or on oppsite strands.
-        gene_unique_slug = '-'.join([gene_name, chromosome, strand])
-
-        # TODO: Numerically optimze this procedure
+        gene_unique_slug = '-'.join([gene_id, chromosome, strand])
 
         if gene_unique_slug in data:
             if interval.start < data[gene_unique_slug][1]:
@@ -105,14 +91,14 @@ def get_genes(gtf_in, gtf_out, attribute='gene_name'):
 
         else:
             data[gene_unique_slug] = [interval.chrom, interval.start,
-                                      interval.stop, interval.name,
-                                      interval.strand]
+                                      interval.stop, interval.strand,
+                                      filter_col8(interval)]
 
     gs = pybedtools.BedTool(pybedtools.create_interval_from_list(
-        [chrom, start, end, name, '1', strand])
-        for chrom, start, end, name, strand in data.values()).saveas()
+        [chrom, '.', name, start, stop, '.', strand, '.', col8])
+        for chrom, start, stop, strand, col8 in data.values()).saveas()
 
-    return gs.sort().saveas(gtf_out)
+    return os.path.abspath(gs.sort().saveas(gtf_out).fn)
 
 
 def _a_in_b(a, b):
@@ -133,7 +119,7 @@ def _add_biotype_attribute(gene_content_):
 
     biotype attribute is equal to transcript_biotype value if present,
     else gene_biotype if present else value in column 2 (index 1). The
-    last option can happen in some of early releases.
+    last option can only happen in some of early ensembl releases.
 
     :param dict gene_content_: intervals in gene separated by transcript id
     :return: same gene_content_ object with added `biotype` attributes
@@ -158,14 +144,16 @@ def _add_biotype_attribute(gene_content_):
         biotype = tbiotype if tbiotype else (gbiotype if gbiotype else exon[1])
         gene_biotypes.append(biotype)
         for interval in transcript_intervals:
+            col8 = interval[8] if interval[8] != '.' else ''
             new_intervals.append(create_interval_from_list(
-                interval[:8] + [interval[8] + ' biotype "{}";'.format(biotype)]))
+                interval[:8] + [col8 + ' biotype "{}";'.format(biotype)]))
         gene_content[transcript_id] = new_intervals
 
-    # Finally, make also gene biotype: a list of all biotypes in
-    # gene, sorted by frequency:
+    # Finally, make also gene biotype: a list of all biotypes in gene,
+    # sorted by frequency. Additionally, another sorting is added to sort
+    # by alphabet if counts are equal.
     biotype = ', '.join([i[0] for i in sorted(
-        Counter(gene_biotypes).items(), key=lambda x: x[1], reverse=True)])
+        sorted(Counter(gene_biotypes).items()), key=lambda x: x[1], reverse=True)])
     interval = gene_content['gene']
     gene_content['gene'] = create_interval_from_list(
         interval[:8] + [interval[8] + ' biotype "[{}]";'.format(biotype)])
@@ -203,7 +191,11 @@ def _check_consistency(intervals):
             'UTR5': ['intron'],
             'ncRNA': ['intron']}}
     intervals = intervals.copy()
-    index = next(i for i in range(len(intervals)) if intervals[i][2] == 'transcript')
+    try:
+        index = next(i for i in range(len(intervals)) if
+                     intervals[i][2] == 'transcript')
+    except StopIteration:
+        raise ValueError("No transcript interval in list of intervals.")
     transcript_interval = intervals.pop(index)
     strand = intervals[0].strand
 
@@ -326,7 +318,7 @@ def filter_col8(interval, keys=None):
     if keys is None:
         keys = ['gene_id', 'gene_name', 'transcript_id', 'transcript_name']
     return ' '.join(['{} "{}";'.format(key, value) for key, value in
-                    interval.attrs.items() if key in keys])
+                    sorted(interval.attrs.items()) if key in keys])
 
 
 def _get_introns(exons):
@@ -336,7 +328,7 @@ def _get_introns(exons):
     Introns are regions located between exons. When constructing them,
     one can copy all the data from exons except:
 
-        * start and stop codon have to be determined
+        * start and stop bp for each intron have to be determined
         * score and frame column are set to undefined value: '.'
         * the name of third column is set to 'intron'
         * content referring to exon is removed from last column
@@ -363,7 +355,7 @@ def _process_transcript_group(intervals):
     """
     Process a list of intervals in the transcript group
 
-    These intervals should not overlap and should completely span the
+    Processed intervals should not overlap and should completely span the
     transcript. Their third column should be one of the following:
 
         * transcript
