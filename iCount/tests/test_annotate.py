@@ -25,7 +25,8 @@ def make_list_from_file(fname, fields_separator=None):
     return data
 
 
-def test_template(cross_links, annotation):
+def test_template(cross_links, annotation, subtype='biotype',
+                  excluded_types=None):
     """
     Utility function for testing iCount.analysis.annotate
 
@@ -45,7 +46,8 @@ def test_template(cross_links, annotation):
     annotation_file = make_file_from_list(annotation)
     out_file = tempfile.NamedTemporaryFile(delete=False).name
     return make_list_from_file(annotate.annotate_cross_links(
-        annotation_file, cross_links_file, out_file), fields_separator='\t')
+        annotation_file, cross_links_file, out_file, subtype=subtype,
+        excluded_types=excluded_types), fields_separator='\t')
 
 
 class TestAnnotateCrossLinks(unittest.TestCase):
@@ -123,6 +125,48 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             ['1', '15', '16', 'intron A, intron B, ncRNA A', '5', '+'],
             ['1', '15', '16', 'ncRNA B', '5', '-']]
         self.assertEqual(test_template(cross_links, annotation), expected)
+
+    def test_subtype_param1(self):
+        """Subtype parameter can be empty: type is just 3rd column."""
+        cross_links = [
+            ['1', '5', '6', '.', '1', '+']]
+        annotation = [
+            ['1', '.', 'intron', '1', '10', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'intron', '2', '10', '.', '+', '.', 'biotype "B";'],
+            ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'biotype "C";']]
+        expected = [
+            ['1', '5', '6', 'intron, ncRNA', '1', '+']]
+
+        self.assertEqual(test_template(
+            cross_links, annotation, subtype=None), expected)
+
+    def test_subtype_param2(self):
+        """Subtype can have any value - not just the default biotype."""
+        cross_links = [
+            ['1', '5', '6', '.', '1', '+']]
+        annotation = [
+            ['1', '.', 'intron', '1', '10', '.', '+', '.', 'attr42 "A";'],
+            ['1', '.', 'intron', '2', '10', '.', '+', '.', 'attr42 "B";'],
+            ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'attr42 "C";']]
+        expected = [
+            ['1', '5', '6', 'intron A, intron B, ncRNA C', '1', '+']]
+
+        self.assertEqual(test_template(
+            cross_links, annotation, subtype='attr42'), expected)
+
+    def test_excluded_types(self):
+        """Exclude annotation intervals by 3rd column value."""
+        cross_links = [
+            ['1', '5', '6', '.', '1', '+']]
+        annotation = [
+            ['1', '.', 'intron', '1', '10', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'intron', '2', '10', '.', '+', '.', 'biotype "B";'],
+            ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'biotype "C";']]
+        expected = [
+            ['1', '5', '6', 'ncRNA C', '1', '+']]
+
+        self.assertEqual(test_template(
+            cross_links, annotation, excluded_types=['intron']), expected)
 
 
 if __name__ == '__main__':

@@ -212,7 +212,9 @@ def annotate(args):
     out_file = iCount.analysis.annotate.annotate_cross_links(
         annotation_file=args.annotation_file,
         cross_links_file=args.cross_links_file,
-        out_file=args.out_file)
+        out_file=args.out_file,
+        subtype=args.subtype,
+        excluded_types=args.excluded_types)
 
 parser_annotation = iCount.analysis.params_to_argparse(
     subparsers, iCount.analysis.annotate)
@@ -233,7 +235,10 @@ def summary(args):
         cross_links_file=args.cross_links_file,
         out_file=args.out_file,
         chrom_length_file=args.chrom_length_file,
-        types_length_file=args.types_length_file)
+        types_length_file=args.types_length_file,
+        ndigits=args.ndigits,
+        subtype=args.subtype,
+        excluded_types=args.excluded_types)
 
 parser_annotation = iCount.analysis.params_to_argparse(
     subparsers, iCount.analysis.summary)
