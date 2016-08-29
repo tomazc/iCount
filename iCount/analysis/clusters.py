@@ -31,11 +31,11 @@ params_opt = [
 
 params_pos = [
     (
-        'sites', 'BED6', 'in',
+        'sites', 'BED6', 'in', 1,
         '(input) BED6 file with cross-linked sites.'
     ),
     (
-        'clusters', 'BED6', 'out',
+        'clusters', 'BED6', 'out', 1,
         '(output) BED6 file with coordinates of identified clusters.'
     ),
 ]

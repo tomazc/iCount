@@ -40,20 +40,20 @@ params_opt = [
 
 params_pos = [
     (
-        'annotation', 'GTF', 'in',
+        'annotation', 'GTF', 'in', 1,
         '(input) GTF file with genomic regions (intervals) and landmarks ('
         'individual sites).'
     ),
     (
-        'sites', 'bedGraph', 'in',
+        'sites', 'bedGraph', 'in', 1,
         '(input) bedGraph with cross-linked sites.'
     ),
     (
-        'table', 'tsv', 'out',
+        'table', 'tsv', 'out', 1,
         '(output) Tab-delimited file with distributions.'
     ),
     (
-        'maps', 'pdf', 'out',
+        'maps', 'pdf', 'out', 1,
         '(output) Rendering of the distributions (PDF file).'
     ),
 ]

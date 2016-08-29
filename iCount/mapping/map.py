@@ -51,11 +51,11 @@ params_opt = [
 
 params_pos = [
     (
-        'sequences', 'FASTQ', 'in',
+        'sequences', 'FASTQ', 'in', 1,
         'Sequencing reads to map to genome.'
     ),
     (
-        'genome', 'folder', 'in',
+        'genome', 'folder', 'in', 1,
         'Folder with genome index.'
     ),
 

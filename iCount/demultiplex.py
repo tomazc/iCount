@@ -51,7 +51,7 @@ params_opt = [
 
 params_pos = [
     (
-        'sequences', 'FASTQ', 'in',
+        'sequences', 'FASTQ', 'in', 1,
         '(input) sequences from a sequencing library.'
     ),
 ]
