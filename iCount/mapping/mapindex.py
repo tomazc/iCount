@@ -45,7 +45,7 @@ params_opt = [
 
 params_pos = [
     (
-        'genome', 'FASTA', 'in',
+        'genome', 'FASTA', 'in', 1,
         'Genome sequence to index.'
     ),
 ]

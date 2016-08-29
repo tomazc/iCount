@@ -46,11 +46,11 @@ params_opt = [
 
 params_pos = [
     (
-        'annotation', 'GTF', 'in',
+        'annotation', 'GTF', 'in', 1,
         '(input) GTF file with genome annotation.'
     ),
     (
-        'segmentation_genes', 'GTF', 'out',
+        'segmentation_genes', 'GTF', 'out', 1,
         '(output) GTF file with gene segments.'
     ),
 ]

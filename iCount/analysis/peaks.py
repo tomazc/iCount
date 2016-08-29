@@ -46,19 +46,19 @@ params_opt = [
 
 params_pos = [
     (
-        'annotation', 'BED6', 'in',
+        'annotation', 'BED6', 'in', 1,
         '(input) BED6 file with gene regions.'
     ),
     (
-        'sites', 'BED6', 'in',
+        'sites', 'BED6', 'in', 1,
         '(input) BED6 file with cross-linked sites.'
     ),
     (
-        'peaks', 'BED6', 'out',
+        'peaks', 'BED6', 'out', 1,
         '(output) BED6 with significant cross-linked sites.'
     ),
     (
-        'scores', 'tab', 'out',
+        'scores', 'tab', 'out', 1,
         '(output) tab-separated table with scores for each cross-linked site.'
     ),
 ]

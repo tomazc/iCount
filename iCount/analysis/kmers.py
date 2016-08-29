@@ -49,15 +49,15 @@ params_opt = [
 
 params_pos = [
     (
-        'annotation', 'GTF', 'in',
+        'annotation', 'GTF', 'in', 1,
         '(input) GTF file with gene models.'
     ),
     (
-        'sites', 'bedGraph', 'in',
+        'sites', 'bedGraph', 'in', 1,
         '(input) bedGraph with cross-linked sites.'
     ),
     (
-        'enrichment', 'tsv', 'out',
+        'enrichment', 'tsv', 'out', 1,
         '(output) Tab-delimited file with information on enriched k-mers.'
     ),
 ]

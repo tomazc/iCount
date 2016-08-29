@@ -1,3 +1,7 @@
+import os
+import shutil
+import tempfile
+
 import pybedtools
 
 
@@ -42,3 +46,41 @@ def convert_legacy(bedGraph_legacy, bed_converted):
     sites = pybedtools.BedTool(bedGraph_legacy).sort().saveas()
     sites1 = sites.each(_convert_legacy_bed_format).saveas(bed_converted)
     return sites1
+
+
+def merge_bed(files, outfile):
+    """
+    Merge BED6 files with cross link data
+
+    :param list beds: list of BED6 files(paths) to be merged
+    :param str outfile: path to output file
+    :return: absolute path to outfile
+    :rtype: str
+    """
+    if len(files) == 0:
+        raise ValueError(
+            "At least one element expected in files list, but none found.")
+
+    joined = tempfile.NamedTemporaryFile(mode='at', delete=False)
+    for file_path in files:
+        if not os.path.isfile(file_path):
+            raise ValueError("File {} not found.".format(file_path))
+        with open(file_path) as infile:
+            shutil.copyfileobj(infile, joined)
+    joined.close()
+
+    # Marge intervals in "joined" file (needs to be sorted before!):
+    # s=True - only merge features that are on the same strand
+    # d=-1 - join only intervals with at least one base-pair overlap - default (0) merges also touching intervals
+    # c=5, o='sum' - when merging intervals, make operation 'sum' on column 5 (score)
+    merged = pybedtools.BedTool(joined.name).sort().merge(
+        s=True, d=-1, c=5, o='sum').sort().saveas()
+
+    # Columns are now shuffled to: chrom-start-stop-strand-score
+    # Reorder to: chrom-start-stop-empty_name-score-strand
+    # which corresponds to BED6
+
+    result = pybedtools.BedTool(pybedtools.create_interval_from_list(
+        i[:3] + ['.', i[4], i[3]]) for i in merged).saveas(outfile)
+
+    return os.path.abspath(result.fn)

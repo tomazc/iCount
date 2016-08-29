@@ -59,7 +59,10 @@ def str_list(string):
 
 
 def str_list_to_str(lst):
-    return ",".join([str(x) for x in lst])
+    if lst:
+        return ",".join([str(x) for x in lst])
+    else:
+        return []
 
 
 class IntervalsListParser:
@@ -161,7 +164,7 @@ def params_to_argparse(subparsers, a):
             assert False
 
     # setup positional parameters
-    for par_name, par_type, par_mode, par_help in a.params_pos:
-        parser.add_argument(par_name, help=par_help)
+    for par_name, par_type, par_mode, par_nargs, par_help in a.params_pos:
+        parser.add_argument(par_name, nargs=par_nargs, help=par_help)
 
     return parser
