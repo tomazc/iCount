@@ -165,6 +165,9 @@ def params_to_argparse(subparsers, a):
 
     # setup positional parameters
     for par_name, par_type, par_mode, par_nargs, par_help in a.params_pos:
-        parser.add_argument(par_name, nargs=par_nargs, help=par_help)
+        if par_nargs != 1:
+            parser.add_argument(par_name, nargs=par_nargs, help=par_help)
+        else:
+            parser.add_argument(par_name, help=par_help)
 
     return parser

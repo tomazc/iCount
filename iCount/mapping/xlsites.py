@@ -58,16 +58,16 @@ params_opt = [
 
 params_pos = [
     (
-        'bam', 'BAM', 'in',
+        'bam', 'BAM', 'in', 1,
         'Data on mapped iCLIP reads.'
     ),
     (
-        'unique', 'folder', 'out',
+        'unique', 'folder', 'out', 1,
         'Name of BED file to store data on identified cross-links sites '
         'obtained from uniquely mapped reads.'
     ),
     (
-        'multi', 'folder', 'out',
+        'multi', 'folder', 'out', 1,
         'Name of BED file to store data on identified cross-links sites '
         'obtained from multi-mapped reads.'
     ),
