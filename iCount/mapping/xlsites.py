@@ -89,7 +89,7 @@ def _merge_similar_randomers(by_bc, randomer_mismatches):
     # assign ambigious randomers to unambigious randomers
     accepted_bcs = set()
     ambig_bcs = []
-    for bc, hits in by_bc.items():
+    for bc, _ in by_bc.items():
         Ns = bc.count('N')
         if Ns == 0:
             accepted_bcs.add(bc)
@@ -194,8 +194,9 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     assert group_by in ['start', 'middle', 'end']
     try:
         bamfile = pysam.Samfile(bam_fname, 'rb')
-    except:
+    except OSError as e:
         print('Error opening BAM file: {:s}'.format(bam_fname))
+        print(e)
         return
 
     # sanity check

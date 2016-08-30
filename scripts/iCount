@@ -208,6 +208,9 @@ def xlsites(args):
                                    quant=args.quant,
                                    randomer_mismatches=args.mismatches,
                                    multimax=args.multimax)
+    if s is None:
+        print('Error running command.')
+        return 1
 
     all_recs, notmapped_recs, mapped_recs, lowmapq_recs, used_recs, \
     invalidrandomer_recs, norandomer_recs, bc_cn = s
