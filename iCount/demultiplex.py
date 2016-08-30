@@ -112,7 +112,11 @@ def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
             extract(reader, barcodes, mismatches=mismatches,
                     minimum_length=minimum_length):
         if r_randomer:
-            r_id = "%s:%s" % (r_id, r_randomer)
+            if r_id[-2] == '/':
+                r_pair = r_id[-2:]
+                r_id = '%s:rbc:%s%s' % (r_id[:-2], r_randomer, r_pair)
+            else:
+                r_id = '%s:rbc:%s' % (r_id, r_randomer)
 
         out_fastq[exp_id].write(r_id, r_seq, '+', r_qual)
     while out_fastq:
