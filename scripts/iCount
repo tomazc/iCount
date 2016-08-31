@@ -14,6 +14,15 @@ parser.add_argument('--version', action='version',
 subparsers = parser.add_subparsers(title='Pipeline commands')
 
 
+# ### examples
+def examples(args):
+    iCount.examples.run()
+
+parser_examples = iCount.analysis.params_to_argparse(subparsers,
+                                                     iCount.examples)
+parser_examples.set_defaults(func=examples)
+
+
 # ### genomes and annotation
 
 # releases: list all releases available on ensembl's FTP
@@ -102,9 +111,9 @@ parser_annotation.set_defaults(func=sequence)
 def segment(args):
     print('Reading genome annotation from {:s}'.format(args.annotation))
     iCount.genomes.segment.get_genes(gtf_in=args.annotation,
-                                     gtf_out_genes=args.segmentation_genes,
-                                     f_type = args.feature,
-                                     a_gene_name = args.attribute)
+                                     gtf_out=args.segmentation_genes,
+#                                     f_type = args.feature,
+                                     attribute=args.attribute)
     print('Segmentation stored into {:s}'.format(args.segmentation_genes))
 
 parser_segment = iCount.analysis.params_to_argparse(subparsers,

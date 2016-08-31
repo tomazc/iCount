@@ -14,6 +14,8 @@ from . import mapping
 from . import genomes
 from ._version import __version__
 
+from . import examples
+
 # CONFIG
 # Because iCount is used in command-line, all paths point to the current
 # working folder by default.
