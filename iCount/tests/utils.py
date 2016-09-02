@@ -6,18 +6,27 @@ import pybedtools
 from pybedtools import create_interval_from_list
 
 
+def get_temp_file_name(tmp_dir=None):
+    """
+    Returns an availiable name for temporary file.
+    """
+    tmp_name = next(tempfile._get_candidate_names())
+    if not tmp_dir:
+        tmp_dir = tempfile._get_default_tempdir()
+    return os.path.join(tmp_dir, tmp_name)
+
+
 def make_file_from_list(data, bedtool=True):
     """Return path to file with the content from `data` (list of lists)"""
-    tfile = tempfile.NamedTemporaryFile(mode='w+', delete=False)
-    tfile.close()
+    tfile = get_temp_file_name()
     if bedtool:
         pybedtools.BedTool(pybedtools.create_interval_from_list(list_)
-                           for list_ in data).saveas(tfile.name)
+                           for list_ in data).saveas(tfile)
     else:
-        with open(tfile.name, 'wt') as file_:
+        with open(tfile, 'wt') as file_:
             for list_ in data:
                 file_.write('\t'.join(map(str, list_)) + '\n')
-    return os.path.abspath(tfile.name)
+    return os.path.abspath(tfile)
 
 
 def make_list_from_file(fname, fields_separator=None):
