@@ -324,8 +324,8 @@ def peaks(args):
     print('   perms={:d}'.format(args.perms))
     iCount.analysis.peaks.run(args.annotation, args.sites, args.peaks,
                               fout_scores=args.scores,
-                              hw=args.hw, fdr=args.fdr, perms=args.perms) #,
-                              #regions=args.regions)
+                              hw=args.hw, fdr=args.fdr, perms=args.perms,
+                              features=args.features)
     print('Bed file with significant peaks saved to {:s}'.format(args.peaks))
     print('Scores for each cross-linked position saved to {:s}'.format(args.scores))
 
