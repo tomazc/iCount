@@ -42,30 +42,40 @@ params_pos = [
 
 
 def _fix_proper_bed6_format(feature):
+    """
+    Take a feature and convert it to BED6 format
+
+    http://bedtools.readthedocs.io/en/latest/content/general-usage.html
+    """
     chrom = feature.chrom
     start = feature.start
     end = feature.stop
     name = feature.strand
     score = feature.score
     strand = feature.name
-    # use BED6 format, see:
-    # http://bedtools.readthedocs.io/en/latest/content/general-usage.html
     return pybedtools.create_interval_from_list(
-        [chrom, start, end, name, score, strand]
-    )
+        [chrom, start, end, name, score, strand])
 
 
-def run(fin_sites, fout_clusters, dist=20): #, extend=0):
-    """Join neighboring cross-linked sites into clusters.
-
+def run(fin_sites, fout_clusters, dist=20):  # , extend=0):
     """
+    Join neighboring cross-linked sites into clusters.
+
+    Score of cluster is the sum of all its element scores.
+
+    :param str fin_sites: Path to input file with sites (BED6 format)
+    :param str fout_clusters: Path to output file with merged sites (BED6)
+    :param int dist: Distance between two cross_links to still merge them.
+    :return: BED file with clusters as elements
+    :rtype: str
+    """
+    # It is required to pre-sort your data:
     sites = pybedtools.BedTool(fin_sites).sort().saveas()
-#    if extend:
-#        sites = sites.slop(b=extend).saveas()
-    m1 = sites.merge(s=True, d=dist, c=[5, 4], o='sum,distinct').saveas()
-    m2 = m1.sort().saveas()
-    m3 = m2.each(_fix_proper_bed6_format).saveas(fout_clusters)
-    return m3
+    # if extend:
+    #    sites = sites.slop(b=extend).saveas()
+    merged = sites.merge(s=True, d=dist, c=[5, 4], o='sum,distinct').saveas()
+    out = merged.sort().each(_fix_proper_bed6_format).saveas(fout_clusters)
+    return out.fn
 
 #     # _lowFDR.bed
 #     desc = "peaks in %s, with %s permutations, %s nt neighborhood, FDR < %g, regions %s" % (
