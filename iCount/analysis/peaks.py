@@ -35,19 +35,17 @@ params_opt = [
         'Number of random permutations needed to determine statistical '
         'significance.'
     ),
-# TODO: ignore for now, until change of annotation format from BED6 to GTF.
-#    (
-#        'regions', 'str_list', ['gene'],  False,
-#        'Calculate enrichment for cross-links within these types (as given
-#    # in '
-#        '3rd column in GTF).'
-#    )
+    (
+        'features', 'str_list', ['gene'],  False,
+        'Calculate enrichment for cross-links within these types (as given '
+        'in 3rd column in GTF).'
+    )
 ]
 
 params_pos = [
     (
-        'annotation', 'BED6', 'in', 1,
-        '(input) BED6 file with gene regions.'
+        'annotation', 'GTF', 'in', 1,
+        '(input) GTF file with gene regions.'
     ),
     (
         'sites', 'BED6', 'in', 1,
@@ -64,7 +62,7 @@ params_pos = [
 ]
 
 
-def sum_within_window(pos_val, w=3):
+def sum_within_window(pos_val, hw=3):
     """Sum counts within window placed on top of each site
 
     The returned list preserves the order of positions given on input.
@@ -77,14 +75,14 @@ def sum_within_window(pos_val, w=3):
     ret_list = [None]*len(pos_val)
     max_i = len(poss)
     for i, p in enumerate(poss):
-        i_start = bisect.bisect_left(poss, p-w, lo=max(0, i-w), hi=i)
-        i_stop = bisect.bisect_left(poss, p+1+w,
-                                    lo=i_start, hi=min(i+w+1, max_i))
+        i_start = bisect.bisect_left(poss, p - hw, lo=max(0, i - hw), hi=i)
+        i_stop = bisect.bisect_left(poss, p + 1 + hw,
+                                    lo=i_start, hi=min(i + hw + 1, max_i))
         ret_list[inds[i]] = (p, sum(vals[i_start:i_stop]))
     return ret_list
 
 
-def sum_within_window_nopos(pos_val, w=3):
+def sum_within_window_nopos(pos_val, hw=3):
     if not pos_val:
         return []
     pos_val = sorted(pos_val)
@@ -93,9 +91,9 @@ def sum_within_window_nopos(pos_val, w=3):
     ret_list = []
     max_i = len(poss)
     for i, p in enumerate(poss):
-        i_start = bisect.bisect_left(poss, p-w, lo=max(0, i-w), hi=i)
-        i_stop = bisect.bisect_left(poss, p+1+w,
-                                    lo=i_start, hi=min(i+w+1, max_i))
+        i_start = bisect.bisect_left(poss, p - hw, lo=max(0, i - hw), hi=i)
+        i_stop = bisect.bisect_left(poss, p + 1 + hw,
+                                    lo=i_start, hi=min(i + hw + 1, max_i))
         ret_list.append(sum(vals[i_start:i_stop]))
     return ret_list
 
@@ -106,16 +104,16 @@ def cumulative_prob(vals, max_val):
     return freqs_cum[::-1]
 
 
-def cum_prob_within_window(pos_val, total_hits, w=3):
+def cum_prob_within_window(pos_val, total_hits, hw=3):
     # extend counts to neighboring +-w nucleotides
-    vals_extended = sum_within_window(pos_val, w=w)
+    vals_extended = sum_within_window(pos_val, hw=hw)
     # calculate cumulative probabilities
     return cumulative_prob([v for _, v in vals_extended], total_hits), vals_extended
 
 
-def cum_prob_within_window_nopos(pos_val, total_hits, w=3):
+def cum_prob_within_window_nopos(pos_val, total_hits, hw=3):
     # extend counts to neighboring +-w nucleotides
-    vals_extended = sum_within_window_nopos(pos_val, w=w)
+    vals_extended = sum_within_window_nopos(pos_val, hw=hw)
 
     # calculate cumulative probabilities
     return cumulative_prob(vals_extended, total_hits)
@@ -125,13 +123,15 @@ def diff_ps(ps1, ps2):
     return sum(abs(p1-p2) for p1, p2 in zip(ps1, ps2))
 
 
-def get_rnd_distrib(size, total_hits, w, perms=100):
-    """The simplest (and fastest) permutation test."""
+def get_rnd_distrib(size, total_hits, hw, perms=100):
+    """The simplest (and fastest) permutation test.
+
+    Not used by default.
+    """
     rnd_cns = numpy.zeros(total_hits+1)
     for i in range(perms):
         rnd_hits = Counter(numpy.random.randint(size, size=total_hits))
-        rnd_hits_extended = \
-            iCount.analysis.peaks.sum_within_window_nopos(rnd_hits.items(), w)
+        rnd_hits_extended = sum_within_window_nopos(rnd_hits.items(), hw)
         for v in rnd_hits_extended:
             rnd_cns[v] += 1
 
@@ -147,7 +147,7 @@ def get_rnd_distrib(size, total_hits, w, perms=100):
 
 ps_cache = {}
 
-def get_avg_rnd_distrib(size, total_hits, w, perms=100):
+def get_avg_rnd_distrib(size, total_hits, hw, perms=100):
     """Return background distribution of peak heights for given region size
     and number of hits.
 
@@ -159,7 +159,7 @@ def get_avg_rnd_distrib(size, total_hits, w, perms=100):
     """
     global ps_cache
 
-    c_key = (size, total_hits, w, perms)
+    c_key = (size, total_hits, hw, perms)
     if c_key in ps_cache:
         return ps_cache[c_key]
 
@@ -167,7 +167,7 @@ def get_avg_rnd_distrib(size, total_hits, w, perms=100):
     for pi in range(perms):
         rnd_hits = Counter(numpy.random.randint(size, size=total_hits))
         rnd_ps[pi, :] = cum_prob_within_window_nopos(rnd_hits.items(),
-                                                     total_hits, w=w)
+                                                     total_hits, hw=hw)
 
     cum_prob_ret = numpy.mean(rnd_ps, axis=0) + numpy.std(rnd_ps, axis=0)
     ps_cache[c_key] = cum_prob_ret
@@ -175,7 +175,7 @@ def get_avg_rnd_distrib(size, total_hits, w, perms=100):
 
 
 def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
-        fdr=0.05, perms=100, rnd_seed=42): #, regions=['gene']):
+        fdr=0.05, perms=100, rnd_seed=42, features=['gene']):
     """Calculate FDR of interaction at each cross-linked site.
 
     """
@@ -188,19 +188,19 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
     overlaps = annotation.intersect(sites, sorted=True, s=True, wo=True).saveas()
     hits_by_name = {}
     name_sizes = {}
-#    skip_cn = 0
+    features_skipped_cn = 0
     for feature in overlaps:
-#        if feature.type not in regions:
-#            skip_cn += 1
-#            continue
+        if feature[2] not in features:  # check if of correct feature type
+            features_skipped_cn += 1
+            continue
         chrom = feature.chrom
         start = feature.start
         end = feature.stop
         assert start < end
         name = feature.name
         strand = feature.strand
-        site_pos = int(feature.fields[7])
-        site_score = int(feature.fields[10])
+        site_pos = int(feature.fields[10])
+        site_score = int(feature.fields[13])
         hits_by_name.setdefault((chrom, strand, name), []).append((site_pos,
                                                                    site_score))
         name_sizes.setdefault((chrom, strand, name), set()).add((start, end))
@@ -211,7 +211,10 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         ((n, sum([e-s for s, e in v])) for n, v in name_sizes.items())
     )
     # calculate and assign FDRs to each cross-linked site
-    out_recs_scores = []
+
+    # key is chrome, item is dict,
+    # where key is (pos, strand), item is list of regions and associated pvals
+    out_recs_scores = {}
     hits_by_name = sorted(hits_by_name.items())
     all_recs = len(hits_by_name)
     cur_perc = 0
@@ -232,28 +235,46 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
             assert p == p2
             score = str(val)
             fdr_score = val2fdr[val_extended]
-            out_recs_scores.append((chrom, p, name, score, strand,
-                                    val_extended, fdr_score))
-    out_recs_scores.sort()
+            out_recs_scores.setdefault(chrom, {}).\
+                            setdefault((p, strand), []).\
+                            append((fdr_score, name, score, val_extended))
 
     fout_peaks = iCount.files.gz_open(fout_peaks, 'wt')
     if fout_scores is not None:
         fout_scores = iCount.files.gz_open(fout_scores, 'wt')
+        fout_scores.write('chrome\tposition\tstrand\tannotation\tscore'
+                          '\tscore_extended\tFDR\n')
 
-    for (chrom, p, name, score, strand, val_extended, fdr_score) in \
-            out_recs_scores:
-        # output in BED6 format:
-        # chrom, start, end, name, score, strand
-        o_str = '{:s}\t{:d}\t{:d}\t{:s}\t{:s}\t{:s}'.format(chrom, p,
-                                                            p + 1, name,
-                                                            score, strand)
-        if fdr_score < fdr:
-            fout_peaks.write('{:s}\n'.format(o_str))
+    for chrom, by_pos in sorted(out_recs_scores.items()):
+        for (p, strand), annot_list in sorted(by_pos.items()):
+            annot_list = sorted(annot_list)
+            if fout_scores:
+                # all records are recorded in the score file
+                for (fdr_score, name, score, val_extended) in annot_list:
+                    # output in BED6 format:
+                    # chrom, start, end, name, score, strand
+                    fout_scores.write(
+                        '{:s}\t{:d}\t{:s}\t{:s}\t{:s}\t{:s}\t'
+                        '{:f}\n'.format(chrom, p, strand, name, score,
+                                        str(val_extended), fdr_score
+                                        )
+                    )
 
-        if fout_scores is not None:
-            fout_scores.write('{:s}\t{:s}\t{:f}\n'.format(o_str,
-                                                          str(val_extended),
-                                                          fdr_score))
+            # report minimum fdr_score for each position in BED6
+            min_fdr_score = annot_list[0][0]
+            if min_fdr_score < fdr:
+                min_fdr_recs = [r for r in annot_list if r[0] == min_fdr_score]
+                _, s_name, s_score, s_val_extended = zip(*min_fdr_recs)
+                assert len(set(s_score)) == 1
+                assert len(set(s_val_extended)) == 1  # this may not be true
+                #  at borders of annotated regions
+                score = s_score[0]
+                name = ','.join(s_name)
+                o_str = '{:s}\t{:d}\t{:d}\t{:s}\t{:s}\t{:s}'.format(
+                    chrom, p, p + 1, name, score, strand
+                )
+                fout_peaks.write('{:s}\n'.format(o_str))
+
     fout_peaks.close()
     if fout_scores is not None:
         fout_scores.close()

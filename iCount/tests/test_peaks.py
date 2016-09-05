@@ -124,11 +124,11 @@ class Testpeaks(unittest.TestCase):
             (20, 2)
         ]
         self.assertEqual(
-            iCount.analysis.peaks.sum_within_window(sites, w=1),
+            iCount.analysis.peaks.sum_within_window(sites, hw=1),
             summed_sites_w1
         )
         self.assertEqual(
-            iCount.analysis.peaks.sum_within_window(sites, w=3),
+            iCount.analysis.peaks.sum_within_window(sites, hw=3),
             summed_sites_w3
         )
 
