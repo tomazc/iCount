@@ -211,7 +211,10 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         ((n, sum([e-s for s, e in v])) for n, v in name_sizes.items())
     )
     # calculate and assign FDRs to each cross-linked site
-    out_recs_scores = []
+
+    # key is chrome, item is dict,
+    # where key is (pos, strand), item is list of regions and associated pvals
+    out_recs_scores = {}
     hits_by_name = sorted(hits_by_name.items())
     all_recs = len(hits_by_name)
     cur_perc = 0
@@ -232,28 +235,46 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
             assert p == p2
             score = str(val)
             fdr_score = val2fdr[val_extended]
-            out_recs_scores.append((chrom, p, name, score, strand,
-                                    val_extended, fdr_score))
-    out_recs_scores.sort()
+            out_recs_scores.setdefault(chrom, {}).\
+                            setdefault((p, strand), []).\
+                            append((fdr_score, name, score, val_extended))
 
     fout_peaks = iCount.files.gz_open(fout_peaks, 'wt')
     if fout_scores is not None:
         fout_scores = iCount.files.gz_open(fout_scores, 'wt')
+        fout_scores.write('chrome\tposition\tstrand\tannotation\tscore'
+                          '\tscore_extended\tFDR\n')
 
-    for (chrom, p, name, score, strand, val_extended, fdr_score) in \
-            out_recs_scores:
-        # output in BED6 format:
-        # chrom, start, end, name, score, strand
-        o_str = '{:s}\t{:d}\t{:d}\t{:s}\t{:s}\t{:s}'.format(chrom, p,
-                                                            p + 1, name,
-                                                            score, strand)
-        if fdr_score < fdr:
-            fout_peaks.write('{:s}\n'.format(o_str))
+    for chrom, by_pos in sorted(out_recs_scores.items()):
+        for (p, strand), annot_list in sorted(by_pos.items()):
+            annot_list = sorted(annot_list)
+            if fout_scores:
+                # all records are recorded in the score file
+                for (fdr_score, name, score, val_extended) in annot_list:
+                    # output in BED6 format:
+                    # chrom, start, end, name, score, strand
+                    fout_scores.write(
+                        '{:s}\t{:d}\t{:s}\t{:s}\t{:s}\t{:s}\t'
+                        '{:f}\n'.format(chrom, p, strand, name, score,
+                                        str(val_extended), fdr_score
+                                        )
+                    )
 
-        if fout_scores is not None:
-            fout_scores.write('{:s}\t{:s}\t{:f}\n'.format(o_str,
-                                                          str(val_extended),
-                                                          fdr_score))
+            # report minimum fdr_score for each position in BED6
+            min_fdr_score = annot_list[0][0]
+            if min_fdr_score < fdr:
+                min_fdr_recs = [r for r in annot_list if r[0] == min_fdr_score]
+                _, s_name, s_score, s_val_extended = zip(*min_fdr_recs)
+                assert len(set(s_score)) == 1
+                assert len(set(s_val_extended)) == 1  # this may not be true
+                #  at borders of annotated regions
+                score = s_score[0]
+                name = ','.join(s_name)
+                o_str = '{:s}\t{:d}\t{:d}\t{:s}\t{:s}\t{:s}'.format(
+                    chrom, p, p + 1, name, score, strand
+                )
+                fout_peaks.write('{:s}\n'.format(o_str))
+
     fout_peaks.close()
     if fout_scores is not None:
         fout_scores.close()
