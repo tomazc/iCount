@@ -86,9 +86,9 @@ def merge_bed(files, outfile):
     return os.path.abspath(result.fn)
 
 
-def _f2s(f):
+def _f2s(f, dec=4):
     """Return string representation of float without trailing decimal zeros"""
-    return '{:.4f}'.format(f).rstrip('0').rstrip('.')
+    return '{{:.{:d}f}}'.format(dec).format(f).rstrip('0').rstrip('.')
 
 
 def _iter_bedgraph_dict(bedgraph, val_index=None):
