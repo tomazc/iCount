@@ -8,11 +8,13 @@ sites.
 Return bedGraph of significant sites.
 
 """
-from collections import Counter
+import math
 import bisect
 import numpy
+from collections import Counter
 
 import iCount
+from iCount.files.bed import _f2s
 
 # description and parameters needed for the analysis
 analysis_name = 'peaks'
@@ -200,7 +202,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         name = feature.name
         strand = feature.strand
         site_pos = int(feature.fields[10])
-        site_score = int(feature.fields[13])
+        site_score = float(feature.fields[13])
         hits_by_name.setdefault((chrom, strand, name), []).append((site_pos,
                                                                    site_score))
         name_sizes.setdefault((chrom, strand, name), set()).add((start, end))
@@ -222,7 +224,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         gid, hits = hits_by_name.pop()
         region_size = name_sizes[gid]
         chrom, strand, name = gid
-        region_hits = sum([v for _, v in hits])
+        region_hits = math.ceil(sum([v for _, v in hits]))
         new_perc = '\r{:.1f}%'.format(100.0*(1.0-len(hits_by_name)/all_recs))
         if new_perc != cur_perc:
             cur_perc = new_perc
@@ -230,11 +232,11 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         true_ps, hits_extended = cum_prob_within_window(hits, region_hits, hw)
         rnd_ps = get_avg_rnd_distrib(region_size, region_hits, hw, perms=perms)
         assert len(rnd_ps) == len(rnd_ps)
-        val2fdr = [r/t for r, t in zip(rnd_ps, true_ps)]
+        val2fdr = [min(1.0, r/t) for r, t in zip(rnd_ps, true_ps)]
         for (p, val), (p2, val_extended) in zip(hits, hits_extended):
             assert p == p2
-            score = str(val)
-            fdr_score = val2fdr[val_extended]
+            score = val
+            fdr_score = val2fdr[round(val_extended)]
             out_recs_scores.setdefault(chrom, {}).\
                             setdefault((p, strand), []).\
                             append((fdr_score, name, score, val_extended))
@@ -255,8 +257,9 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
                     # chrom, start, end, name, score, strand
                     fout_scores.write(
                         '{:s}\t{:d}\t{:s}\t{:s}\t{:s}\t{:s}\t'
-                        '{:f}\n'.format(chrom, p, strand, name, score,
-                                        str(val_extended), fdr_score
+                        '{:.6f}\n'.format(chrom, p, strand, name,
+                                        _f2s(score, dec=6),
+                                        _f2s(val_extended, dec=6), fdr_score
                                         )
                     )
 
@@ -271,7 +274,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
                 score = s_score[0]
                 name = ','.join(s_name)
                 o_str = '{:s}\t{:d}\t{:d}\t{:s}\t{:s}\t{:s}'.format(
-                    chrom, p, p + 1, name, score, strand
+                    chrom, p, p + 1, name, _f2s(score), strand
                 )
                 fout_peaks.write('{:s}\n'.format(o_str))
 
