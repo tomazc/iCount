@@ -124,10 +124,10 @@ def _merge_similar_randomers(by_bc, randomer_mismatches):
         order_bcs = sorted(order_bcs, reverse=True)
         merged = False
         for i, (_, bc) in enumerate(order_bcs):
-            for bc2 in order_bcs[i+1:]:
+            for _, bc2 in order_bcs[i+1:]:
                 if match(bc, bc2, randomer_mismatches):
                     merged = True
-                    amb_hits = by_bc.pop(amb_bc)
+                    amb_hits = by_bc.pop(bc2)
                     by_bc[bc].extend(amb_hits)
             if merged:
                 break
