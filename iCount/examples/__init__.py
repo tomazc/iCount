@@ -36,7 +36,7 @@ def run():
     print('Setting up folder with examples.')
 
     cur_folder = os.path.dirname(os.path.abspath(__file__))
-    for script in ['hnRNPC.sh']:
+    for script in ['hnRNPC.sh', 'hnRNPC_reduced.sh']:
         src_fn = os.path.join(cur_folder, script)
         dst_fn = os.path.join(examples_folder, script)
         print('   copying example script {:s}'.format(script))
