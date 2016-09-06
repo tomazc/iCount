@@ -54,7 +54,6 @@ def str_list(string):
     string = string.strip()
     if not string:
         return []
-    print('"{:s}"'.format(string))
     return [x.strip() for x in string.split(',')]
 
 

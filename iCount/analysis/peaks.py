@@ -41,7 +41,11 @@ params_opt = [
         'features', 'str_list', ['gene'],  False,
         'Calculate enrichment for cross-links within these types (as given '
         'in 3rd column in GTF).'
-    )
+    ),
+    (
+        'verbose', 'choice-single', ('yes', ['yes', 'no']), False,
+        'Report on progress.'
+    ),
 ]
 
 params_pos = [
@@ -177,7 +181,8 @@ def get_avg_rnd_distrib(size, total_hits, hw, perms=100):
 
 
 def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
-        fdr=0.05, perms=100, rnd_seed=42, features=['gene']):
+        fdr=0.05, perms=100, rnd_seed=42, features=['gene'],
+        report_progress=True):
     """Calculate FDR of interaction at each cross-linked site.
 
     """
@@ -226,7 +231,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         chrom, strand, name = gid
         region_hits = math.ceil(sum([v for _, v in hits]))
         new_perc = '\r{:.1f}%'.format(100.0*(1.0-len(hits_by_name)/all_recs))
-        if new_perc != cur_perc:
+        if report_progress and new_perc != cur_perc:
             cur_perc = new_perc
             print(cur_perc, end="", flush=True),
         true_ps, hits_extended = cum_prob_within_window(hits, region_hits, hw)
@@ -281,4 +286,6 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
     fout_peaks.close()
     if fout_scores is not None:
         fout_scores.close()
-    print('\ndone')
+
+    if report_progress:
+        print('\ndone')

@@ -1,0 +1,483 @@
+
+##############################
+# create "common" folders
+genome_dir="genomes"
++ genome_dir=genomes
+mkdir -p ${genome_dir}
++ mkdir -p genomes
+
+# create analysis output folder
+analysis_dir="hnRNPCred"
++ analysis_dir=hnRNPCred
+mkdir -p ${analysis_dir}
++ mkdir -p hnRNPCred
+
+
+##############################
+# ## general steps
+# step 1: download genome sequence
+genome="hs84red.fa.gz"
++ genome=hs84red.fa.gz
+if [ ! -f "${genome_dir}/${genome}" ];
+then
+iCount sequence -release 84 -species homo_sapiens -chromosomes "21,MT" \
+                -target_dir ${genome_dir} -target_fname ${genome}
+
+mv "${genome_dir}/hs84red.chr21_MT.fa.gz" "${genome_dir}/${genome}"
+mv "${genome_dir}/hs84red.chr21_MT.fa.gz.chrom_length.txt" \
+   "${genome_dir}/hs84red.fa.gz.chrom_length.txt"
+fi
++ '[' '!' -f genomes/hs84red.fa.gz ']'
++ iCount sequence -release 84 -species homo_sapiens -chromosomes 21,MT -target_dir genomes -target_fname hs84red.fa.gz
+Downloading FASTA file: genomes/hs84red.chr21_MT.fa.gz
++ mv genomes/hs84red.chr21_MT.fa.gz genomes/hs84red.fa.gz
++ mv genomes/hs84red.chr21_MT.fa.gz.chrom_length.txt genomes/hs84red.fa.gz.chrom_length.txt
+genome="${genome_dir}/${genome}"
++ genome=genomes/hs84red.fa.gz
+
+
+# step 2: download annotation
+annotation="hs84.gtf.gz"
++ annotation=hs84.gtf.gz
+if [ ! -f "${genome_dir}/${annotation}" ];
+then
+    iCount annotation -release 84 -species homo_sapiens \
+                      -target_dir ${genome_dir} -target_fname ${annotation}
+fi
++ '[' '!' -f genomes/hs84.gtf.gz ']'
++ iCount annotation -release 84 -species homo_sapiens -target_dir genomes -target_fname hs84.gtf.gz
+Downloading annotation file: genomes/hs84.gtf.gz
+annotation="${genome_dir}/${annotation}"
++ annotation=genomes/hs84.gtf.gz
+
+genes_annotation="${genome_dir}/hs84.genes.bed.gz"
++ genes_annotation=genomes/hs84.genes.bed.gz
+if [ ! -f "${genes_annotation}" ];
+then
+    iCount segment ${annotation} ${genes_annotation}
+fi
++ '[' '!' -f genomes/hs84.genes.bed.gz ']'
++ iCount segment genomes/hs84.gtf.gz genomes/hs84.genes.bed.gz
+Reading genome annotation from genomes/hs84.gtf.gz
+Segmentation stored into genomes/hs84.genes.bed.gz
+
+
+# step 3: index genome
+genome_index="star_index/hg19red"
++ genome_index=star_index/hg19red
+if [ ! -d ${genome_index} ];
+then
+    mkdir -p ${genome_index}
+    overhang="100"
+    iCount mapindex -threads 1 -outdir ${genome_index} \
+                    -annotation ${annotation} -overhang ${overhang} ${genome}
+fi
++ '[' '!' -d star_index/hg19red ']'
++ mkdir -p star_index/hg19red
++ overhang=100
++ iCount mapindex -threads 1 -outdir star_index/hg19red -annotation genomes/hs84.gtf.gz -overhang 100 genomes/hs84red.fa.gz
+Sep 06 15:15:54 ..... Started STAR run
+Sep 06 15:15:54 ... Starting to generate Genome files
+Sep 06 15:15:55 ... starting to sort  Suffix Array. This may take a long time...
+Sep 06 15:15:55 ... sorting Suffix Array chunks and saving them to disk...
+Sep 06 15:16:42 ... loading chunks from disk, packing SA...
+Sep 06 15:16:43 ... Finished generating suffix array
+Sep 06 15:16:43 ... starting to generate Suffix Array index...
+Sep 06 15:17:01 ..... Processing annotations GTF
+Sep 06 15:17:10 ..... Inserting junctions into the genome indices
+Sep 06 15:17:29 ... writing Genome to disk ...
+Sep 06 15:17:29 ... writing Suffix Array to disk ...
+Sep 06 15:17:30 ... writing SAindex to disk
+Sep 06 15:17:33 ..... Finished successfully
+/tmp/iCount/starindex/tmpb6rhkyuu_hs84red.fa.gz
+/tmp/iCount/starindex/tmphe0x235l_hs84.gtf.gz
+
+
+##############################
+### analysis-specific steps
+pushd ${analysis_dir}
++ pushd hnRNPCred
+/tmp/iCount/tests/functional/pipeline/examples/hnRNPCred /tmp/iCount/tests/functional/pipeline/examples
+
+# step 4: download FASTQ file of a hnRNPC iCLIP library
+fastq="hnRNPC.fq.gz"
++ fastq=hnRNPC.fq.gz
+if [ ! -f ${fastq} ];
+then
+    url="http://icount.fri.uni-lj.si/data/20101116_LUjh03/SLX-2605\
+.CRIRUN_501.s_4.sequence.reduced.txt.gz"
+    wget --no-verbose -O ${fastq} ${url}
+fi
++ '[' '!' -f hnRNPC.fq.gz ']'
++ url=http://icount.fri.uni-lj.si/data/20101116_LUjh03/SLX-2605.CRIRUN_501.s_4.sequence.reduced.txt.gz
++ wget --no-verbose -O hnRNPC.fq.gz http://icount.fri.uni-lj.si/data/20101116_LUjh03/SLX-2605.CRIRUN_501.s_4.sequence.reduced.txt.gz
+2016-09-06 15:17:38 URL:http://icount.fri.uni-lj.si/data/20101116_LUjh03/SLX-2605.CRIRUN_501.s_4.sequence.reduced.txt.gz [23819202/23819202] -> "hnRNPC.fq.gz" [1]
+
+
+# step 5: demultiplex
+barcodes="NNNGGTTNN,NNNTTGTNN,NNNCAATNN,NNNACCTNN,NNNGGCGNN"
++ barcodes=NNNGGTTNN,NNNTTGTNN,NNNCAATNN,NNNACCTNN,NNNGGCGNN
+adapter="AGATCGGAAGAGCGGTTCAG"
++ adapter=AGATCGGAAGAGCGGTTCAG
+mm="1"  # number of mismatches allowed in sample barcode
++ mm=1
+ext_pref="exp"
++ ext_pref=exp
+ext_dir="extracted"
++ ext_dir=extracted
+mkdir -p ${ext_dir}
++ mkdir -p extracted
+iCount demultiplex -barcodes ${barcodes} -adapter ${adapter} \
+                   -mismatches ${mm} -prefix ${ext_pref} -outdir ${ext_dir} \
+                   ${fastq}
++ iCount demultiplex -barcodes NNNGGTTNN,NNNTTGTNN,NNNCAATNN,NNNACCTNN,NNNGGCGNN -adapter AGATCGGAAGAGCGGTTCAG -mismatches 1 -prefix exp -outdir extracted hnRNPC.fq.gz
+Demultiplexing file hnRNPC.fq.gz
+looking for barcodes NNNGGTTNN, NNNTTGTNN, NNNCAATNN, NNNACCTNN, NNNGGCGNN
+trimming adapter AGATCGGAAGAGCGGTTCAG
+allowing for 1 mismatches in barcodes
+discarding trimmed sequences shorter than 15
+saved to files:
+   extracted/exp_nomatch.fastq.gz
+   extracted/exp_NNNGGTTNN.fastq.gz
+   extracted/exp_NNNTTGTNN.fastq.gz
+   extracted/exp_NNNCAATNN.fastq.gz
+   extracted/exp_NNNACCTNN.fastq.gz
+   extracted/exp_NNNGGCGNN.fastq.gz
+
+
+# step 6: map reads to genome reference
+multimax="50"
++ multimax=50
+mismatches="2"
++ mismatches=2
+
+for barcode in ${barcodes//,/ }; do
+    sequences="${ext_dir}/${ext_pref}_${barcode}.fastq.gz"
+
+    map_dir="mappings/${ext_pref}_${barcode}"
+    rm -Rf ${map_dir}
+    mkdir -p ${map_dir}
+
+    iCount map -threads 1 -outdir ${map_dir} -multimax ${multimax} \
+               -mismatches ${mismatches} ${sequences} "../${genome_index}"
+done
++ for barcode in '${barcodes//,/ }'
++ sequences=extracted/exp_NNNGGTTNN.fastq.gz
++ map_dir=mappings/exp_NNNGGTTNN
++ rm -Rf mappings/exp_NNNGGTTNN
++ mkdir -p mappings/exp_NNNGGTTNN
++ iCount map -threads 1 -outdir mappings/exp_NNNGGTTNN -multimax 50 -mismatches 2 extracted/exp_NNNGGTTNN.fastq.gz ../star_index/hg19red
+Sep 06 15:18:41 ..... Started STAR run
+Sep 06 15:18:41 ..... Loading genome
+Sep 06 15:18:41 ..... Started mapping
+Sep 06 15:18:52 ..... Started sorting BAM
+Sep 06 15:18:52 ..... Finished successfully
+/tmp/iCount/starmap/tmpgtj3v7ia_exp_NNNGGTTNN.fastq.gz
++ for barcode in '${barcodes//,/ }'
++ sequences=extracted/exp_NNNTTGTNN.fastq.gz
++ map_dir=mappings/exp_NNNTTGTNN
++ rm -Rf mappings/exp_NNNTTGTNN
++ mkdir -p mappings/exp_NNNTTGTNN
++ iCount map -threads 1 -outdir mappings/exp_NNNTTGTNN -multimax 50 -mismatches 2 extracted/exp_NNNTTGTNN.fastq.gz ../star_index/hg19red
+Sep 06 15:18:53 ..... Started STAR run
+Sep 06 15:18:53 ..... Loading genome
+Sep 06 15:18:54 ..... Started mapping
+Sep 06 15:21:03 ..... Started sorting BAM
+Sep 06 15:21:04 ..... Finished successfully
+/tmp/iCount/starmap/tmpfnqvdehq_exp_NNNTTGTNN.fastq.gz
++ for barcode in '${barcodes//,/ }'
++ sequences=extracted/exp_NNNCAATNN.fastq.gz
++ map_dir=mappings/exp_NNNCAATNN
++ rm -Rf mappings/exp_NNNCAATNN
++ mkdir -p mappings/exp_NNNCAATNN
++ iCount map -threads 1 -outdir mappings/exp_NNNCAATNN -multimax 50 -mismatches 2 extracted/exp_NNNCAATNN.fastq.gz ../star_index/hg19red
+Sep 06 15:21:06 ..... Started STAR run
+Sep 06 15:21:06 ..... Loading genome
+Sep 06 15:21:07 ..... Started mapping
+Sep 06 15:22:28 ..... Started sorting BAM
+Sep 06 15:22:28 ..... Finished successfully
+/tmp/iCount/starmap/tmpklv5upl6_exp_NNNCAATNN.fastq.gz
++ for barcode in '${barcodes//,/ }'
++ sequences=extracted/exp_NNNACCTNN.fastq.gz
++ map_dir=mappings/exp_NNNACCTNN
++ rm -Rf mappings/exp_NNNACCTNN
++ mkdir -p mappings/exp_NNNACCTNN
++ iCount map -threads 1 -outdir mappings/exp_NNNACCTNN -multimax 50 -mismatches 2 extracted/exp_NNNACCTNN.fastq.gz ../star_index/hg19red
+Sep 06 15:22:30 ..... Started STAR run
+Sep 06 15:22:30 ..... Loading genome
+Sep 06 15:22:30 ..... Started mapping
+Sep 06 15:22:51 ..... Started sorting BAM
+Sep 06 15:22:51 ..... Finished successfully
+/tmp/iCount/starmap/tmpgo043777_exp_NNNACCTNN.fastq.gz
++ for barcode in '${barcodes//,/ }'
++ sequences=extracted/exp_NNNGGCGNN.fastq.gz
++ map_dir=mappings/exp_NNNGGCGNN
++ rm -Rf mappings/exp_NNNGGCGNN
++ mkdir -p mappings/exp_NNNGGCGNN
++ iCount map -threads 1 -outdir mappings/exp_NNNGGCGNN -multimax 50 -mismatches 2 extracted/exp_NNNGGCGNN.fastq.gz ../star_index/hg19red
+Sep 06 15:22:53 ..... Started STAR run
+Sep 06 15:22:53 ..... Loading genome
+Sep 06 15:22:53 ..... Started mapping
+Sep 06 15:26:23 ..... Started sorting BAM
+Sep 06 15:26:24 ..... Finished successfully
+/tmp/iCount/starmap/tmpouhu5dcy_exp_NNNGGCGNN.fastq.gz
+
+
+# step 7: identify and quantify cross-linked sites
+groupby="start"
++ groupby=start
+quant="cDNA"
++ quant=cDNA
+mismatches="2"
++ mismatches=2
+
+bed_dir="beds"
++ bed_dir=beds
+rm -Rf ${bed_dir}
++ rm -Rf beds
+mkdir -p ${bed_dir}
++ mkdir -p beds
+
+peaks_dir="peaks"
++ peaks_dir=peaks
+rm -Rf ${peaks_dir}
++ rm -Rf peaks
+mkdir -p ${peaks_dir}
++ mkdir -p peaks
+
+for barcode in ${barcodes//,/ }; do
+    map_dir="mappings/${ext_pref}_${barcode}"
+    bam="${map_dir}/Aligned.sortedByCoord.out.bam"
+
+    bed="${bed_dir}/hits_${barcode}_${groupby}_${quant}_unique.bed"
+    bedm="${bed_dir}/hits_${barcode}_${groupby}_${quant}_multi.bed"
+
+    iCount xlsites ${bam} ${bed} ${bedm} -mismatches ${mismatches} \
+                   -groupby ${groupby} -quant ${quant}
+
+
+    # step 8: perform peaks analysis
+    peaks="${peaks_dir}/peaks_${barcode}_${groupby}_${quant}_unique.bed"
+    scores="${peaks_dir}/peaks_${barcode}_${groupby}_${quant}_unique.tab"
+    iCount peaks "../${genes_annotation}" ${bed} ${peaks} ${scores} \
+                 -verbose no
+done
++ for barcode in '${barcodes//,/ }'
++ map_dir=mappings/exp_NNNGGTTNN
++ bam=mappings/exp_NNNGGTTNN/Aligned.sortedByCoord.out.bam
++ bed=beds/hits_NNNGGTTNN_start_cDNA_unique.bed
++ bedm=beds/hits_NNNGGTTNN_start_cDNA_multi.bed
++ iCount xlsites mappings/exp_NNNGGTTNN/Aligned.sortedByCoord.out.bam beds/hits_NNNGGTTNN_start_cDNA_unique.bed beds/hits_NNNGGTTNN_start_cDNA_multi.bed -mismatches 2 -groupby start -quant cDNA
+Reading BAM file mappings/exp_NNNGGTTNN/Aligned.sortedByCoord.out.bam
+grouping reads by their start
+allowing 2 mismatches in randomers
+ignore hits with MAPQ lower than 0
+ignore reads with more than 50 hits
+report on *cDNA* counts
+all records in BAM file: 21502
+reads not mapped: 8733
+mapped reads records (hits): 12769
+hits ignored because with low MAPQ: 0
+records used for quantification: 12769
+records with invalid randomer info in header: 0
+records with no randomer info: 0
+ten most frequent randomers:
+   TGTCT: 305
+   AGTCT: 269
+   AGTTT: 197
+   TGATT: 180
+   TGTTT: 175
+   AGCCT: 157
+   AGTGT: 142
+   AGCTT: 135
+   AGGTT: 129
+   TGACT: 118
+saved to BED file (uniquely mapped reads) beds/hits_NNNGGTTNN_start_cDNA_unique.bed
+saved to BED file (multi-mapped reads) beds/hits_NNNGGTTNN_start_cDNA_multi.bed
++ peaks=peaks/peaks_NNNGGTTNN_start_cDNA_unique.bed
++ scores=peaks/peaks_NNNGGTTNN_start_cDNA_unique.tab
++ iCount peaks ../genomes/hs84.genes.bed.gz beds/hits_NNNGGTTNN_start_cDNA_unique.bed peaks/peaks_NNNGGTTNN_start_cDNA_unique.bed peaks/peaks_NNNGGTTNN_start_cDNA_unique.tab -verbose no
+Performing peak analysis on beds/hits_NNNGGTTNN_start_cDNA_unique.bed
+using annotation from ../genomes/hs84.genes.bed.gz
+parameter values:
+   hw=3
+   fdr=0.050000
+   perms=100
+Bed file with significant peaks saved to peaks/peaks_NNNGGTTNN_start_cDNA_unique.bed
+Scores for each cross-linked position saved to peaks/peaks_NNNGGTTNN_start_cDNA_unique.tab
++ for barcode in '${barcodes//,/ }'
++ map_dir=mappings/exp_NNNTTGTNN
++ bam=mappings/exp_NNNTTGTNN/Aligned.sortedByCoord.out.bam
++ bed=beds/hits_NNNTTGTNN_start_cDNA_unique.bed
++ bedm=beds/hits_NNNTTGTNN_start_cDNA_multi.bed
++ iCount xlsites mappings/exp_NNNTTGTNN/Aligned.sortedByCoord.out.bam beds/hits_NNNTTGTNN_start_cDNA_unique.bed beds/hits_NNNTTGTNN_start_cDNA_multi.bed -mismatches 2 -groupby start -quant cDNA
+Reading BAM file mappings/exp_NNNTTGTNN/Aligned.sortedByCoord.out.bam
+grouping reads by their start
+allowing 2 mismatches in randomers
+ignore hits with MAPQ lower than 0
+ignore reads with more than 50 hits
+report on *cDNA* counts
+all records in BAM file: 242590
+reads not mapped: 108773
+mapped reads records (hits): 133817
+hits ignored because with low MAPQ: 0
+records used for quantification: 133817
+records with invalid randomer info in header: 0
+records with no randomer info: 0
+ten most frequent randomers:
+   ACGTC: 1881
+   CTGTC: 1411
+   CCGTC: 1266
+   TTGTC: 1163
+   ATGTC: 1117
+   TCGTC: 931
+   GCGTC: 871
+   TCATC: 864
+   CAGTC: 748
+   ACGCC: 683
+saved to BED file (uniquely mapped reads) beds/hits_NNNTTGTNN_start_cDNA_unique.bed
+saved to BED file (multi-mapped reads) beds/hits_NNNTTGTNN_start_cDNA_multi.bed
++ peaks=peaks/peaks_NNNTTGTNN_start_cDNA_unique.bed
++ scores=peaks/peaks_NNNTTGTNN_start_cDNA_unique.tab
++ iCount peaks ../genomes/hs84.genes.bed.gz beds/hits_NNNTTGTNN_start_cDNA_unique.bed peaks/peaks_NNNTTGTNN_start_cDNA_unique.bed peaks/peaks_NNNTTGTNN_start_cDNA_unique.tab -verbose no
+Performing peak analysis on beds/hits_NNNTTGTNN_start_cDNA_unique.bed
+using annotation from ../genomes/hs84.genes.bed.gz
+parameter values:
+   hw=3
+   fdr=0.050000
+   perms=100
+Bed file with significant peaks saved to peaks/peaks_NNNTTGTNN_start_cDNA_unique.bed
+Scores for each cross-linked position saved to peaks/peaks_NNNTTGTNN_start_cDNA_unique.tab
++ for barcode in '${barcodes//,/ }'
++ map_dir=mappings/exp_NNNCAATNN
++ bam=mappings/exp_NNNCAATNN/Aligned.sortedByCoord.out.bam
++ bed=beds/hits_NNNCAATNN_start_cDNA_unique.bed
++ bedm=beds/hits_NNNCAATNN_start_cDNA_multi.bed
++ iCount xlsites mappings/exp_NNNCAATNN/Aligned.sortedByCoord.out.bam beds/hits_NNNCAATNN_start_cDNA_unique.bed beds/hits_NNNCAATNN_start_cDNA_multi.bed -mismatches 2 -groupby start -quant cDNA
+Reading BAM file mappings/exp_NNNCAATNN/Aligned.sortedByCoord.out.bam
+grouping reads by their start
+allowing 2 mismatches in randomers
+ignore hits with MAPQ lower than 0
+ignore reads with more than 50 hits
+report on *cDNA* counts
+all records in BAM file: 145665
+reads not mapped: 64031
+mapped reads records (hits): 81634
+hits ignored because with low MAPQ: 0
+records used for quantification: 81634
+records with invalid randomer info in header: 0
+records with no randomer info: 0
+ten most frequent randomers:
+   TGTCC: 932
+   TGTCT: 853
+   TGTCA: 768
+   TCGTC: 762
+   CCTCC: 752
+   CAGCC: 732
+   AGTCC: 684
+   TCGCA: 654
+   TCGCT: 634
+   ACGCC: 633
+saved to BED file (uniquely mapped reads) beds/hits_NNNCAATNN_start_cDNA_unique.bed
+saved to BED file (multi-mapped reads) beds/hits_NNNCAATNN_start_cDNA_multi.bed
++ peaks=peaks/peaks_NNNCAATNN_start_cDNA_unique.bed
++ scores=peaks/peaks_NNNCAATNN_start_cDNA_unique.tab
++ iCount peaks ../genomes/hs84.genes.bed.gz beds/hits_NNNCAATNN_start_cDNA_unique.bed peaks/peaks_NNNCAATNN_start_cDNA_unique.bed peaks/peaks_NNNCAATNN_start_cDNA_unique.tab -verbose no
+Performing peak analysis on beds/hits_NNNCAATNN_start_cDNA_unique.bed
+using annotation from ../genomes/hs84.genes.bed.gz
+parameter values:
+   hw=3
+   fdr=0.050000
+   perms=100
+Bed file with significant peaks saved to peaks/peaks_NNNCAATNN_start_cDNA_unique.bed
+Scores for each cross-linked position saved to peaks/peaks_NNNCAATNN_start_cDNA_unique.tab
++ for barcode in '${barcodes//,/ }'
++ map_dir=mappings/exp_NNNACCTNN
++ bam=mappings/exp_NNNACCTNN/Aligned.sortedByCoord.out.bam
++ bed=beds/hits_NNNACCTNN_start_cDNA_unique.bed
++ bedm=beds/hits_NNNACCTNN_start_cDNA_multi.bed
++ iCount xlsites mappings/exp_NNNACCTNN/Aligned.sortedByCoord.out.bam beds/hits_NNNACCTNN_start_cDNA_unique.bed beds/hits_NNNACCTNN_start_cDNA_multi.bed -mismatches 2 -groupby start -quant cDNA
+Reading BAM file mappings/exp_NNNACCTNN/Aligned.sortedByCoord.out.bam
+grouping reads by their start
+allowing 2 mismatches in randomers
+ignore hits with MAPQ lower than 0
+ignore reads with more than 50 hits
+report on *cDNA* counts
+all records in BAM file: 40983
+reads not mapped: 16573
+mapped reads records (hits): 24410
+hits ignored because with low MAPQ: 0
+records used for quantification: 24410
+records with invalid randomer info in header: 0
+records with no randomer info: 0
+ten most frequent randomers:
+   TCTCC: 492
+   AGTCC: 474
+   TGTCC: 291
+   ACTCC: 270
+   CGTCT: 269
+   CGTCC: 264
+   CGTCA: 251
+   CGTCG: 226
+   AGTCG: 221
+   AGGTT: 189
+saved to BED file (uniquely mapped reads) beds/hits_NNNACCTNN_start_cDNA_unique.bed
+saved to BED file (multi-mapped reads) beds/hits_NNNACCTNN_start_cDNA_multi.bed
++ peaks=peaks/peaks_NNNACCTNN_start_cDNA_unique.bed
++ scores=peaks/peaks_NNNACCTNN_start_cDNA_unique.tab
++ iCount peaks ../genomes/hs84.genes.bed.gz beds/hits_NNNACCTNN_start_cDNA_unique.bed peaks/peaks_NNNACCTNN_start_cDNA_unique.bed peaks/peaks_NNNACCTNN_start_cDNA_unique.tab -verbose no
+Performing peak analysis on beds/hits_NNNACCTNN_start_cDNA_unique.bed
+using annotation from ../genomes/hs84.genes.bed.gz
+parameter values:
+   hw=3
+   fdr=0.050000
+   perms=100
+Bed file with significant peaks saved to peaks/peaks_NNNACCTNN_start_cDNA_unique.bed
+Scores for each cross-linked position saved to peaks/peaks_NNNACCTNN_start_cDNA_unique.tab
++ for barcode in '${barcodes//,/ }'
++ map_dir=mappings/exp_NNNGGCGNN
++ bam=mappings/exp_NNNGGCGNN/Aligned.sortedByCoord.out.bam
++ bed=beds/hits_NNNGGCGNN_start_cDNA_unique.bed
++ bedm=beds/hits_NNNGGCGNN_start_cDNA_multi.bed
++ iCount xlsites mappings/exp_NNNGGCGNN/Aligned.sortedByCoord.out.bam beds/hits_NNNGGCGNN_start_cDNA_unique.bed beds/hits_NNNGGCGNN_start_cDNA_multi.bed -mismatches 2 -groupby start -quant cDNA
+Reading BAM file mappings/exp_NNNGGCGNN/Aligned.sortedByCoord.out.bam
+grouping reads by their start
+allowing 2 mismatches in randomers
+ignore hits with MAPQ lower than 0
+ignore reads with more than 50 hits
+report on *cDNA* counts
+all records in BAM file: 397336
+reads not mapped: 176657
+mapped reads records (hits): 220679
+hits ignored because with low MAPQ: 0
+records used for quantification: 220679
+records with invalid randomer info in header: 0
+records with no randomer info: 0
+ten most frequent randomers:
+   TGTTC: 12324
+   AGTTC: 8754
+   CGTTC: 5533
+   TGTCC: 5491
+   AGTCC: 4231
+   AGTAC: 3210
+   TGTAC: 3028
+   CATTC: 2341
+   TGTCT: 2166
+   AGTCT: 2163
+saved to BED file (uniquely mapped reads) beds/hits_NNNGGCGNN_start_cDNA_unique.bed
+saved to BED file (multi-mapped reads) beds/hits_NNNGGCGNN_start_cDNA_multi.bed
++ peaks=peaks/peaks_NNNGGCGNN_start_cDNA_unique.bed
++ scores=peaks/peaks_NNNGGCGNN_start_cDNA_unique.tab
++ iCount peaks ../genomes/hs84.genes.bed.gz beds/hits_NNNGGCGNN_start_cDNA_unique.bed peaks/peaks_NNNGGCGNN_start_cDNA_unique.bed peaks/peaks_NNNGGCGNN_start_cDNA_unique.tab -verbose no
+Performing peak analysis on beds/hits_NNNGGCGNN_start_cDNA_unique.bed
+using annotation from ../genomes/hs84.genes.bed.gz
+parameter values:
+   hw=3
+   fdr=0.050000
+   perms=100
+Bed file with significant peaks saved to peaks/peaks_NNNGGCGNN_start_cDNA_unique.bed
+Scores for each cross-linked position saved to peaks/peaks_NNNGGCGNN_start_cDNA_unique.tab
+
+popd
++ popd
+/tmp/iCount/tests/functional/pipeline/examples

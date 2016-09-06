@@ -210,12 +210,14 @@ def xlsites(args):
     print('Reading BAM file {:s}'.format(args.bam))
     print('grouping reads by their {:s}'.format(args.groupby))
     print('allowing {:d} mismatches in randomers'.format(args.mismatches))
+    print('ignore hits with MAPQ lower than {:d}'.format(args.mapqth))
     print('ignore reads with more than {:d} hits'.format(args.multimax))
     print('report on *{:s}* counts'.format(args.quant))
     s = iCount.mapping.xlsites.run(args.bam, args.unique, args.multi,
                                    group_by=args.groupby,
                                    quant=args.quant,
                                    randomer_mismatches=args.mismatches,
+                                   mapq_th=args.mapqth,
                                    multimax=args.multimax)
     if s is None:
         print('Error running command.')
@@ -226,8 +228,8 @@ def xlsites(args):
     print('all records in BAM file: {:d}'.format(all_recs))
     print('reads not mapped: {:d}'.format(notmapped_recs))
     print('mapped reads records (hits): {:d}'.format(mapped_recs))
-    print('hits ignored because with low MAPQ {:d}'.format(lowmapq_recs))
-    print('records used for qunatification: {:d}'.format(used_recs))
+    print('hits ignored because with low MAPQ: {:d}'.format(lowmapq_recs))
+    print('records used for quantification: {:d}'.format(used_recs))
     print('records with invalid randomer info in header: {:d}'.format(invalidrandomer_recs))
     print('records with no randomer info: {:d}'.format(norandomer_recs))
     print('ten most frequent randomers:')
@@ -325,7 +327,9 @@ def peaks(args):
     iCount.analysis.peaks.run(args.annotation, args.sites, args.peaks,
                               fout_scores=args.scores,
                               hw=args.hw, fdr=args.fdr, perms=args.perms,
-                              features=args.features)
+                              features=args.features,
+                              report_progress=(args.verbose == 'yes'),
+                              )
     print('Bed file with significant peaks saved to {:s}'.format(args.peaks))
     print('Scores for each cross-linked position saved to {:s}'.format(args.scores))
 

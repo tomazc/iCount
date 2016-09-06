@@ -54,6 +54,10 @@ params_opt = [
         'multimax', 'int_range', (50, 1, 300), False,
         'Consider only reads with this number of hits or fewer.'
     ),
+    (
+        'mapqth', 'int_range', (0, 0, 255), False,
+        'Consider only reads with at least this mapping quality.'
+    ),
 ]
 
 params_pos = [

@@ -7,18 +7,22 @@ genome_dir="genomes"
 mkdir -p ${genome_dir}
 
 # create analysis output folder
-analysis_dir="hnRNPC"
+analysis_dir="hnRNPCred"
 mkdir -p ${analysis_dir}
 
 
 ##############################
 # ## general steps
 # step 1: download genome sequence
-genome="hs84.fa.gz"
+genome="hs84red.fa.gz"
 if [ ! -f "${genome_dir}/${genome}" ];
 then
-iCount sequence -release 84 -species homo_sapiens \
+iCount sequence -release 84 -species homo_sapiens -chromosomes "21,MT" \
                 -target_dir ${genome_dir} -target_fname ${genome}
+
+mv "${genome_dir}/hs84red.chr21_MT.fa.gz" "${genome_dir}/${genome}"
+mv "${genome_dir}/hs84red.chr21_MT.fa.gz.chrom_length.txt" \
+   "${genome_dir}/hs84red.fa.gz.chrom_length.txt"
 fi
 genome="${genome_dir}/${genome}"
 
@@ -40,7 +44,7 @@ fi
 
 
 # step 3: index genome
-genome_index="star_index/hg19"
+genome_index="star_index/hg19red"
 if [ ! -d ${genome_index} ];
 then
     mkdir -p ${genome_index}
@@ -59,7 +63,7 @@ fastq="hnRNPC.fq.gz"
 if [ ! -f ${fastq} ];
 then
     url="http://icount.fri.uni-lj.si/data/20101116_LUjh03/SLX-2605\
-.CRIRUN_501.s_4.sequence.txt.gz"
+.CRIRUN_501.s_4.sequence.reduced.txt.gz"
     wget --no-verbose -O ${fastq} ${url}
 fi
 
@@ -119,7 +123,8 @@ for barcode in ${barcodes//,/ }; do
     # step 8: perform peaks analysis
     peaks="${peaks_dir}/peaks_${barcode}_${groupby}_${quant}_unique.bed"
     scores="${peaks_dir}/peaks_${barcode}_${groupby}_${quant}_unique.tab"
-    iCount peaks "../${genes_annotation}" ${bed} ${peaks} ${scores}
+    iCount peaks "../${genes_annotation}" ${bed} ${peaks} ${scores} \
+                 -verbose no
 done
 
 popd
