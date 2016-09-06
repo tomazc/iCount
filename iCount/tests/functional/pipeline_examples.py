@@ -69,8 +69,16 @@ class TestPipeline(unittest.TestCase):
 
             cur_fn = cur_results[script]
 
-            ref_lines[script] = _read_file(ref_fn)
-            cur_lines[script] = _read_file(cur_fn)
+            # remove temporary and time stamped entries
+            ref = _read_file(ref_fn)
+            ref = [r for r in ref if '/tmp/iCount/star' not in r]
+            ref = [r for r in ref if 'URL:http://icount' not in r]
+            ref_lines[script] = ref
+
+            cur = _read_file(cur_fn)
+            cur = [r for r in cur if '/tmp/iCount/star' not in r]
+            cur = [r for r in cur if 'URL:http://icount' not in r]
+            cur_lines[script] = cur
 
             if ref_lines[script] == cur_lines[script]:
                 self.files_to_remove.append(cur_fn)
@@ -79,17 +87,7 @@ class TestPipeline(unittest.TestCase):
             self.assertIn(script, cur_lines)
             self.assertIn(script, ref_lines)
 
-            # remove temporary and time stamped entries
-            ref = ref_lines[script]
-            cur = cur_lines[script]
-
-            red_ref = [r for r in ref if '/tmp/iCount/star' not in r]
-            red_cur = [r for r in cur if '/tmp/iCount/star' not in r]
-
-            red_ref = [r for r in red_ref if 'URL:http://icount' not in r]
-            red_cur = [r for r in red_cur if 'URL:http://icount' not in r]
-
-            self.assertEqual(red_ref, red_cur)
+            self.assertEqual(ref_lines[script], cur_lines[script])
 
 if __name__ == '__main__':
     unittest.main()
