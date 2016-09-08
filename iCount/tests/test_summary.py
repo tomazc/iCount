@@ -5,31 +5,10 @@ import tempfile
 import pybedtools
 
 from iCount.analysis import summary
+from iCount.tests.utils import make_file_from_list, make_list_from_file
 
 
-def make_file_from_list(data, bedtool=True):
-    """Return path to file with the content from `data` (list of lists)"""
-    tfile = tempfile.NamedTemporaryFile(mode='w+', delete=False)
-    if bedtool:
-        pybedtools.BedTool(pybedtools.create_interval_from_list(list_)
-                           for list_ in data).saveas(tfile.name)
-    else:
-        for list_ in data:
-            tfile.write('\t'.join(map(str, list_)) + '\n')
-    tfile.close()
-    return os.path.abspath(tfile.name)
-
-
-def make_list_from_file(fname, fields_separator=None):
-    """Read file to list of lists"""
-    data = []
-    with open(fname) as file_:
-        for line in file_:
-            data.append(line.strip().split(fields_separator))
-    return data
-
-
-def test_make_types_length(annotation, subtype='biotype', excluded_types=None):
+def _make_types_length(annotation, subtype='biotype', excluded_types=None):
     """
     Run function `make_types_length_file` with data from `annotation`
     """
@@ -40,8 +19,8 @@ def test_make_types_length(annotation, subtype='biotype', excluded_types=None):
         excluded_types=excluded_types), fields_separator='\t')
 
 
-def test_make_summary_report(annotation, cross_links, chrom_lengths,
-                             subtype='biotype', excluded_types=None):
+def _make_summary_report(annotation, cross_links, chrom_lengths,
+                         subtype='biotype', excluded_types=None):
     """
     Run function `make_summary_report` with input/output data as lists.
     """
@@ -74,7 +53,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
         expected = [
             ['CDS A', '20']]
 
-        self.assertEqual(expected, test_make_types_length(annotation))
+        self.assertEqual(expected, _make_types_length(annotation))
 
     def test_merge_respect_strand(self):
         """
@@ -88,7 +67,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
         expected = [
             ['CDS A', '20']]
 
-        self.assertEqual(expected, test_make_types_length(annotation))
+        self.assertEqual(expected, _make_types_length(annotation))
 
     def test_mixed_types(self):
         """Defect different types in same position correctly"""
@@ -104,7 +83,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['ncRNA A', '11'],
             ['ncRNA C', '11']]
 
-        self.assertEqual(expected, test_make_types_length(annotation))
+        self.assertEqual(expected, _make_types_length(annotation))
 
     def test_shuffled_input(self):
         """Unsorted input does not make difference."""
@@ -118,7 +97,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['intron B', '10'],
             ['ncRNA C', '10']]
 
-        self.assertEqual(expected, test_make_types_length(annotation))
+        self.assertEqual(expected, _make_types_length(annotation))
 
     def test_subtype_param1(self):
         """Subtype parameter can be empty: type is just 3rd column."""
@@ -129,7 +108,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['intron', '10'],
             ['ncRNA', '10']]
 
-        self.assertEqual(expected, test_make_types_length(
+        self.assertEqual(expected, _make_types_length(
             annotation, subtype=None))
 
     def test_subtype_param2(self):
@@ -141,7 +120,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['intron A', '10'],
             ['ncRNA C', '10']]
 
-        self.assertEqual(expected, test_make_types_length(
+        self.assertEqual(expected, _make_types_length(
             annotation, subtype='attr42'))
 
     def test_excluded_types(self):
@@ -152,7 +131,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
         expected = [
             ['ncRNA C', '10']]
 
-        self.assertEqual(expected, test_make_types_length(
+        self.assertEqual(expected, _make_types_length(
             annotation, excluded_types=['intron']))
 
 
@@ -172,7 +151,7 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "A";']]
         message = r"No intersections found. This may be caused by .*"
         with self.assertRaisesRegex(ValueError, message):
-            test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+            _make_summary_report(annotation, cross_links, self.chrom_lengths)
 
     def test_diff_only_strand1(self):
         """Same coords but diff strand and same type."""
@@ -186,7 +165,7 @@ class TestMakeSummaryReport(unittest.TestCase):
             self.header,
             ['CDS A', '20', '0.1', '2', '1.0', '10.0', '5', '1.0', '10.0']]
 
-        out = test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+        out = _make_summary_report(annotation, cross_links, self.chrom_lengths)
         self.assertEqual(out, expected)
 
     def test_diff_only_strand2(self):
@@ -202,7 +181,7 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['CDS A', '10', '0.05', '1', '0.5', '10.0', '3', '0.75', '15.0'],
             ['CDS B', '10', '0.05', '1', '0.5', '10.0', '1', '0.25', '5.0']]
 
-        out = test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+        out = _make_summary_report(annotation, cross_links, self.chrom_lengths)
         self.assertEqual(out, expected)
 
     def test_many_regions(self):
@@ -221,7 +200,7 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['ncRNA A', '10', '0.05', '1', '0.25', '5.0', '1', '0.25', '5.0'],
             ['ncRNA C', '20', '0.1', '1', '0.25', '2.5', '1', '0.25', '2.5']]
 
-        out = test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+        out = _make_summary_report(annotation, cross_links, self.chrom_lengths)
         self.assertEqual(out, expected)
 
     def test_unsorted_input(self):
@@ -237,7 +216,7 @@ class TestMakeSummaryReport(unittest.TestCase):
             self.header,
             ['CDS A', '25', '0.125', '2', '1.0', '8.0', '3', '1.0', '8.0']]
 
-        out = test_make_summary_report(annotation, cross_links, self.chrom_lengths)
+        out = _make_summary_report(annotation, cross_links, self.chrom_lengths)
         self.assertEqual(out, expected)
 
     def test_subtype_param1(self):
@@ -251,7 +230,7 @@ class TestMakeSummaryReport(unittest.TestCase):
             self.header,
             ['CDS', '10', '0.05', '1', '1.0', '20.0', '1', '1.0', '20.0']]
 
-        out = test_make_summary_report(annotation, cross_links,
+        out = _make_summary_report(annotation, cross_links,
                                        self.chrom_lengths, subtype=None)
         self.assertEqual(out, expected)
 
@@ -269,7 +248,7 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['CDS B', '10', '0.05', '1', '0.5', '10.0', '1', '0.5', '10.0'],
             ['intron B', '4', '0.02', '0', '0.0', '0.0', '0', '0.0', '0.0']]
 
-        out = test_make_summary_report(annotation, cross_links,
+        out = _make_summary_report(annotation, cross_links,
                                        self.chrom_lengths, subtype='attr42')
         self.assertEqual(out, expected)
 
@@ -284,7 +263,7 @@ class TestMakeSummaryReport(unittest.TestCase):
             self.header,
             ['ncRNA C', '20', '0.1', '1', '1.0', '10.0', '1', '1.0', '10.0']]
 
-        out = test_make_summary_report(annotation, cross_links,
+        out = _make_summary_report(annotation, cross_links,
                                        self.chrom_lengths, excluded_types=['intron'])
         self.assertEqual(out, expected)
 

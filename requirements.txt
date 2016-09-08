@@ -1,9 +1,5 @@
-jupyter
 cutadapt==1.10
-cython
 numpy
-scipy
-matplotlib
-pandas
 pysam
 pybedtools
+pandas

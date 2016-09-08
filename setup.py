@@ -73,6 +73,16 @@ setup(name='iCount',
       include_package_data=True,
       zip_safe=False,
       install_requires=install_requires,
+      tests_require=['pylint', 'pytest-cov', 'pycodestyle', 'pydocstyle', 'coverage'],
+      extras_require={
+          'test': [
+              'pylint',
+              'pytest-cov',
+              'pycodestyle',
+              'pydocstyle',
+              'coverage'
+          ],
+      },
       test_suite='iCount.tests.suite',
       scripts=scripts,
       )
