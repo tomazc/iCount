@@ -5,27 +5,10 @@ import tempfile
 import pybedtools
 
 from iCount.files.bed import merge_bed
+from iCount.tests.utils import make_file_from_list, make_list_from_file
 
 
-def make_file_from_list(data):
-    """Return path to file with the content from `data` (list of lists)"""
-    tfile = tempfile.NamedTemporaryFile(delete=False)
-    pybedtools.BedTool(pybedtools.create_interval_from_list(list_)
-                       for list_ in data).saveas(tfile.name)
-    tfile.close()
-    return os.path.abspath(tfile.name)
-
-
-def make_list_from_file(fname, fields_separator=None):
-    """Read file to list of lists"""
-    data = []
-    with open(fname) as file_:
-        for line in file_:
-            data.append(line.strip().split(fields_separator))
-    return data
-
-
-def test_merge_bed(data):
+def merge_bed_wrapper(data):
     """
     TODO
     """
@@ -69,7 +52,7 @@ class TestMergeBed(unittest.TestCase):
             ['1', '5', '6', '.', '1', '-'],
             ['1', '8', '9', '.', '1', '+'],
             ['2', '5', '6', '.', '1', '+']]
-        out = test_merge_bed([bed1])
+        out = merge_bed_wrapper([bed1])
 
         self.assertEqual(out, expected)
 
@@ -89,7 +72,7 @@ class TestMergeBed(unittest.TestCase):
             ['1', '5', '6', '.', '1', '-'],
             ['1', '8', '9', '.', '1', '+'],
             ['2', '5', '6', '.', '1', '+']]
-        out = test_merge_bed([bed1, bed2])
+        out = merge_bed_wrapper([bed1, bed2])
 
         self.assertEqual(out, expected)
 

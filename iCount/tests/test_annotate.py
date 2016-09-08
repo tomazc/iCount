@@ -5,28 +5,11 @@ import tempfile
 import pybedtools
 
 from iCount.analysis import annotate
+from iCount.tests.utils import make_file_from_list, make_list_from_file
 
 
-def make_file_from_list(data):
-    """Return path to file with the content from `data` (list of lists)"""
-    tfile = tempfile.NamedTemporaryFile(delete=False)
-    pybedtools.BedTool(pybedtools.create_interval_from_list(list_)
-                       for list_ in data).saveas(tfile.name)
-    tfile.close()
-    return os.path.abspath(tfile.name)
-
-
-def make_list_from_file(fname, fields_separator=None):
-    """Read file to list of lists"""
-    data = []
-    with open(fname) as file_:
-        for line in file_:
-            data.append(line.strip().split(fields_separator))
-    return data
-
-
-def test_template(cross_links, annotation, subtype='biotype',
-                  excluded_types=None):
+def template(cross_links, annotation, subtype='biotype',
+             excluded_types=None):
     """
     Utility function for testing iCount.analysis.annotate
 
@@ -69,7 +52,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
 
         message = r"No intersections found. This may be caused by .*"
         with self.assertRaisesRegex(ValueError, message):
-            test_template(cross_links, annotation)
+            template(cross_links, annotation)
 
     def test_basic(self):
         """Detect single cross_link and annotate it."""
@@ -79,7 +62,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "ABC";']]
         expected = [
             ['1', '15', '16', 'CDS ABC', '5', '+']]
-        self.assertEqual(test_template(cross_links, annotation), expected)
+        self.assertEqual(template(cross_links, annotation), expected)
 
     def test_multiple_annotations(self):
         """Single cross_link intersects with multiple annotations."""
@@ -95,7 +78,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "A";']]
         expected = [
             ['1', '15', '16', 'CDS A, CDS B, ncRNA A', '5', '+']]
-        self.assertEqual(test_template(cross_links, annotation), expected)
+        self.assertEqual(template(cross_links, annotation), expected)
 
     def test_shuffled_contents(self):
         """Result should be sorted, even if inputs are not."""
@@ -109,7 +92,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             ['1', '14', '15', 'CDS A', '5', '+'],
             ['1', '15', '16', 'CDS A', '5', '+'],
             ['1', '16', '17', 'CDS A', '5', '+']]
-        self.assertEqual(test_template(cross_links, annotation), expected)
+        self.assertEqual(template(cross_links, annotation), expected)
 
     def test_strand_specific(self):
         """Two cross-links with same coordinate, but different strand."""
@@ -124,7 +107,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         expected = [
             ['1', '15', '16', 'intron A, intron B, ncRNA A', '5', '+'],
             ['1', '15', '16', 'ncRNA B', '5', '-']]
-        self.assertEqual(test_template(cross_links, annotation), expected)
+        self.assertEqual(template(cross_links, annotation), expected)
 
     def test_subtype_param1(self):
         """Subtype parameter can be empty: type is just 3rd column."""
@@ -137,7 +120,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         expected = [
             ['1', '5', '6', 'intron, ncRNA', '1', '+']]
 
-        self.assertEqual(test_template(
+        self.assertEqual(template(
             cross_links, annotation, subtype=None), expected)
 
     def test_subtype_param2(self):
@@ -151,7 +134,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         expected = [
             ['1', '5', '6', 'intron A, intron B, ncRNA C', '1', '+']]
 
-        self.assertEqual(test_template(
+        self.assertEqual(template(
             cross_links, annotation, subtype='attr42'), expected)
 
     def test_excluded_types(self):
@@ -165,7 +148,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         expected = [
             ['1', '5', '6', 'ncRNA C', '1', '+']]
 
-        self.assertEqual(test_template(
+        self.assertEqual(template(
             cross_links, annotation, excluded_types=['intron']), expected)
 
 
