@@ -2,9 +2,7 @@ language: python
 
 sudo: false   # use container-based infrastructure
 
-python:
-    - "3.4"
-    - "3.5"
+dist: trusty
 
 addons:
     apt:
@@ -25,21 +23,34 @@ before_cache:   # prevent logs from caching
 
 before_install:
     - pip install -U setuptools pip wheel
-    - pip install codecov
 
 install:
     - travis_wait pip install -r requirements.txt
     - pip install .
+    - pip install coverage
+    - pip install tox
     - wget https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2.26.0.tar.gz
     - tar -zxvf bedtools-2.26.0.tar.gz
     - pushd bedtools2 && make && popd
     - export PATH=$PATH:$PWD/bedtools2/bin/
 
+matrix:
+  include:
+    - env: TOX_ENV=py34
+      python: "3.4"
+    - env: TOX_ENV=py35
+      python: "3.5"
+    - env: TOX_ENV=linters
+      python: "3.5"
+
 script:
-    - coverage run setup.py test
+  - tox -e $TOX_ENV
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -t b99bec7c-6000-4438-ba89-e7c2cddfefa4
+
+  - pip install codecov
+  - codecov -t b99bec7c-6000-4438-ba89-e7c2cddfefa4
 
 notifications:
     email: false
+
