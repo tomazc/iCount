@@ -61,7 +61,6 @@ def reverse_strand(data):
         return [
             data[i][:6] + [rstrands[i]] + data[i][7:] for i in range(len(data))]
 
-
 def make_sequence(size):
     """
     Makes random DNA segment of length `size`

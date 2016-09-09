@@ -125,33 +125,30 @@ def cum_prob_within_window_nopos(pos_val, total_hits, hw=3):
     return cumulative_prob(vals_extended, total_hits)
 
 
-def diff_ps(ps1, ps2):
-    return sum(abs(p1-p2) for p1, p2 in zip(ps1, ps2))
-
-
-def get_rnd_distrib(size, total_hits, hw, perms=100):
-    """The simplest (and fastest) permutation test.
-
-    Not used by default.
-    """
-    rnd_cns = numpy.zeros(total_hits+1)
-    for i in range(perms):
-        rnd_hits = Counter(numpy.random.randint(size, size=total_hits))
-        rnd_hits_extended = sum_within_window_nopos(rnd_hits.items(), hw)
-        for v in rnd_hits_extended:
-            rnd_cns[v] += 1
-
-    s = sum(rnd_cns)
-    if s > 0:
-        rnd_ps = rnd_cns / s
-    else:
-        rnd_ps = rnd_cns
-
-    cum_prob_ret = numpy.cumsum(rnd_ps[::-1])
-    return cum_prob_ret[::-1]
+# def get_rnd_distrib(size, total_hits, hw, perms=100):
+#     """The simplest (and fastest) permutation test.
+#
+#     Not used by default.
+#     """
+#     rnd_cns = numpy.zeros(total_hits+1)
+#     for i in range(perms):
+#         rnd_hits = Counter(numpy.random.randint(size, size=total_hits))
+#         rnd_hits_extended = sum_within_window_nopos(rnd_hits.items(), hw)
+#         for v in rnd_hits_extended:
+#             rnd_cns[v] += 1
+#
+#     s = sum(rnd_cns)
+#     if s > 0:
+#         rnd_ps = rnd_cns / s
+#     else:
+#         rnd_ps = rnd_cns
+#
+#     cum_prob_ret = numpy.cumsum(rnd_ps[::-1])
+#     return cum_prob_ret[::-1]
 
 
 ps_cache = {}
+
 
 def get_avg_rnd_distrib(size, total_hits, hw, perms=100):
     """Return background distribution of peak heights for given region size
@@ -243,8 +240,8 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
             score = val
             fdr_score = val2fdr[round(val_extended)]
             out_recs_scores.setdefault(chrom, {}).\
-                            setdefault((p, strand), []).\
-                            append((fdr_score, name, score, val_extended))
+                setdefault((p, strand), []).\
+                append((fdr_score, name, score, val_extended))
 
     fout_peaks = iCount.files.gz_open(fout_peaks, 'wt')
     if fout_scores is not None:
@@ -263,9 +260,9 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
                     fout_scores.write(
                         '{:s}\t{:d}\t{:s}\t{:s}\t{:s}\t{:s}\t'
                         '{:.6f}\n'.format(chrom, p, strand, name,
-                                        _f2s(score, dec=6),
-                                        _f2s(val_extended, dec=6), fdr_score
-                                        )
+                                          _f2s(score, dec=6),
+                                          _f2s(val_extended, dec=6), fdr_score
+                                          )
                     )
 
             # report minimum fdr_score for each position in BED6
