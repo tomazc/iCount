@@ -19,7 +19,6 @@ def decompress_to_tempfile(fname, context='misc'):
         shutil.copyfileobj(fin, fout)
         fin.close()
         fout.close()
-        print(fout.name)
         return fout.name
 
     return fname
