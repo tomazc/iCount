@@ -10,7 +10,7 @@ params_opt = []
 params_pos = []
 
 
-def run():
+def run(in_dir='.'):
     """Creates an examples subfolder with example scripts.
 
     This will create an examples subfolder in current working directory and
@@ -20,7 +20,7 @@ def run():
     :return: None
     """
 
-    examples_folder = os.path.abspath(os.path.join('.', 'examples'))
+    examples_folder = os.path.abspath(os.path.join(in_dir, 'examples'))
     if os.path.exists(examples_folder):
         print('Examples folder already exists: {:s}'.format(examples_folder))
         print('Scripts will NOT be copied into it.')

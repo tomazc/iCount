@@ -1,7 +1,6 @@
 from . import annotate
 from . import clusters
 from . import group
-from . import iCLIP
 from . import kmers
 from . import peaks
 from . import rnamaps
