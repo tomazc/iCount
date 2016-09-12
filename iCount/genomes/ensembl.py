@@ -10,8 +10,6 @@ import shutil
 import tempfile
 import subprocess
 
-import iCount
-
 BASE_URL = 'ftp.ensembl.org'
 
 MIN_RELEASE_SUPPORTED = 59
@@ -43,12 +41,15 @@ def get_ftp_instance():
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
 def get_release_list():
     """
-    Get list of available releases
+    Get list of available ENSEMBL releases.
 
     Only allows ENSEMBL releases from {0} - {1}.
 
-    :return: list of available releases - elements are numbers of type str
-    :rtype: list
+    Returns
+    -------
+    list
+        List of available releases
+
     """
     ftp = get_ftp_instance()
     # set current working directory
@@ -65,12 +66,18 @@ def get_release_list():
 
 def get_species_list(release):
     """
-    Get list of species for given release
+    Get list of species for given release.
 
-    :param str release: the release number of type str or int
-    :return: list of species - elements are latin_names
-    :rtype: list
-    :raises ValueError: if no species are found for given release
+    Parameters
+    ----------
+    release : str
+        The release number of type str or int.
+
+    Returns
+    -------
+    list
+        List of species.
+
     """
     ftp = get_ftp_instance()
     ftp.cwd('pub/' + 'release-' + str(release) + '/fasta/')
@@ -83,16 +90,27 @@ def get_species_list(release):
 
 def download_annotation(release, species, target_dir=None, target_fname=None):
     """
-    Downloads annotation file for given release and species
+    Download annotation in GTF file fromat.
 
-    :param str/int release: the release number
-    :param str species: the species latin name
-    :param str/path target_dir: download location
-    :param str target_fname: desired name of downloaded file (must have .gz file extension)
+    Parameters
+    ----------
+    release : int
+        Release number.
+    species : str
+        Species latin name.
+    target_dir : str
+        Download to this directory (if not given, current working directory).
+    target_fname : str
+        Annotation filename (must have .gz file extension). If not given,
+        species.release.gtf.gz is used.
 
-    :return: filename of downloaded file
-    :rtype: str
-    :raises ValueError: if provided target_dir does not exist
+    Returns
+    -------
+    str
+        Downloaded annotation filename.
+
+    TODO: target_dir & target_fname into one parameter? But the default name is
+    a quite useful feature...
     """
 
     if not target_dir:
@@ -175,7 +193,7 @@ def chrom_length(fasta_in, txt_out=None):
 def download_sequence(release, species, target_dir=None, target_fname=None,
                       tempdir=None, chromosomes=[]):
     """
-    Downloads whole genome file for given release and species
+    Downloads genome file in FASTA fromat.
 
     Several steps are performed:
 
@@ -185,16 +203,30 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
         * sort list of these files to have the correct order
         * download each file and write it to target_fname
 
-    :param str/int release: the release number
-    :param str species: the species latin name
-    :param str/path target_dir: download location
-    :param str target_fname: desired name of downloaded file (must have .gz file extension)
-    :param str tempdir: location of temp. folder and files
-    :param list chromosomes: a subset of chromosomes to download
+    Parameters
+    ----------
+    release : int
+        Release number.
+    species : str
+        Species latin name.
+    target_dir : str
+        Download to this directory (if not given, current working directory).
+    target_fname : str
+        Annotation filename (must have .gz file extension). If not given,
+        species.release.gtf.gz is used.
+    tempdir : str
+        Temporary directory with intermediate results.
+    chromosomes : list_str
+        If given, don't download the whole genome, but juts the given
+        cromosomes. Chromosomes can be given as strings aor integers
 
-    :return: filename of downloaded file
-    :rtype: str
-    :raises ValueError: if provided target_dir does not exist
+    Returns
+    -------
+    str
+        Downloaded genome/sequnce filename.
+
+    TODO: target_dir & target_fname into one parameter? But the default name is
+    a quite useful feature...
     """
 
     if not target_dir:

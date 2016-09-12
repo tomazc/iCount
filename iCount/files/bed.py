@@ -48,14 +48,22 @@ def convert_legacy(bedgraph_legacy, bed_converted):
     return sites1
 
 
-def merge_bed(files, outfile):
+def merge_bed(outfile, files):
     """
     Merge BED6 files with cross link data
 
-    :param list beds: list of BED6 files(paths) to be merged
-    :param str outfile: path to output file
-    :return: absolute path to outfile
-    :rtype: str
+    Parameters
+    ----------
+    outfile : str
+        Path to output file
+    files : list_str
+        BED6 files(paths) to be merged
+
+    Returns
+    -------
+    str
+        Absolute path to outfile
+
     """
     if len(files) == 0:
         raise ValueError(

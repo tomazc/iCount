@@ -1,377 +1,293 @@
 #!/usr/bin/env python
 
+"""
+Command line interface for iCount Python package.
+
+This module offers CL interface to iCount Python package. To separate Python
+package from CLI and to avoid code and docstring duplication, CL commands are
+semi-automatically created from functions that already exist in thre package.
+For this automation to work functions in Python modules need to respect the
+following rules:
+
+    * TODO!
+    * ONe module = one comamnd
+    * Correct docstrings (Numpy style)
+    * if liststs, str_list...
+
+If you just wish to add CLI for a function, look at the bottom of this file
+("Define commands" section). Exposing a Python function to CLI is done with a
+simple call to `make_parser_from_function`.
+
+If you want to modify the CLI generation proces, then look at the "Functions for
+atomated CLI generation" section.
+"""
+
 import os
+import re
+import sys
+import inspect
 import argparse
+import traceback
+import collections
 
 import iCount
 
-parser = argparse.ArgumentParser(
+from sphinx.ext.napoleon.docstring import NumpyDocstring, NumpyDocstring
+
+
+########################################
+# Functions for atomated CLI generation:
+########################################
+
+def _list_str(string, separator=','):
+    """Convert comma separated string to list"""
+    return string.strip(', \n\t')
+
+VALID_TYPES = {
+    'bool': bool,
+    'str': str,
+    'int': int,
+    'float': float,
+    'list_str': _list_str,
+}
+
+
+def _extract_parameter_data(function):
+    """
+    Extract name, type, description, etc. of each parameter in `function`.
+
+    The returned object should have the form::
+
+        data = {
+            'param1': {
+                name = 'param1',
+                type = 'str',
+                help = 'The first parameter. Just for demo.',
+            },
+            'param2': {
+                name = '--param2',
+                type = 'int',
+                help = 'Some optional input number...',
+            },
+        }
+
+    Every parameter in returned object can have the following entries:
+
+        * name - the name of parameter, preceeded by '--' if it is optional
+        * default - the default value (only for optional parameters). Extracted
+          from function signature.
+        * type - type of parameter, extracted from function docstring. If not
+          set, it is assumed to be str.
+        * help - parameter description, extracted from function docstring. If
+          not found, set to 'No description'
+
+    """
+
+    # Use OrderedDict to keep the order of parameters
+    data = collections.OrderedDict()
+
+    # Get function docstring and convert from Numpy to rst docstring style:
+    function_docstring = str(NumpyDocstring(inspect.getdoc(function))) or ''
+
+    # Determine weather argument is positional or optional: positional arguments
+    # are the ones that do not have default values defined:
+    params = inspect.getargspec(function).args
+    default_values = list(inspect.getargspec(function).defaults or [])
+    pos_opt_border = len(params) - len(default_values)
+    optional = {par: default for par, default in
+                zip(params[pos_opt_border:], default_values)}
+
+    for param in params:
+        if param in optional:
+            data[param] = {'name': '--' + param, 'default': optional[param]}
+        else:
+            data[param] = {'name': param}
+
+        # Extract help (parameter description) and type from function docstring:
+        regex_help = r'.*:param {}: (.+?)\n.*'.format(param)
+        regex_type = r'.*:type {}: (.+?)\n.*'.format(param)
+        # Use DOTALL flag - this way '.' matches also newline characters:
+        match_help = re.match(regex_help, function_docstring, flags=re.DOTALL)
+        match_type = re.match(regex_type, function_docstring, flags=re.DOTALL)
+
+        if match_help and match_type:
+            param_type = match_type.group(1).strip()
+            if param_type not in VALID_TYPES:
+                raise ValueError("Invalid type {} in function {}".format(
+                    param_type, function.__name__))
+            data[param]['type'] = VALID_TYPES[param_type]
+            data[param]['help'] = match_help.group(1).strip().rstrip('.')
+
+            if param_type == 'bool':
+                data[param]['action'] = 'store_true'
+                # If action == store_true, than `type` needs to be removed.
+                data[param].pop('type')
+            if param_type == 'list_str':
+                data[param]['nargs'] = '+'
+
+        else:
+            # TODO: raise ValueError or just make some arbitrary description?
+            # raise ValueError("Bad docstring for parameter {}.".format(param))
+            data[param]['help'] = 'No description'
+
+    return data
+
+
+def make_parser_from_function(function, subparsers, module=None, only_func=False):
+    """
+    Make a argparse parser from `function`and it to `subparsers`.
+
+    Example usage:
+
+        make_parser_form_function(iCount.analysis.peaks.run, subparsers)
+
+    and the CLI for is made from function `iCount.analysis.peaks.run`. When
+    constructing the CLI, program assumes that:
+
+        * name of the subparser is set to name of module where function is defined.
+        * Subparser description is extracted from module docstring.
+        * type, default values and other info about function parameters is extracted
+          from function docstring, which has to follow Numpy docstring convention.
+
+    If module parameter is given, module docstring is sourced form this module
+    not from the one where function is defined.
+
+    If only_func=True, function doscring is used for command description.
+    Docstring is used onla until Parameters or Returns section fo the socstring.
+
+    ----------------------------------------------------------------------------
+
+    TODO: Reporting about cammand progress, steps in execution, success etc
+    should be done via logger statemnets. User can register a handler that
+    listens to particular module logger by providing --verbose/-v flag. The
+    handler prints logger calls to stdout
+    -v with no argument would juts turn on loggin to somo default level (INFO?)
+    -v 10 would set the logger level to 30 (30=WARNING)
+    By default, verbose flag is set to false, probably?
+    think also of intermediat values, like 25 for more interesting info
+    (results, for example) while keeping lveel 20 for all other info messages...
+    Mek decistion and stcik with it.
+
+    https://pypi.python.org/pypi/autoargs/0.0.2
+    https://github.com/metaperture/autoargs
+    """
+
+    if module:
+        # Command name is determined from module name:
+        name = module.__name__.split('.')[-1]
+        # Description is determined from module docstring:
+        description = inspect.getdoc(module)
+    elif only_func:
+        # If only_func=True than name of the comand equals function name
+        name = function.__name__
+        # Take only the docstring until the "Parameters" section:
+        desc = inspect.getdoc(function).split('\n')
+        idx = [i for i, d in enumerate(desc) if d == 'Parameters' or d == 'Returns'][0]
+        description = '\n'.join(desc[:idx])
+    else:
+        # Command name is determined from module name:
+        name = inspect.getmodule(function).__name__.split('.')[-1]
+        # Description is determined from module docstring:
+        description = inspect.getdoc(inspect.getmodule(function))
+
+    if not description:
+        description = "No description provided."
+    # Short description is determined from first line of module docstring:
+    short_description = description.split('\n')[0]
+
+    parser = subparsers.add_parser(
+        name,
+        description=description,
+        help=short_description,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    # Add each of the function parameter as CLI argument:
+    params = _extract_parameter_data(function)
+    for values in params.values():
+        name = values.pop('name')
+        parser.add_argument(name, **values)
+
+    # Add verbose argument:
+    parser.add_argument('--verbose', '-v', action='store_true',
+                        help="Report about execution and results.")
+
+    # Connect parser with function to execute:
+    parser.set_defaults(func=function)
+
+# #########################################################################
+# #########################################################################
+
+#####################
+# Define root parser:
+#####################
+
+root_parser = argparse.ArgumentParser(
     description='iCount - computational analysis of iCLIP data.',
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    # TODO: make custom formatter?
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
-parser.add_argument('--version', action='version',
-                    version='%%(prog)s %s' % iCount.__version__)
-subparsers = parser.add_subparsers(title='Pipeline commands')
+root_parser.add_argument('--version', action='version',
+                         version='%%(prog)s %s' % iCount.__version__)
+subparsers = root_parser.add_subparsers(title='Pipeline commands')
+
+
+##################
+# Define commands:
+##################
+
+# Analysis:
+make_parser_from_function(
+    iCount.analysis.annotate.annotate_cross_links, subparsers)
+make_parser_from_function(
+    iCount.analysis.clusters.run, subparsers)
+make_parser_from_function(
+    iCount.analysis.group.merge_bed, subparsers, module=iCount.analysis.group)
+make_parser_from_function(
+    iCount.analysis.peaks.run, subparsers)
+make_parser_from_function(
+    iCount.analysis.summary.make_summary_report, subparsers)
+
+
+# Genomes:
+make_parser_from_function(
+    iCount.genomes.ensembl.get_release_list, subparsers, only_func=True)
+make_parser_from_function(
+    iCount.genomes.ensembl.get_species_list, subparsers, only_func=True)
+make_parser_from_function(
+    iCount.genomes.ensembl.download_annotation, subparsers, only_func=True)
+make_parser_from_function(
+    iCount.genomes.ensembl.download_sequence, subparsers, only_func=True)
+
+
+# Mapping:
+make_parser_from_function(iCount.mapping.map.run, subparsers)
+make_parser_from_function(iCount.mapping.mapindex.run, subparsers)
+make_parser_from_function(iCount.mapping.xlsites.run, subparsers)
+
+
+#############################
+# Parse and execute commands:
+#############################
+
+# Parse agrs and run:
+parsed_args = root_parser.parse_args()
 
-
-# ### examples
-def examples(args):
-    iCount.examples.run()
-
-parser_examples = iCount.analysis.params_to_argparse(subparsers,
-                                                     iCount.examples)
-parser_examples.set_defaults(func=examples)
-
-
-# ### genomes and annotation
-
-# releases: list all releases available on ensembl's FTP
-#   Releases older than version 59 are not reported.
-def releases(args):
-    rel_list = iCount.genomes.releases.get()
-    print('There are {:d} releases available: {:s}'.\
-          format(len(rel_list), ','.join(rel_list)))
-
-
-parser_releases = iCount.analysis.params_to_argparse(subparsers,
-                                                     iCount.genomes.releases)
-parser_releases.set_defaults(func=releases)
-
-
-# species: list all species available on ensembl FTP
-#   input: release
-#   output: list of species for given release
-def species(args):
-    spe_list = iCount.genomes.species.get(release=args.release)
-    print('There are {:d} species available: {:s}'.\
-          format(len(spe_list), ','.join(spe_list)))
-
-
-parser_species = iCount.analysis.params_to_argparse(subparsers,
-                                                    iCount.genomes.species)
-parser_species.set_defaults(func=species)
-
-
-# annotation: download genome annotation for given release and species
-#   (prepares a set of derived annotations used for annotating,
-#    summarizations and analyses)
-#
-#   input: release
-#   input: species
-#   options:
-#       - outdir: where to store file(s)
-#       - filename: store into file with given name
-#           (default: species.release.gtf.gz)
-def annotation(args):
-    gtf_file = iCount.genomes.annotation.get(
-        release=args.release,
-        species=args.species,
-        target_dir=args.target_dir,
-        target_fname=args.target_fname)
-
-    print('Downloading annotation file: {:s}'.format(gtf_file))
-
-parser_annotation = iCount.analysis.params_to_argparse(
-    subparsers, iCount.genomes.annotation)
-
-parser_annotation.set_defaults(func=annotation)
-
-
-# sequence: download genome sequence for given release and species
-#   input: release
-#   input: species
-#   options:
-#       - outdir: where to store file(s)
-#       - filename: store into file with given name
-#           (default: species.release.fa.gz)
-
-# examples: download example FASTQ files with iCLIP data
-#   options:
-#       - outdir: folder where to store downloaded files
-def sequence(args):
-    fasta_file = iCount.genomes.sequence.get(
-        release=args.release,
-        species=args.species,
-        target_dir=args.target_dir,
-        target_fname=args.target_fname,
-        chromosomes=args.chromosomes)
-
-    print('Downloading FASTA file: {:s}'.format(fasta_file))
-
-parser_annotation = iCount.analysis.params_to_argparse(
-    subparsers, iCount.genomes.sequence)
-
-parser_annotation.set_defaults(func=sequence)
-
-
-# segment: segment genome based on annotation file and save it into annotation
-#   files
-#   input: gtf file
-#   output: gtf file with genetic regions
-def segment(args):
-    print('Reading genome annotation from {:s}'.format(args.annotation))
-    iCount.genomes.segment.get_genes(gtf_in=args.annotation,
-                                     gtf_out=args.segmentation_genes,
-#                                     f_type = args.feature,
-                                     attribute=args.attribute)
-    print('Segmentation stored into {:s}'.format(args.segmentation_genes))
-
-parser_segment = iCount.analysis.params_to_argparse(subparsers,
-                                                    iCount.genomes.segment)
-
-parser_segment.set_defaults(func=segment)
-
-
-# ### demultiplexing
-
-# demultiplex
-#   input: FASTQ file with multiplexed (barcoded) samples
-#   output: multiple FASTQ files, one for each sample
-#   options:
-#       - barcodes: comma-separated list of sample barcodes (including
-#                   information on randomer positions)
-#       - prefix: prefix of demultiplexed files
-#       - mismatches: number of allowed mismatches in barcodes
-#       - adapter: 3' adapter sequence to trim (default: AGATCGGAAGAGCGGTTCAG)
-#       - outdir: output folder
-def demultiplex(args):
-    if not os.path.isdir(args.outdir):
-        print('Error, output folder does not exist: {:s}'.format(args.outdir))
-        print('Make sure that output folder exists.')
-        return 1
-    print('Demultiplexing file {:s}'.format(args.sequences))
-    print('looking for barcodes {:s}'.format(', '.join(args.barcodes)))
-    if args.adapter:
-        print('trimming adapter {:s}'.format(args.adapter))
-    print('allowing for {:d} mismatches in barcodes'.format(args.mismatches))
-    print('discarding trimmed sequences shorter than {:d}'.format(
-        args.minimum_length))
-    out_fns = iCount.demultiplex.run(args.sequences, args.barcodes,
-                                     args.adapter, args.mismatches,
-                                     minimum_length=args.minimum_length,
-                                     prefix=args.prefix,
-                                     outdir=args.outdir)
-    print('saved to files:')
-    for fn in out_fns:
-        print('   {:s}'.format(fn))
-
-parser_demux = iCount.analysis.params_to_argparse(subparsers,
-                                                  iCount.demultiplex)
-parser_demux.set_defaults(func=demultiplex)
-
-
-# ### mapping
-
-# mapindex: prepare index for given genome assembly and annotation
-#   input: genome sequence, annotation gtf
-#   output: genome index files stored in genome index folder
-#   options:
-#       - genome index folder
-def mapindex(args):
-    if not os.path.isdir(args.outdir):
-        print('Error, output folder does not exist: {:s}'.format(args.outdir))
-        print('Make sure that output folder exists.')
-        return 1
-    return iCount.mapping.mapindex.run(args.genome, args.outdir,
-                                       annotation_fname=args.annotation,
-                                       overhang=args.overhang,
-                                       threads=args.threads)
-
-parser_mapindex = iCount.analysis.params_to_argparse(subparsers,
-                                                     iCount.mapping.mapindex)
-parser_mapindex.set_defaults(func=mapindex)
-
-
-# map: call STAR and generate bam file
-#   input: genome index, annotation, FASTQ file
-#   output: bam file
-#   options:
-#       - number of allowed mismatches
-def mapreads(args):
-    if not os.path.isdir(args.outdir):
-        print('Error, output folder does not exist: {:s}'.format(args.outdir))
-        print('Make sure that output folder exists.')
-        return 1
-    return iCount.mapping.map.run(args.sequences, args.genome, args.outdir,
-                                  annotation_fname=args.annotation,
-                                  multimax=args.multimax,
-                                  mismatches=args.mismatches,
-                                  threads=args.threads)
-
-parser_mapreads = iCount.analysis.params_to_argparse(subparsers,
-                                                     iCount.mapping.map)
-parser_mapreads.set_defaults(func=mapreads)
-
-
-# xlsites: interpret bam and generate BED with data on identified sites
-#   options:
-#       -group: start, middle, end
-def xlsites(args):
-    print('Reading BAM file {:s}'.format(args.bam))
-    print('grouping reads by their {:s}'.format(args.groupby))
-    print('allowing {:d} mismatches in randomers'.format(args.mismatches))
-    print('ignore hits with MAPQ lower than {:d}'.format(args.mapqth))
-    print('ignore reads with more than {:d} hits'.format(args.multimax))
-    print('report on *{:s}* counts'.format(args.quant))
-    s = iCount.mapping.xlsites.run(args.bam, args.unique, args.multi,
-                                   group_by=args.groupby,
-                                   quant=args.quant,
-                                   randomer_mismatches=args.mismatches,
-                                   mapq_th=args.mapqth,
-                                   multimax=args.multimax)
-    if s is None:
-        print('Error running command.')
-        return 1
-
-    all_recs, notmapped_recs, mapped_recs, lowmapq_recs, used_recs, \
-    invalidrandomer_recs, norandomer_recs, bc_cn = s
-    print('all records in BAM file: {:d}'.format(all_recs))
-    print('reads not mapped: {:d}'.format(notmapped_recs))
-    print('mapped reads records (hits): {:d}'.format(mapped_recs))
-    print('hits ignored because with low MAPQ: {:d}'.format(lowmapq_recs))
-    print('records used for quantification: {:d}'.format(used_recs))
-    print('records with invalid randomer info in header: {:d}'.format(invalidrandomer_recs))
-    print('records with no randomer info: {:d}'.format(norandomer_recs))
-    print('ten most frequent randomers:')
-    bc_cn = sorted([(cn, bc) for bc, cn in bc_cn.items()], reverse=True)
-    for cn, bc in bc_cn[:10]:
-        print('   {:s}: {:d}'.format(bc, cn))
-
-
-    print('saved to BED file (uniquely mapped reads) {:s}'.format(args.unique))
-    print('saved to BED file (multi-mapped reads) {:s}'.format(args.multi))
-
-parser_xlsites = iCount.analysis.params_to_argparse(subparsers,
-                                                    iCount.mapping.xlsites)
-parser_xlsites.set_defaults(func=xlsites)
-
-
-# filter:
-#    input: set of bam files
-#    output: set of reduced bam files (erroneous reads are removed)
-
-
-# ### analyses
-# annotate
-#   input: annotation_file
-#   input: cross_links_file
-#   input: out_file
-def annotate(args):
-    out_file = iCount.analysis.annotate.annotate_cross_links(
-        annotation_file=args.annotation_file,
-        cross_links_file=args.cross_links_file,
-        out_file=args.out_file,
-        subtype=args.subtype,
-        excluded_types=args.excluded_types)
-
-parser_annotation = iCount.analysis.params_to_argparse(
-    subparsers, iCount.analysis.annotate)
-
-parser_annotation.set_defaults(func=annotate)
-
-
-# summary: make summary report form annotation and cross-link file
-#   input: annotation_file
-#   input: cross_links_file
-#   input: out_file
-#   input: chrom_length_file
-#   input: types_length_file
-
-def summary(args):
-    out_file = iCount.analysis.summary.make_summary_report(
-        annotation_file=args.annotation_file,
-        cross_links_file=args.cross_links_file,
-        out_file=args.out_file,
-        chrom_length_file=args.chrom_length_file,
-        types_length_file=args.types_length_file,
-        ndigits=args.ndigits,
-        subtype=args.subtype,
-        excluded_types=args.excluded_types)
-
-parser_annotation = iCount.analysis.params_to_argparse(
-    subparsers, iCount.analysis.summary)
-
-parser_annotation.set_defaults(func=summary)
-
-
-# group (bedGraphs)
-#   input: BED6 files to be merged (with scores in 5th column)
-#   output: one joined BED6 file (with summed scores for same sites)
-#   options:
-#       - outfile: filename to which the output should be written. If
-#                    not given, write to stdout
-
-def group(args):
-    print("Grouping files:")
-    for filename in args.files:
-        print('\t* {}'.format(filename))
-    out_file = iCount.analysis.group.run(
-        files=args.files,
-        outfile=args.outfile)
-    if args.outfile:
-        print("Results written to {}.".format(args.outfile))
-
-parser_annotation = iCount.analysis.params_to_argparse(
-    subparsers, iCount.analysis.group)
-parser_annotation.set_defaults(func=group)
-
-
-# peak identification
-def peaks(args):
-    print('Performing peak analysis on {:s}'.format(args.sites))
-    print('using annotation from {:s}'.format(args.annotation))
-    print('parameter values:')
-    print('   hw={:d}'.format(args.hw))
-    print('   fdr={:f}'.format(args.fdr))
-    print('   perms={:d}'.format(args.perms))
-    iCount.analysis.peaks.run(args.annotation, args.sites, args.peaks,
-                              fout_scores=args.scores,
-                              hw=args.hw, fdr=args.fdr, perms=args.perms,
-                              features=args.features,
-                              report_progress=(args.verbose == 'yes'),
-                              )
-    print('Bed file with significant peaks saved to {:s}'.format(args.peaks))
-    print('Scores for each cross-linked position saved to {:s}'.format(args.scores))
-
-parser_peaks = iCount.analysis.params_to_argparse(subparsers,
-                                                 iCount.analysis.peaks)
-parser_peaks.set_defaults(func=peaks)
-
-
-# clusters
-def clusters(args):
-    print('Performing cluster analysis on {:s}'.format(args.sites))
-    print('parameter values:')
-    print('   dist={:d}'.format(args.dist))
-    iCount.analysis.clusters.run(args.sites, args.clusters, dist=args.dist)
-    print('Bed file with clusters saved to {:s}'.format(args.clusters))
-
-parser_clusters = iCount.analysis.params_to_argparse(subparsers,
-                                                    iCount.analysis.clusters)
-parser_clusters.set_defaults(func=clusters)
-
-
-# kmer enrichment
-def kmers(args):
-    print(args)
-
-parser_kmers = iCount.analysis.params_to_argparse(subparsers,
-                                                 iCount.analysis.kmers)
-parser_kmers.set_defaults(func=kmers)
-
-
-# RNA maps
-def rnamap(args):
-    print(args)
-
-parser_rnamap = iCount.analysis.params_to_argparse(subparsers,
-                                                   iCount.analysis.rnamaps)
-parser_rnamap.set_defaults(func=rnamap)
-
-
-# ### parse and run it
-parsed_args = parser.parse_args()
 if not vars(parsed_args):
-    parser.print_help()
-    parser.exit(1)
-parsed_args.func(parsed_args)
+    root_parser.print_help()
+    root_parser.exit(1)
+try:
+    args = vars(parsed_args).copy()
+    args.pop('func')
+    verbose = args.pop('verbose')
+    result_object = parsed_args.func(**args)
+    if verbose:
+        print(result_object)  # TODO: to stderr or stdout?
+    sys.exit(0)
+except Exception as exception:
+    exception_message = exception.args[0]  # TODO: to stderr or stdout?
+    exception_type = exception.__class__.__name__
+    if verbose:
+        print('[{}] {}'.format(exception_type, exception_message))
+        traceback.print_tb(exception.__traceback__)
+    sys.exit(1)

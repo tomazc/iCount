@@ -1,44 +1,12 @@
 """
-Cluster finding
----------------
+Merge adjacent cross-linked sites into clusters.
 
-Read bedGraph with (significant) cross-linked sites.
-Cluster together sites that are apart at most a specified number of
-nucleotides.
-Return BED file with clusters' coordinates.
-
+Read bedGraph with (significant) cross-linked sites. Cluster together sites that
+are apart at most a specified number of nucleotides. Return BED file with
+clusters' coordinates.
 """
 
 import pybedtools
-
-# description and parameters needed for the analysis
-analysis_name = 'clusters'
-analysis_description_short = 'cluster analysis'
-analysis_description = 'Merge adjacent cross-linked sites into clusters.'
-
-params_opt = [
-    (
-        'dist', 'int_range', (20, 0, 200), False,
-        'Maximum distance between sites that can be merged into a single '
-        'cluster.'
-    ),
-# TODO: pybedtools requires info on chromosome sizes
-#    (   'extend', 'int_range', (0, 0, 200), False,
-#        'Before merging, extend both upstream and downstream of actual sites '
-#        'by a specified number of nucleotides.'
-#    ),
-]
-
-params_pos = [
-    (
-        'sites', 'BED6', 'in', 1,
-        '(input) BED6 file with cross-linked sites.'
-    ),
-    (
-        'clusters', 'BED6', 'out', 1,
-        '(output) BED6 file with coordinates of identified clusters.'
-    ),
-]
 
 
 def _fix_proper_bed6_format(feature):
@@ -63,11 +31,20 @@ def run(fin_sites, fout_clusters, dist=20):  # , extend=0):
 
     Score of cluster is the sum of all its element scores.
 
-    :param str fin_sites: Path to input file with sites (BED6 format)
-    :param str fout_clusters: Path to output file with merged sites (BED6)
-    :param int dist: Distance between two cross_links to still merge them.
-    :return: BED file with clusters as elements
-    :rtype: str
+    Parameters
+    ----------
+    fin_sites : str
+        Path to input file with sites (BED6 format)
+    fout_clusters : str
+        Path to output file with merged sites (BED6)
+    dist : int
+        Distance between two cross_links to still merge them.
+
+    Returns
+    -------
+    str
+        BED file with clusters as elements
+
     """
     # It is required to pre-sort your data:
     sites = pybedtools.BedTool(fin_sites).sort().saveas()

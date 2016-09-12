@@ -1,6 +1,6 @@
 """
-Generate BED file from BAM.
----------------------------
+Transforms information in BAM file on mapped reads and their randomers into BED file.
+
 
 Reads information on mapped reads and their associated randomer sequence
 to produce BED file with cross-link sites.
@@ -27,55 +27,6 @@ of randomers among) unique mapped sites that overlap with multimapped reads
 import pysam
 
 import iCount
-
-# description and parameters needed for the analysis
-analysis_name = 'xlsites'
-analysis_description_short = 'identify and quantify cross-linked sites'
-analysis_description = 'Transforms information in BAM file on mapped reads ' \
-                       'and their randomers into BED file.'
-
-params_opt = [
-    (
-        'groupby', 'choice-single', ('start', ['start', 'middle', 'end']),
-        False,
-        'Cross-link is defined by either the start, end or middle '
-        'position of mapped reads.'
-    ),
-    (
-        'quant', 'choice-single', ('cDNA', ['cDNA', 'reads']),
-        False,
-        'Report number of unique cDNAs or number of mapped reads.'
-    ),
-    (
-        'mismatches', 'int_range', (1, 0, 5), False,
-        'Number of tolerated mismatches when comparing two randomer barcodes.'
-    ),
-    (
-        'multimax', 'int_range', (50, 1, 300), False,
-        'Consider only reads with this number of hits or fewer.'
-    ),
-    (
-        'mapqth', 'int_range', (0, 0, 255), False,
-        'Consider only reads with at least this mapping quality.'
-    ),
-]
-
-params_pos = [
-    (
-        'bam', 'BAM', 'in', 1,
-        'Data on mapped iCLIP reads.'
-    ),
-    (
-        'unique', 'folder', 'out', 1,
-        'Name of BED file to store data on identified cross-links sites '
-        'obtained from uniquely mapped reads.'
-    ),
-    (
-        'multi', 'folder', 'out', 1,
-        'Name of BED file to store data on identified cross-links sites '
-        'obtained from multi-mapped reads.'
-    ),
-]
 
 
 def _match(s1, s2, allowed_mismatches):
@@ -268,16 +219,29 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     more multiple hits), 1 (4 or 3 multiple hits), 3 (2 multiple hits),
     255 (unique hit)
 
-    :param str bam_fname: path to bam filename
-    :param str unique_fname: file to store data from uniquely mapped reads
-    :param str multi_fname: file to store data from multi-mapped reads
-    :param str group_by:
-    :param str quant:
-    :param int randomer_mismatches:
-    :param int mapq_th: Ignore hits with MAPQ lower than this threshold value.
-    :param int multimax:
-    :return:
-    :rtype:
+    Parameters
+    ----------
+    bam_fname : str
+        Path to bam filename.
+    unique_fname : str
+        File to store data from uniquely mapped reads
+    multi_fname : str
+        File to store data from multi-mapped reads
+    group_by : str
+        Blah blah
+    quant : str
+        Blah blah
+    randomer_mismatches : int
+        Blah blah
+    mapq_th : int
+        Ignore hits with MAPQ lower than this threshold value.
+    multimax : int
+        Blah blah
+
+    Returns
+    -------
+    bool
+        Some random result
     """
     assert quant in ['cDNA', 'reads']
     assert group_by in ['start', 'middle', 'end']

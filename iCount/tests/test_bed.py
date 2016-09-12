@@ -1,8 +1,5 @@
-import os
 import unittest
 import tempfile
-
-import pybedtools
 
 from iCount.files.bed import merge_bed
 from iCount.tests.utils import make_file_from_list, make_list_from_file
@@ -17,7 +14,7 @@ def merge_bed_wrapper(data):
         files.append(make_file_from_list(file_))
     out_file = tempfile.NamedTemporaryFile(delete=False).name
     return make_list_from_file(
-        merge_bed(files, out_file), fields_separator='\t')
+        merge_bed(out_file, files), fields_separator='\t')
 
 
 class TestMergeBed(unittest.TestCase):
@@ -29,13 +26,13 @@ class TestMergeBed(unittest.TestCase):
         """Raise if no files are given."""
         message = "At least one element expected in files list, but none found."
         with self.assertRaisesRegex(ValueError, message):
-            merge_bed([], 'outfile_name')
+            merge_bed('outfile_name', [])
 
     def test_bad_file_name(self):
         """Raise error if bad filename given as input"""
         message = r"File .* not found."
         with self.assertRaisesRegex(ValueError, message):
-            merge_bed(['/bad/path/to/unexisting/file'], 'outfile_name')
+            merge_bed('outfile_name', ['/bad/path/to/unexisting/file'])
 
     def test_merge_single_file(self):
         """Test merging of single file"""

@@ -1,26 +1,12 @@
+"""
+Report proportion of cross-link events/sites on each region type
+"""
 import os
 import re
 
 import pybedtools
 
 from pybedtools import create_interval_from_list
-
-
-# data required for CLI interface:
-analysis_name = 'summary'
-analysis_description_short = 'Summary report'
-analysis_description = 'Report proportion of cross-link events/sites on each region type'
-params_opt = [
-    ('annotation_file', 'string', None, True, 'Annotation file.'),
-    ('cross_links_file', 'string', None, True, 'Cross-link file (BED6).'),
-    ('out_file', 'string', None, True, 'Output filename.'),
-    ('chrom_length_file', 'string', None, True, 'File with chromosome lengths.'),
-    ('types_length_file', 'string', None, False, 'File with lengths for each type.'),
-    ('ndigits', 'string', '8', False, 'Number of decimal places in results'),
-    ('subtype', 'string', 'biotype', False, 'Attribute defining subtype'),
-    ('excluded_types', 'str_list', [], False, 'Types from third column to exclude from analysis'),
-]
-params_pos = []
 
 
 def make_types_length_file(annotation_file, out_file=None, subtype='biotype',
@@ -31,11 +17,23 @@ def make_types_length_file(annotation_file, out_file=None, subtype='biotype',
     In the context of this function "type" equals to the combination of 3rd
     column and attribute subtype from annotation file (GTF).
 
-    :param str annotation_file: path to annotation file (should be GTF and
-    include subtype attribute)
-    :param str out_file: path to output file (if None it is determined automatically)
-    :return: absolute path to out_file
-    :return: str
+
+    Parameters
+    ----------
+    annotation_file : str
+        Path to annotation file (should be GTF and include subtype attribute).
+    out_file : str
+        Path to output file (if None it is determined automatically).
+    subtype : int
+        Subtype.
+    excluded_types : list_str
+        Excluded types.
+
+    Returns
+    -------
+    str
+        Absolute path to out_file
+
     """
     excluded_types = excluded_types or []
     annotation = pybedtools.BedTool(annotation_file).filter(
@@ -92,17 +90,30 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
     some type (multiple events can happen on each cross link). Col5 is
     numerical value in 5th column of cross-link file.
 
-    :param string annotation_file: path to annotation file (should be GTF and
-    include subtype attribute)
-    :param string cross_links_file: path to cross_links_file (should be BED6)
-    :param string out_file: path to output file
-    :param string chrom_length_file: path to file with chromosome lengths
-    :param string types_length_file: path to file with lengths of each type
-    :param string ndigits: Number of decimal places in results
-    :param string subtype: name of attribute to be used as subtype
-    :param list excluded_types: types in 3rd column to exclude form analysis
-    :returns: path to summary report file (should be equal to out_file parameter)
-    :rtype: string
+    Parameters
+    ----------
+    annotation_file : str
+        Path to annotation file (should be GTF and include subtype attribute).
+    cross_links_file : str
+        Path to cross_links_file (should be BED6)
+    out_file : str
+        Path to output file
+    chrom_length_file : str
+        Path to file with chromosome lengths
+    types_length_file : str
+        Path to file with lengths of each type
+    ndigits : int
+        Number of decimal places in results
+    subtype : str
+        Name of attribute to be used as subtype
+    excluded_types : list_str
+        Types in 3rd column to exclude form analysis
+
+    Returns
+    -------
+    str
+        Path to summary report file (should be equal to out_file parameter)
+
     """
     excluded_types = excluded_types or []
     cross_links = pybedtools.BedTool(cross_links_file).sort().saveas()
