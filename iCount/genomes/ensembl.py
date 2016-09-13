@@ -10,11 +10,22 @@ import shutil
 import tempfile
 import subprocess
 
+import iCount
 
 BASE_URL = 'ftp.ensembl.org'
 
 MIN_RELEASE_SUPPORTED = 59
 MAX_RELEASE_SUPPORTED = 84
+
+
+def _docstring_parameter(*sub):
+    """
+    To be used as decorator for passing arguments for docstring formatting.
+    """
+    def dec(obj):
+        obj.__doc__ = obj.__doc__.format(*sub)
+        return obj
+    return dec
 
 
 def get_ftp_instance():
@@ -29,9 +40,12 @@ def get_ftp_instance():
     return ftp
 
 
+@_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
 def get_release_list():
     """
     Get list of available releases
+
+    Only allows ENSEMBL releases from {0} - {1}.
 
     :return: list of available releases - elements are numbers of type str
     :rtype: list

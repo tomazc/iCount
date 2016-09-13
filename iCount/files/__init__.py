@@ -1,3 +1,24 @@
+"""
+Files
+=====
+
+.. automodule:: iCount.files.bam
+   :members:
+
+.. automodule:: iCount.files.bed
+   :members:
+
+.. automodule:: iCount.files.fastq
+   :members:
+
+.. automodule:: iCount.files.gtf
+   :members:
+
+.. automodule:: iCount.files.temp
+   :members:
+
+"""
+
 import os
 import gzip
 
