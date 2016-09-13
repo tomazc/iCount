@@ -13,6 +13,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   ref
 
 
 Indices and tables

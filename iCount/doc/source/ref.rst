@@ -1,0 +1,5 @@
+================
+iCount Reference
+================
+
+.. automodule:: iCount

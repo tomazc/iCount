@@ -1,3 +1,18 @@
+"""
+Externals
+=========
+
+.. automodule:: iCount.externals.cutadapt
+   :members:
+
+.. automodule:: iCount.externals.star
+   :members:
+
+.. automodule:: iCount.externals.tophat
+   :members:
+
+"""
+
 from . import cutadapt
 from . import star
 

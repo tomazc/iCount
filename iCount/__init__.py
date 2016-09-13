@@ -2,6 +2,22 @@
 
 iCount is a Python library for processing iCLIP and other NGS data.
 
+=======
+Modules
+=======
+
+.. automodule:: iCount.analysis
+
+.. automodule:: iCount.externals
+
+.. automodule:: iCount.files
+
+.. automodule:: iCount.genomes
+
+.. automodule:: iCount.mapping
+
+.. automodule:: iCount.demultiplex
+
 """
 
 import os
