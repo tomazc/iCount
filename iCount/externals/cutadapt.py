@@ -7,7 +7,7 @@ import subprocess
 
 def get_version():
     args = [
-        'cutadapt', '--version'
+        'cutadapt', '--version',
     ]
     try:
         ver = subprocess.check_output(args, shell=False,
@@ -22,7 +22,7 @@ def run(in_fname, out_fname, adapter, qual_base=64, qual_trim=None,
     args = [
         'cutadapt', '--quiet',
         '-a', adapter,
-        '--quality-base={:d}'.format(qual_base)
+        '--quality-base={:d}'.format(qual_base),
     ]
     if qual_trim is not None:
         args.extend(['-q', '{:d}'.format(qual_trim)])

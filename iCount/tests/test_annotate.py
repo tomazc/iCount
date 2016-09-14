@@ -46,9 +46,11 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         Check that exception is raised if chromosome naming is inconsistent.
         """
         cross_links = [
-            ['chr1', '15', '16', '.', '5', '+']]
+            ['chr1', '15', '16', '.', '5', '+'],
+        ]
         annotation = [
-            ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "ABC";']]
+            ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "ABC";'],
+        ]
 
         message = r"No intersections found. This may be caused by .*"
         with self.assertRaisesRegex(ValueError, message):
@@ -57,17 +59,21 @@ class TestAnnotateCrossLinks(unittest.TestCase):
     def test_basic(self):
         """Detect single cross_link and annotate it."""
         cross_links = [
-            ['1', '15', '16', '.', '5', '+']]
+            ['1', '15', '16', '.', '5', '+'],
+        ]
         annotation = [
-            ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "ABC";']]
+            ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "ABC";'],
+        ]
         expected = [
-            ['1', '15', '16', 'CDS ABC', '5', '+']]
+            ['1', '15', '16', 'CDS ABC', '5', '+'],
+        ]
         self.assertEqual(template(cross_links, annotation), expected)
 
     def test_multiple_annotations(self):
         """Single cross_link intersects with multiple annotations."""
         cross_links = [
-            ['1', '15', '16', '.', '5', '+']]
+            ['1', '15', '16', '.', '5', '+'],
+        ]
         annotation = [
             ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "A";'],
@@ -75,9 +81,11 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             ['1', '.', 'CDS', '10', '20', '.', '-', '.', 'biotype "C";'],
             ['1', '.', 'CDS', '12', '18', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'CDS', '30', '40', '.', '+', '.', 'biotype "D";'],
-            ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "A";']]
+            ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "A";'],
+        ]
         expected = [
-            ['1', '15', '16', 'CDS A, CDS B, ncRNA A', '5', '+']]
+            ['1', '15', '16', 'CDS A, CDS B, ncRNA A', '5', '+'],
+        ]
         self.assertEqual(template(cross_links, annotation), expected)
 
     def test_shuffled_contents(self):
@@ -85,40 +93,49 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         cross_links = [
             ['1', '16', '17', '.', '5', '+'],
             ['1', '14', '15', '.', '5', '+'],
-            ['1', '15', '16', '.', '5', '+']]
+            ['1', '15', '16', '.', '5', '+'],
+        ]
         annotation = [
-            ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "A";']]
+            ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "A";'],
+        ]
         expected = [
             ['1', '14', '15', 'CDS A', '5', '+'],
             ['1', '15', '16', 'CDS A', '5', '+'],
-            ['1', '16', '17', 'CDS A', '5', '+']]
+            ['1', '16', '17', 'CDS A', '5', '+'],
+        ]
         self.assertEqual(template(cross_links, annotation), expected)
 
     def test_strand_specific(self):
         """Two cross-links with same coordinate, but different strand."""
         cross_links = [
             ['1', '15', '16', '.', '5', '+'],
-            ['1', '15', '16', '.', '5', '-']]
+            ['1', '15', '16', '.', '5', '-'],
+        ]
         annotation = [
             ['1', '.', 'intron', '10', '20', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'intron', '10', '20', '.', '+', '.', 'biotype "B";'],
             ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "A";'],
-            ['1', '.', 'ncRNA', '10', '20', '.', '-', '.', 'biotype "B";']]
+            ['1', '.', 'ncRNA', '10', '20', '.', '-', '.', 'biotype "B";'],
+        ]
         expected = [
             ['1', '15', '16', 'intron A, intron B, ncRNA A', '5', '+'],
-            ['1', '15', '16', 'ncRNA B', '5', '-']]
+            ['1', '15', '16', 'ncRNA B', '5', '-'],
+        ]
         self.assertEqual(template(cross_links, annotation), expected)
 
     def test_subtype_param1(self):
         """Subtype parameter can be empty: type is just 3rd column."""
         cross_links = [
-            ['1', '5', '6', '.', '1', '+']]
+            ['1', '5', '6', '.', '1', '+'],
+        ]
         annotation = [
             ['1', '.', 'intron', '1', '10', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'intron', '2', '10', '.', '+', '.', 'biotype "B";'],
-            ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'biotype "C";']]
+            ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'biotype "C";'],
+        ]
         expected = [
-            ['1', '5', '6', 'intron, ncRNA', '1', '+']]
+            ['1', '5', '6', 'intron, ncRNA', '1', '+'],
+        ]
 
         self.assertEqual(template(
             cross_links, annotation, subtype=None), expected)
@@ -126,13 +143,16 @@ class TestAnnotateCrossLinks(unittest.TestCase):
     def test_subtype_param2(self):
         """Subtype can have any value - not just the default biotype."""
         cross_links = [
-            ['1', '5', '6', '.', '1', '+']]
+            ['1', '5', '6', '.', '1', '+'],
+        ]
         annotation = [
             ['1', '.', 'intron', '1', '10', '.', '+', '.', 'attr42 "A";'],
             ['1', '.', 'intron', '2', '10', '.', '+', '.', 'attr42 "B";'],
-            ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'attr42 "C";']]
+            ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'attr42 "C";'],
+        ]
         expected = [
-            ['1', '5', '6', 'intron A, intron B, ncRNA C', '1', '+']]
+            ['1', '5', '6', 'intron A, intron B, ncRNA C', '1', '+'],
+        ]
 
         self.assertEqual(template(
             cross_links, annotation, subtype='attr42'), expected)
@@ -140,11 +160,13 @@ class TestAnnotateCrossLinks(unittest.TestCase):
     def test_excluded_types(self):
         """Exclude annotation intervals by 3rd column value."""
         cross_links = [
-            ['1', '5', '6', '.', '1', '+']]
+            ['1', '5', '6', '.', '1', '+'],
+        ]
         annotation = [
             ['1', '.', 'intron', '1', '10', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'intron', '2', '10', '.', '+', '.', 'biotype "B";'],
-            ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'biotype "C";']]
+            ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'biotype "C";'],
+        ]
         expected = [
             ['1', '5', '6', 'ncRNA C', '1', '+']]
 

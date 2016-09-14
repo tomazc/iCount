@@ -27,7 +27,7 @@ def _convert_legacy_bed_format(feature):
         score = feature.name
         strand = '+'
     return pybedtools.create_interval_from_list(
-        [chrom, start, end, name, score, strand]
+        [chrom, start, end, name, score, strand],
     )
 
 

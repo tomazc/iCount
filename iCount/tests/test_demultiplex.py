@@ -60,10 +60,13 @@ class TestDemultiplex(unittest.TestCase):
         not_matching_fastq_fname = os.path.join(test_output_folder,
                                                 'nomatch.fastq')
 
-        iCount.demultiplex.demultiplex(in_fastq_fname, out_fastq_fnames,
-                                       not_matching_fastq_fname, barcodes,
-                                       mismatches=1)
-
+        iCount.demultiplex.demultiplex(
+            in_fastq_fname,
+            out_fastq_fnames,
+            not_matching_fastq_fname,
+            barcodes,
+            mismatches=1,
+        )
 
 
 if __name__ == '__main__':

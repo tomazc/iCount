@@ -21,7 +21,8 @@ class TestClusters(unittest.TestCase):
             ['1', '4', '5', '.', '1', '+'],
             ['1', '4', '5', '.', '1', '-'],
             ['1', '5', '6', '.', '1', '+'],
-            ['1', '10', '11', '.', '1', '+']])
+            ['1', '10', '11', '.', '1', '+'],
+        ])
 
         fout_clusters = get_temp_file_name()
 
@@ -31,7 +32,8 @@ class TestClusters(unittest.TestCase):
         expected = [
             ['1', '4', '6', '.', '2', '+'],
             ['1', '4', '5', '.', '1', '-'],
-            ['1', '10', '11', '.', '1', '+']]
+            ['1', '10', '11', '.', '1', '+'],
+        ]
 
         self.assertEqual(expected, result)
 

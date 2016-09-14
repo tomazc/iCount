@@ -66,9 +66,11 @@ def run(sequences_fname, genomedir, outdir, annotation_fname='', multimax=50,
         mismatches=2, threads=1):
     assert os.path.isdir(outdir)
     assert os.path.isdir(genomedir)
-    return iCount.externals.star.map_reads(sequences_fname, genomedir,
-                                           outdir,
-                                           annotation=annotation_fname,
-                                           multimax=multimax,
-                                           mismatches=mismatches,
-                                           threads=threads)
+    return iCount.externals.star.map_reads(
+        sequences_fname, genomedir,
+        outdir,
+        annotation=annotation_fname,
+        multimax=multimax,
+        mismatches=mismatches,
+        threads=threads,
+    )

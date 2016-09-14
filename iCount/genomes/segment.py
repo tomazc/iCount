@@ -183,13 +183,16 @@ def _check_consistency(intervals):
             'CDS': ['intron', 'UTR3'],
             'intron': ['CDS', 'ncRNA', 'UTR3', 'UTR5'],
             'UTR3': ['intron'],
-            'ncRNA': ['intron']},
+            'ncRNA': ['intron'],
+        },
         '-': {
             'UTR3': ['intron', 'CDS'],
             'CDS': ['intron', 'UTR5'],
             'intron': ['CDS', 'ncRNA', 'UTR3', 'UTR5'],
             'UTR5': ['intron'],
-            'ncRNA': ['intron']}}
+            'ncRNA': ['intron'],
+        }
+    }
     intervals = intervals.copy()
     try:
         index = next(i for i in range(len(intervals)) if
