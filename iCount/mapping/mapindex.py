@@ -53,7 +53,10 @@ params_pos = [
 
 def run(genome_fname, outdir, annotation_fname='', overhang=100, threads=1):
     assert os.path.isdir(outdir)
-    return iCount.externals.star.build_index(genome_fname, outdir,
-                                             annotation=annotation_fname,
-                                             overhang=overhang,
-                                             threads=threads)
+    return iCount.externals.star.build_index(
+        genome_fname,
+        outdir,
+        annotation=annotation_fname,
+        overhang=overhang,
+        threads=threads,
+    )

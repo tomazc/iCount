@@ -117,9 +117,11 @@ def _merge_similar_randomers(by_bc, randomer_mismatches):
     by_bc = {
         'AAA': [(middle_pos, end_pos, read_len, num_mapped),  # hit1
                 (middle_pos, end_pos, read_len, num_mapped),  # hit2
-                (middle_pos, end_pos, read_len, num_mapped)]  # ...
+                (middle_pos, end_pos, read_len, num_mapped),  # ...
+        ]
         'AAT': [(middle_pos, end_pos, read_len, num_mapped),  # hit1
-                (middle_pos, end_pos, read_len, num_mapped)]  # hit2
+                (middle_pos, end_pos, read_len, num_mapped),  # hit2
+        ]
 
     Steps in function:
         0. Indentify ambigious randomers ('N' characters in barcode)
@@ -199,9 +201,11 @@ def _collapse(xlink_pos, by_bc, report_by, multimax=1):
     by_bc = {
         'AAA': [(middle_pos, end_pos, read_len, num_mapped),  # hit1
                 (middle_pos, end_pos, read_len, num_mapped),  # hit2
-                (middle_pos, end_pos, read_len, num_mapped)]  # ...
+                (middle_pos, end_pos, read_len, num_mapped),  # ...
+        ]
         'AAT': [(middle_pos, end_pos, read_len, num_mapped),  # hit1
-                (middle_pos, end_pos, read_len, num_mapped)]  # hit2
+                (middle_pos, end_pos, read_len, num_mapped),  # hit2
+                ]
 
     Counting the number of reads is easy - just count the number of hits per
     cross-link site.
@@ -287,7 +291,7 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
         raise ValueError('Error opening BAM file: {:s}'.format(bam_fname))
 
     # sanity check
-    assert all(bamfile.getrname(i) == rname \
+    assert all(bamfile.getrname(i) == rname
                for i, rname in enumerate(bamfile.references))
 
     # counters
@@ -369,9 +373,9 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
 
         # store hit data in a "dict of dicts" structure:
         grouped.setdefault((chrome, strand), {}).\
-                setdefault(xlink_pos, {}).\
-                setdefault(bc, []).\
-                append((middle_pos, end_pos, read_len, num_mapped))
+            setdefault(xlink_pos, {}).\
+            setdefault(bc, []).\
+            append((middle_pos, end_pos, read_len, num_mapped))
     bamfile.close()
 
     # collapse duplicates
@@ -401,4 +405,4 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     iCount.files.bed.save_dict(multi, multi_fname, val_index=val_index)
 
     return all_recs, notmapped_recs, mapped_recs, lowmapq_recs, \
-           used_recs, invalidrandomer_recs, norandomer_recs, bc_cn
+        used_recs, invalidrandomer_recs, norandomer_recs, bc_cn

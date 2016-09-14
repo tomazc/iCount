@@ -45,7 +45,7 @@ class TestCutadapt(unittest.TestCase):
         )
         out_fastq_fname = os.path.join(
             test_output_folder,
-            'out.fastq'
+            'out.fastq',
         )
         adapter = "AGATCGGAAGAGCGGTTCAG"
 
