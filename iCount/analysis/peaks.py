@@ -1,12 +1,9 @@
 """
-Peak finding
-------------
+Determine local clusters of significantly cross-linked sites.
 
-Read annotation and bedGraph with cross-linked sites.
-Perform permutation analysis to determine significance (FDR) of individual
-sites.
-Return bedGraph of significant sites.
-
+Read annotation and bedGraph with cross-linked sites. Perform permutation
+analysis to determine significance (FDR) of individual sites. Return bedGraph of
+significant sites.
 """
 import math
 import bisect
@@ -15,57 +12,6 @@ from collections import Counter
 
 import iCount
 from iCount.files.bed import _f2s
-
-# description and parameters needed for the analysis
-analysis_name = 'peaks'
-analysis_description_short = 'peak analysis'
-analysis_description = 'Determine local clusters of significantly ' \
-                       'cross-linked sites by performing permutation ' \
-                       'analysis.'
-
-params_opt = [
-    (
-        'hw', 'int_range', (3, 0, 200), False,
-        'Half-window size.'
-    ),
-    (
-        'fdr', 'float_range', (0.05, 0.01, 0.25), False,
-        'Significance threshold.'
-    ),
-    (
-        'perms', 'int_range', (100, 10, 1000), False,
-        'Number of random permutations needed to determine statistical '
-        'significance.'
-    ),
-    (
-        'features', 'str_list', ['gene'],  False,
-        'Calculate enrichment for cross-links within these types (as given '
-        'in 3rd column in GTF).'
-    ),
-    (
-        'verbose', 'choice-single', ('yes', ['yes', 'no']), False,
-        'Report on progress.'
-    ),
-]
-
-params_pos = [
-    (
-        'annotation', 'GTF', 'in', 1,
-        '(input) GTF file with gene regions.'
-    ),
-    (
-        'sites', 'BED6', 'in', 1,
-        '(input) BED6 file with cross-linked sites.'
-    ),
-    (
-        'peaks', 'BED6', 'out', 1,
-        '(output) BED6 with significant cross-linked sites.'
-    ),
-    (
-        'scores', 'tab', 'out', 1,
-        '(output) tab-separated table with scores for each cross-linked site.'
-    ),
-]
 
 
 def sum_within_window(pos_val, hw=3):
@@ -180,7 +126,36 @@ def get_avg_rnd_distrib(size, total_hits, hw, perms=100):
 def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         fdr=0.05, perms=100, rnd_seed=42, features=['gene'],
         report_progress=True):
-    """Calculate FDR of interaction at each cross-linked site.
+    """
+    Calculate FDR of interaction at each cross-linked site.
+
+    Parameters
+    ----------
+    fin_annotation : str
+        Path to input annotation file.
+    fin_sites : str
+        Path to input cross-links file.
+    fout_peaks : str
+        Path to "peaks" output file.
+    fout_scores : str
+        Path to "scores" output file.
+    hw : int
+        Half-window size.
+    fdr : float
+        FDR threshold.
+    perms : int
+        Number of permutations.
+    rnd_seed : int
+        Seed for random generator.
+    features : list_str
+        Features over which to perform analysis.
+    report_progress : bool
+        Print analysis progress. TODO refactor to logger.
+
+    Returns
+    -------
+    None
+        None
 
     """
 

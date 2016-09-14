@@ -1,23 +1,12 @@
+"""
+Annotate each cross link site with types of regions that intersect with it.
+"""
 import re
 import os
 
 import pybedtools
 
 from pybedtools import create_interval_from_list
-
-
-# data required for CLI interface:
-analysis_name = 'annotate'
-analysis_description_short = 'Annotate cross links'
-analysis_description = 'Annotate each cross link site with types of regions that intersect with it.'
-params_opt = [
-    ('annotation_file', 'string', None, True, 'Annotation file.'),
-    ('cross_links_file', 'string', None, True, 'Cross-link file (BED6).'),
-    ('out_file', 'string', None, True, 'Output filename.'),
-    ('subtype', 'string', 'biotype', False, 'Attribute defining subtype'),
-    ('excluded_types', 'str_list', ['transcript', 'gene'], False, 'Types form third column to exclude from analysis'),
-]
-params_pos = []
 
 
 def annotate_cross_links(annotation_file, cross_links_file, out_file,
@@ -37,11 +26,24 @@ def annotate_cross_links(annotation_file, cross_links_file, out_file,
     belonging to different transcripts can overlap. Intergenic regions are also
     considered as region. Each region has one and only one type.
 
-    :param string annotation_file: path to annotation file (should be GTF and include `subtype` attribute)
-    :param string cross_links_file: path to cross_links_file (should be BED6)
-    :param string out_file: path to output file
-    :returns: path to summary report file (should be equal to out_file parameter)
-    :rtype: string
+    Parameters
+    ----------
+    annotation_file : str
+        Path to annotation file (should be GTF and include `subtype` attribute).
+    cross_links_file : str
+        Path to cross_links_file (should be BED6).
+    out_file : str
+        Path to output file.
+    subtype : str
+        Subtype.
+    excluded_types : list_str
+        Excluded types.
+
+    Returns
+    -------
+    str
+        Path to summary report file (should be equal to out_file parameter)
+
     """
 
     excluded_types = excluded_types or []

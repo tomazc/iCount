@@ -18,6 +18,13 @@ def get_temp_file_name(tmp_dir=None):
     return os.path.join(tmp_dir, tmp_name)
 
 
+def get_temp_dir(tmp_dir=None):
+    """
+    Returns a temporary directory.
+    """
+    return tempfile.mkdtemp()
+
+
 def make_file_from_list(data, bedtool=True):
     """Return path to file with the content from `data` (list of lists)"""
     tfile = get_temp_file_name()

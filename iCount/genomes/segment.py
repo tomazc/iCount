@@ -1,5 +1,5 @@
 """
-Segment genome
+Segment genome into non-overlapping regions.'
 --------------
 
 Parse genome annotation, segment it and prepare a number of versions needed
@@ -25,35 +25,6 @@ import pybedtools
 from collections import Counter
 
 from pybedtools import create_interval_from_list
-
-# description and parameters needed for the analysis
-analysis_name = 'segment'
-analysis_description_short = 'segment genome regions'
-analysis_description = 'Segment genome into non-overlapping regions.'
-
-# no parameters needed
-params_opt = [
-    (
-        'feature', 'string', 'gene', False,
-        'Feature type name that specifies gene records in GTF.'
-    ),
-    (
-        'attribute', 'string', 'gene_name', False,
-        'Tag (in the attribute field of the GTF) to use for grouping records '
-        'on same gene.'
-    ),
-]
-
-params_pos = [
-    (
-        'annotation', 'GTF', 'in', 1,
-        '(input) GTF file with genome annotation.'
-    ),
-    (
-        'segmentation_genes', 'GTF', 'out', 1,
-        '(output) GTF file with gene segments.'
-    ),
-]
 
 
 def get_genes(gtf_in, gtf_out, name='gene', attribute='gene_id'):
