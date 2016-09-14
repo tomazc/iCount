@@ -179,8 +179,6 @@ class TestRun(unittest.TestCase):
                 # No NH tag is set
                 ('name5', 0, 0, 300, 20, [(0, 200)], {})]}
 
-
-
     def test_run_simple(self):
         bam_fname = make_bam_file(self.data)
         unique_fname = get_temp_file_name()
@@ -189,21 +187,21 @@ class TestRun(unittest.TestCase):
         result = xlsites.run(bam_fname, unique_fname, multi_fname, mapq_th=5)
 
         # All records:
-        self.assertEqual(result[0], 6)
+        self.assertEqual(result.all_recs, 6)
         # Unmapped records:
-        self.assertEqual(result[1], 1)
+        self.assertEqual(result.notmapped_recs, 1)
         # Mapped records:
-        self.assertEqual(result[2], 5)
+        self.assertEqual(result.mapped_recs, 5)
         # Records with too low quality:
-        self.assertEqual(result[3], 1)
+        self.assertEqual(result.lowmapq_recs, 1)
         # Records used in analysis
-        self.assertEqual(result[4], 4)
+        self.assertEqual(result.used_recs, 4)
         # Records with invalid randomers
-        self.assertEqual(result[5], 1)
+        self.assertEqual(result.invalidrandomer_recs, 1)
         # Records with no randomers:
-        self.assertEqual(result[6], 1)
+        self.assertEqual(result.norandomer_recs, 1)
         # Barcode counter:
-        self.assertEqual(result[7], {'': 2, 'ACG': 1, 'CCCC': 1})
+        self.assertEqual(result.bc_cn, {'': 2, 'ACG': 1, 'CCCC': 1})
 
     def test_error_open_bamfile(self):
         """ Provide onyl file with no content - erorr shoud be raised. """
