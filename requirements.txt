@@ -3,3 +3,7 @@ numpy
 pysam
 pybedtools
 pandas
+docutils
+numpydoc
+Sphinx>=1.4
+sphinxcontrib-fulltoc

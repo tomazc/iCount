@@ -38,6 +38,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
+    'sphinxcontrib.fulltoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -58,7 +59,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'iCount'
-copyright = '2016, Tomaž Curk'
+copyright = '2016 University of Ljubljana, FRI'
 author = 'Tomaž Curk'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -187,7 +188,7 @@ html_static_path = ['_static']
 
 # Custom sidebar templates, maps document names to template names.
 #
-# html_sidebars = {}
+html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'searchbox.html'], }
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -273,7 +274,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'iCount.tex', 'iCount Documentation',
-     'Tomaž Curk', 'manual'),
+     'Tomaž Curk, University of Ljubljana, FRI', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

@@ -1,3 +1,9 @@
+"""
+Examples
+========
+
+"""
+
 import os
 import shutil
 

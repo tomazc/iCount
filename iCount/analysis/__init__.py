@@ -2,25 +2,27 @@
 Analysis
 ========
 
-.. automodule:: iCount.analysis.annotate
+iCount implements a number of analyses.
+
+.. automodule:: iCount.analysis.peaks
    :members:
 
 .. automodule:: iCount.analysis.clusters
    :members:
 
-.. automodule:: iCount.analysis.group
-   :members:
-
 .. automodule:: iCount.analysis.kmers
-   :members:
-
-.. automodule:: iCount.analysis.peaks
    :members:
 
 .. automodule:: iCount.analysis.rnamaps
    :members:
 
+.. automodule:: iCount.analysis.annotate
+   :members:
+
 .. automodule:: iCount.analysis.summary
+   :members:
+
+.. automodule:: iCount.analysis.group
    :members:
 
 """

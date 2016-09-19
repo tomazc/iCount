@@ -1,4 +1,7 @@
 """
+Map using STAR
+--------------
+
 Call STAR to map reads to genome index and produce BAM file.
 
 Calls STAR to map sequence reads to reference genome, by passing the

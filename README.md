@@ -2,11 +2,11 @@
 [![codecov](https://codecov.io/gh/tomazc/iCount/branch/master/graph/badge.svg?token=JhUJ66rnJ3)](https://codecov.io/gh/tomazc/iCount)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/bb21b3cc5fcd420c885ed12bf8393065)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tomazc/iCount&amp;utm_campaign=Badge_Grade)
 
-# iCount processing of iCLIP protein-RNA interaction data
+# iCount: protein-RNA interaction analysis
 
 iCount is a Python module and associated command-line interface (CLI),
-which provides all the commands needed to process iCLIP data and 
-generate:
+which provides all the commands needed to process iCLIP data on 
+protein-RNA interactions and generate:
  
 + Demultiplexed and adapter-trimmed FASTQ files.
 + BAM files with mapped iCLIP reads.

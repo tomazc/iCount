@@ -1,4 +1,7 @@
 """
+Identify and quantify cross-linked sites
+----------------------------------------
+
 Transforms information in BAM file on mapped reads and their randomers into BED file.
 
 

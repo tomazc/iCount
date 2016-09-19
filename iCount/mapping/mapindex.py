@@ -1,4 +1,7 @@
 """
+Generate STAR index
+-------------------
+
 Call STAR to generate genome index, which is used for mapping.
 
 Calls STAR to generate index based on genome sequence and annotation,

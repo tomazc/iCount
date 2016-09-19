@@ -1,4 +1,7 @@
 """
+Cutadapt
+--------
+
 Interface to running cutadapt.
 """
 

@@ -1,4 +1,7 @@
 """
+Cluster sites
+-------------
+
 Merge adjacent cross-linked sites into clusters.
 
 Read bedGraph with (significant) cross-linked sites. Cluster together sites that

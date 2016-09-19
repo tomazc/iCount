@@ -19,7 +19,7 @@ class TestFilesTemp(unittest.TestCase):
         test_text = 'empty file'
         with open(fn_in, 'wt') as f:
             f.write(test_text)
-        fn_out = iCount.files.temp.decompress_to_tempfile(fn_in)
+        fn_out = iCount.files.decompress_to_tempfile(fn_in)
         self.assertEqual(fn_in, fn_out)
         # content should be same
         with open(fn_out, 'rt') as f:
@@ -32,7 +32,7 @@ class TestFilesTemp(unittest.TestCase):
         test_text = 'empty file'
         with gzip.open(fn_in, 'wt') as f:
             f.write(test_text)
-        fn_out = iCount.files.temp.decompress_to_tempfile(fn_in)
+        fn_out = iCount.files.decompress_to_tempfile(fn_in)
         self.assertNotEqual(fn_in, fn_out)
         # content should be same
         with open(fn_out, 'rt') as f:

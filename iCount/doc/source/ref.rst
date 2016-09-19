@@ -1,5 +1,9 @@
-================
-iCount Reference
-================
+*********
+Reference
+*********
 
-.. automodule:: iCount
+.. toctree::
+   :maxdepth: 1
+
+   ref_CLI
+   ref_python

@@ -1,3 +1,10 @@
+"""
+FASTA
+-----
+
+Reading `FASTA`_ files.
+
+"""
 
 def read_fasta(fasta_file):
     """

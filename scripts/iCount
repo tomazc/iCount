@@ -22,7 +22,6 @@ If you want to modify the CLI generation proces, then look at the "Functions for
 atomated CLI generation" section.
 """
 
-import os
 import re
 import sys
 import logging
@@ -34,7 +33,7 @@ import collections
 import iCount
 from iCount import logger
 
-from sphinx.ext.napoleon.docstring import NumpyDocstring, NumpyDocstring
+from sphinx.ext.napoleon.docstring import NumpyDocstring
 
 LOGGER = logging.getLogger('iCount.scripts.iCount')
 
@@ -45,7 +44,7 @@ LOGGER = logging.getLogger('iCount.scripts.iCount')
 
 def _list_str(string, separator=','):
     """Convert comma separated string to list"""
-    return string.strip(', \n\t')
+    return string.strip('{:s} \n\t'.format(separator))
 
 VALID_TYPES = {
     'bool': bool,
@@ -183,7 +182,7 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         # Description is determined from module docstring:
         description = inspect.getdoc(module)
     elif only_func:
-        # If only_func=True than name of the comand equals function name
+        # If only_func=True than name of the command equals function name
         name = function.__name__
         # Take only the docstring until the 'Parameters' section:
         desc = inspect.getdoc(function).split('\n')
@@ -204,7 +203,7 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         name,
         description=description,
         help=short_description,
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter # ArgumentDefaultsHelpFormatter
     )
 
     # Add each of the function parameter as CLI argument:
@@ -235,8 +234,8 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
 #####################
 
 root_parser = argparse.ArgumentParser(
-    description=inspect.getdoc(iCount),
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    description=inspect.getdoc(iCount).split('\n..')[0],
+    formatter_class=argparse.RawTextHelpFormatter # ArgumentDefaultsHelpFormatter,
 )
 # Parser (general) arguments
 root_parser.add_argument('-v', '--version', action='version',
@@ -293,6 +292,7 @@ def verbose_help(mode):
             print(parser.format_help() + '\n')
     else:
         raise NotImplementedError('"{}" not supported.'.format(mode))
+
 # Add the man command:
 parser = subparsers.add_parser('man', help='Print help for all commands.')
 parser.add_argument('--mode', type=str, default='txt', metavar='')

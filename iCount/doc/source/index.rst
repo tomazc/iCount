@@ -1,25 +1,16 @@
-.. iCount documentation master file, created by
-   sphinx-quickstart on Sun Jun 26 16:27:15 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. automodule:: iCount
 
-Welcome to iCount's documentation!
-==================================
 
-Documentation for iCount version |version|
-
-Contents:
+Contents of this documentation:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
+   tutorial
+   installation
    ref
+   versions
+   license
+   cite
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+This documentation is for iCount version: |version|
