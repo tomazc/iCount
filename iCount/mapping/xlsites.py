@@ -25,8 +25,10 @@ of randomers among) unique mapped sites that overlap with multimapped reads
 """
 
 import pysam
-
+import logging
 import iCount
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _match(s1, s2, allowed_mismatches):
@@ -247,6 +249,9 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     bool
         Some random result
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+    result = iCount.Result()
+
     assert quant in ['cDNA', 'reads']
     assert group_by in ['start', 'middle', 'end']
     try:
@@ -259,32 +264,32 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
                for i, rname in enumerate(bamfile.references))
 
     # counters
-    all_recs = 0  # All records
-    notmapped_recs = 0  # Not mapped records
-    mapped_recs = 0  # Mapped records
-    lowmapq_recs = 0  # Records with insufficient quality
-    used_recs = 0  # Records used in analysis (all - unmapped - lowmapq)
-    invalidrandomer_recs = 0  # Records with invalid randomer
-    norandomer_recs = 0  # Records with no randomer
-    bc_cn = {}  # Barcode counter
+    result.all_recs = 0  # All records
+    result.notmapped_recs = 0  # Not mapped records
+    result.mapped_recs = 0  # Mapped records
+    result.lowmapq_recs = 0  # Records with insufficient quality
+    result.used_recs = 0  # Records used in analysis (all - unmapped - lowmapq)
+    result.invalidrandomer_recs = 0  # Records with invalid randomer
+    result.norandomer_recs = 0  # Records with no randomer
+    result.bc_cn = {}  # Barcode counter
     _cache_bcs = {}
 
     # group by start
     grouped = {}
     valid_nucs = set('ATCGN')
     for r in bamfile:
-        all_recs += 1
+        result.all_recs += 1
         if r.is_unmapped:
-            notmapped_recs += 1
+            result.notmapped_recs += 1
             continue
 
-        mapped_recs += 1
+        result.mapped_recs += 1
 
         if r.mapq < mapq_th:
-            lowmapq_recs += 1
+            result.lowmapq_recs += 1
             continue
 
-        used_recs += 1
+        result.used_recs += 1
 
         # NH (number of reported alignments) tag is required:
         if r.has_tag('NH'):
@@ -300,13 +305,13 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
             if set(bc) - valid_nucs:
                 # invalid barcode characters
                 bc = ''
-                invalidrandomer_recs += 1
+                result.invalidrandomer_recs += 1
         else:
             bc = ''
-            norandomer_recs += 1
+            result.norandomer_recs += 1
 
         bc = _cache_bcs.setdefault(bc, bc)  # reduce memory consumption
-        bc_cn[bc] = bc_cn.get(bc, 0) + 1
+        result.bc_cn[bc] = result.bc_cn.get(bc, 0) + 1
 
         # position of cross-link is one nucleotide before start of read
         poss = sorted(r.positions)
@@ -365,8 +370,22 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
 
     # generate BED with cross-linked positions
     val_index = ['cDNA', 'reads'].index(quant)
-    iCount.files.bed.save_dict(unique, unique_fname, val_index=val_index)
-    iCount.files.bed.save_dict(multi, multi_fname, val_index=val_index)
 
-    return all_recs, notmapped_recs, mapped_recs, lowmapq_recs, \
-        used_recs, invalidrandomer_recs, norandomer_recs, bc_cn
+    LOGGER.info('All records in BAM file: %d' % result.all_recs)
+    LOGGER.info('Reads not mapped: %d' % result.notmapped_recs)
+    LOGGER.info('Mapped reads records (hits): %d' % result.mapped_recs)
+    LOGGER.info('Hits ignored because of low MAPQ: %d' % result.lowmapq_recs)
+    LOGGER.info('Records used for quantification: %d' % result.used_recs)
+    LOGGER.info('Records with invalid randomer info in header: %d' % result.invalidrandomer_recs)
+    LOGGER.info('Records with no randomer info: %d' % result.norandomer_recs)
+    LOGGER.info('Ten most frequent randomers:')
+    top10 = sorted([(cn, bc) for bc, cn in result.bc_cn.items()], reverse=True)[:10]
+    for cn, bc in top10:
+        LOGGER.info('    %s: %d' % (bc, cn))
+
+    iCount.files.bed.save_dict(unique, unique_fname, val_index=val_index)
+    LOGGER.info('Saved to BED file (uniquely mapped reads): %s' % unique_fname)
+    iCount.files.bed.save_dict(multi, multi_fname, val_index=val_index)
+    LOGGER.info('Saved to BED file (multi-mapped reads): %s' % multi_fname)
+
+    return result

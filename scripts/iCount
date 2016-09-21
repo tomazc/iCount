@@ -25,14 +25,18 @@ atomated CLI generation" section.
 import os
 import re
 import sys
+import logging
 import inspect
 import argparse
 import traceback
 import collections
 
 import iCount
+from iCount import logger
 
 from sphinx.ext.napoleon.docstring import NumpyDocstring, NumpyDocstring
+
+LOGGER = logging.getLogger('iCount.scripts.iCount')
 
 
 ########################################
@@ -208,9 +212,15 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         name = values.pop('name')
         parser.add_argument(name, **values)
 
-    # Add verbose argument:
-    parser.add_argument('--verbose', '-v', action='store_true',
-                        help="Report about execution and results.")
+    # Add loglevel argument:
+    parser.add_argument('--stdout_loglevel', '-S', default=logging.INFO, type=int,
+                        help="Log level (0-50). If 0")
+    parser.add_argument('--file_logpath', '-P', default=None, type=str,
+                        help="Path to logfile.")
+    parser.add_argument('--file_loglevel', '-F', default=0, type=int,
+                        help="Log level (1-50)")
+    parser.add_argument('--results_file', '-R', default=None, type=argparse.FileType('wt'),
+                        help="File into which Result object should be stored.")
 
     # Connect parser with function to execute:
     parser.set_defaults(func=function)
@@ -223,13 +233,15 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
 #####################
 
 root_parser = argparse.ArgumentParser(
-    description='iCount - computational analysis of iCLIP data.',
-    # TODO: make custom formatter?
+    description=inspect.getdoc(iCount),
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
-root_parser.add_argument('--version', action='version',
-                         version='%%(prog)s %s' % iCount.__version__)
-subparsers = root_parser.add_subparsers(title='Pipeline commands')
+root_parser.add_argument(
+    '-v', '--version',
+    action='version',
+    version='%%(prog)s %s' % iCount.__version__,
+)
+subparsers = root_parser.add_subparsers(title='Commands')
 
 
 ##################
@@ -277,17 +289,36 @@ if not vars(parsed_args):
     root_parser.print_help()
     root_parser.exit(1)
 try:
-    args = vars(parsed_args).copy()
-    args.pop('func')
-    verbose = args.pop('verbose')
-    result_object = parsed_args.func(**args)
-    if verbose:
-        print(result_object)  # TODO: to stderr or stdout?
+    args = vars(parsed_args)
+    func = args.pop('func')
+
+    # Stdout logger
+    stdout_loglevel = args.pop('stdout_loglevel')
+    logger.log_to_stdout(is_on=True, level=stdout_loglevel)
+
+    # File logger
+    file_loglevel = args.pop('file_loglevel')
+    file_logpath = args.pop('file_logpath')
+    is_on = any([file_loglevel, file_logpath])
+    logger.log_to_file(is_on=is_on, level=file_loglevel, path=file_logpath)
+
+    # Switch to output results to a file:
+    results_file = args.pop('results_file')
+
+    # Execute the wrapped function:
+    result_object = func(**args)
+
+    # Save results to results_file. If not given, don't report anything.
+    if results_file:
+        print(result_object, file=results_file)
     sys.exit(0)
+
 except Exception as exception:
-    exception_message = exception.args[0]  # TODO: to stderr or stdout?
+    exception_message = exception.args[0]
     exception_type = exception.__class__.__name__
-    if verbose:
-        print('[{}] {}'.format(exception_type, exception_message))
-        traceback.print_tb(exception.__traceback__)
+
+    LOGGER = logging.getLogger('iCount.scripts.iCount')
+    LOGGER.error('[%s] %s' % (exception_type, exception_message))
+    for line in traceback.format_list(traceback.extract_tb(exception.__traceback__)):
+        LOGGER.error(line)
     sys.exit(1)
