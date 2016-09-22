@@ -117,7 +117,7 @@ def _extract_parameter_data(function):
         if match_help and match_type:
             param_type = match_type.group(1).strip()
             if param_type not in VALID_TYPES:
-                raise ValueError("Invalid type {} in function {}".format(
+                raise ValueError('Invalid type {} in function {}'.format(
                     param_type, function.__name__))
             data[param]['type'] = VALID_TYPES[param_type]
             data[param]['help'] = match_help.group(1).strip().rstrip('.')
@@ -184,7 +184,7 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
     elif only_func:
         # If only_func=True than name of the comand equals function name
         name = function.__name__
-        # Take only the docstring until the "Parameters" section:
+        # Take only the docstring until the 'Parameters' section:
         desc = inspect.getdoc(function).split('\n')
         idx = [i for i, d in enumerate(desc) if d == 'Parameters' or d == 'Returns'][0]
         description = '\n'.join(desc[:idx])
@@ -195,7 +195,7 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         description = inspect.getdoc(inspect.getmodule(function))
 
     if not description:
-        description = "No description provided."
+        description = 'No description provided.'
     # Short description is determined from first line of module docstring:
     short_description = description.split('\n')[0]
 
@@ -243,7 +243,6 @@ root_parser.add_argument(
 )
 subparsers = root_parser.add_subparsers(title='Commands')
 
-
 ##################
 # Define commands:
 ##################
@@ -277,6 +276,25 @@ make_parser_from_function(iCount.mapping.map.run, subparsers)
 make_parser_from_function(iCount.mapping.mapindex.run, subparsers)
 make_parser_from_function(iCount.mapping.xlsites.run, subparsers)
 
+
+def verbose_help(mode):
+    if mode == 'txt':
+        print(root_parser.format_help() + '\n')
+
+        for name, parser in root_parser._action_groups[2]._actions[2].choices.items():
+            if name == 'man':
+                continue
+            print(name)
+            print('=' * len(name) + '\n')
+            print(parser.format_help() + '\n')
+    else:
+        raise NotImplementedError('"{}" not supported.'.format(mode))
+
+# Add the man command:
+parser = subparsers.add_parser('man', help='Print help for all commands.')
+parser.add_argument('--mode', type=str, default='txt')
+parser.add_argument('--verbose', '-v', action='store_true')
+parser.set_defaults(func=verbose_help)
 
 #############################
 # Parse and execute commands:
