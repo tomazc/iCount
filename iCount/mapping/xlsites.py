@@ -28,6 +28,7 @@ import pysam
 import logging
 import iCount
 
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -250,7 +251,6 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
         Some random result
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
-    result = iCount.Result()
 
     assert quant in ['cDNA', 'reads']
     assert group_by in ['start', 'middle', 'end']
@@ -264,32 +264,35 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
                for i, rname in enumerate(bamfile.references))
 
     # counters
-    result.all_recs = 0  # All records
-    result.notmapped_recs = 0  # Not mapped records
-    result.mapped_recs = 0  # Mapped records
-    result.lowmapq_recs = 0  # Records with insufficient quality
-    result.used_recs = 0  # Records used in analysis (all - unmapped - lowmapq)
-    result.invalidrandomer_recs = 0  # Records with invalid randomer
-    result.norandomer_recs = 0  # Records with no randomer
-    result.bc_cn = {}  # Barcode counter
+    metrics = iCount.Metrics(
+        all_recs=0,  # All records
+        notmapped_recs=0,  # Not mapped records
+        mapped_recs=0,  # Mapped records
+        lowmapq_recs=0,  # Records with insufficient quality
+        used_recs=0,  # Records used in analysis (all - unmapped - lowmapq)
+        invalidrandomer_recs=0,  # Records with invalid randomer
+        norandomer_recs=0,  # Records with no randomer
+        bc_cn={},  # Barcode counter
+    )
+
     _cache_bcs = {}
 
     # group by start
     grouped = {}
     valid_nucs = set('ATCGN')
     for r in bamfile:
-        result.all_recs += 1
+        metrics.all_recs += 1
         if r.is_unmapped:
-            result.notmapped_recs += 1
+            metrics.notmapped_recs += 1
             continue
 
-        result.mapped_recs += 1
+        metrics.mapped_recs += 1
 
         if r.mapq < mapq_th:
-            result.lowmapq_recs += 1
+            metrics.lowmapq_recs += 1
             continue
 
-        result.used_recs += 1
+        metrics.used_recs += 1
 
         # NH (number of reported alignments) tag is required:
         if r.has_tag('NH'):
@@ -305,13 +308,13 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
             if set(bc) - valid_nucs:
                 # invalid barcode characters
                 bc = ''
-                result.invalidrandomer_recs += 1
+                metrics.invalidrandomer_recs += 1
         else:
             bc = ''
-            result.norandomer_recs += 1
+            metrics.norandomer_recs += 1
 
         bc = _cache_bcs.setdefault(bc, bc)  # reduce memory consumption
-        result.bc_cn[bc] = result.bc_cn.get(bc, 0) + 1
+        metrics.bc_cn[bc] = metrics.bc_cn.get(bc, 0) + 1
 
         # position of cross-link is one nucleotide before start of read
         poss = sorted(r.positions)
@@ -371,15 +374,15 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     # generate BED with cross-linked positions
     val_index = ['cDNA', 'reads'].index(quant)
 
-    LOGGER.info('All records in BAM file: %d' % result.all_recs)
-    LOGGER.info('Reads not mapped: %d' % result.notmapped_recs)
-    LOGGER.info('Mapped reads records (hits): %d' % result.mapped_recs)
-    LOGGER.info('Hits ignored because of low MAPQ: %d' % result.lowmapq_recs)
-    LOGGER.info('Records used for quantification: %d' % result.used_recs)
-    LOGGER.info('Records with invalid randomer info in header: %d' % result.invalidrandomer_recs)
-    LOGGER.info('Records with no randomer info: %d' % result.norandomer_recs)
+    LOGGER.info('All records in BAM file: %d' % metrics.all_recs)
+    LOGGER.info('Reads not mapped: %d' % metrics.notmapped_recs)
+    LOGGER.info('Mapped reads records (hits): %d' % metrics.mapped_recs)
+    LOGGER.info('Hits ignored because of low MAPQ: %d' % metrics.lowmapq_recs)
+    LOGGER.info('Records used for quantification: %d' % metrics.used_recs)
+    LOGGER.info('Records with invalid randomer info in header: %d' % metrics.invalidrandomer_recs)
+    LOGGER.info('Records with no randomer info: %d' % metrics.norandomer_recs)
     LOGGER.info('Ten most frequent randomers:')
-    top10 = sorted([(cn, bc) for bc, cn in result.bc_cn.items()], reverse=True)[:10]
+    top10 = sorted([(cn, bc) for bc, cn in metrics.bc_cn.items()], reverse=True)[:10]
     for cn, bc in top10:
         LOGGER.info('    %s: %d' % (bc, cn))
 
@@ -388,4 +391,4 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     iCount.files.bed.save_dict(multi, multi_fname, val_index=val_index)
     LOGGER.info('Saved to BED file (multi-mapped reads): %s' % multi_fname)
 
-    return result
+    return metrics
