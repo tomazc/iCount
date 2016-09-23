@@ -3,7 +3,6 @@ iCount is a Python library for processing iCLIP and other NGS data.
 """
 
 import os
-import inspect
 
 from . import analysis
 from . import externals
@@ -15,6 +14,7 @@ from ._version import __version__
 
 from . import examples
 from .logger import log_to_stdout, log_to_file, log_inputs
+from .metrics import Metrics
 
 # CONFIG
 # Because iCount is used in command-line, all paths point to the current
@@ -48,16 +48,3 @@ if not os.path.exists(tmp_root):
           "{0:s}".format(tmp_root))
     os.makedirs(tmp_root)
 
-
-class Result:
-
-    def __init__(self, context=None):
-        # If context is not given, determine it from calling function.
-        if context is None:
-            previous_frame = inspect.getouterframes(inspect.currentframe())[1]
-            module = inspect.getmodulename(previous_frame[1])
-            context = module + '.' + previous_frame[3]
-        self.context = context
-
-    def __repr__(self):
-        return '{:s}\n{:s}'.format(self.context, self.__dict__.__repr__())
