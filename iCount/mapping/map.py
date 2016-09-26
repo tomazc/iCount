@@ -17,7 +17,11 @@ following parameters:
 """
 
 import os
+import logging
+
 import iCount
+
+LOGGER = logging.getLogger(__name__)
 
 
 def run(sequences_fname, genomedir, outdir, annotation_fname='', multimax=50,
@@ -47,8 +51,12 @@ def run(sequences_fname, genomedir, outdir, annotation_fname='', multimax=50,
     int
         Return code - TODO - will we cajenge this?
     """
-    assert os.path.isdir(outdir)
-    assert os.path.isdir(genomedir)
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+
+    if not os.path.isdir(genomedir):
+        raise FileNotFoundError('Directory with genome index does not exist. Make sure it does.')
+    if not os.path.isdir(outdir):
+        raise FileNotFoundError('Output directory does not exist. Make sure it does.')
     return iCount.externals.star.map_reads(
         sequences_fname, genomedir,
         outdir,

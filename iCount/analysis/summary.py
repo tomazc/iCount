@@ -3,10 +3,15 @@ Report proportion of cross-link events/sites on each region type
 """
 import os
 import re
+import logging
 
 import pybedtools
 
+import iCount
+
 from pybedtools import create_interval_from_list
+
+LOGGER = logging.getLogger(__name__)
 
 
 def make_types_length_file(annotation_file, out_file=None, subtype='biotype',
@@ -115,6 +120,8 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
         Path to summary report file (should be equal to out_file parameter)
 
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+
     excluded_types = excluded_types or []
     cross_links = pybedtools.BedTool(cross_links_file).sort().saveas()
     annotation = pybedtools.BedTool(annotation_file).filter(
@@ -122,6 +129,7 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
 
     # If not given/present, make file with cumulative length for each type:
     if not types_length_file or not os.path.isfile(types_length_file):
+        LOGGER.info('types_length_file not given - calculating it')
         types_length_file = make_types_length_file(
             annotation_file, subtype=subtype, excluded_types=excluded_types)
 
@@ -135,6 +143,7 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
     # sorted=True - invokes memory efficient algorithm for large files
     # s=True - only report hits in B that overlap A on the same strand
     # wb=True - Write the original entry in B for each overlap
+    LOGGER.info('Calculating intersection between cross-link and annotation_file...')
     overlaps = cross_links.intersect(annotation, sorted=True, s=True, wb=True).saveas()
     try:
         # this will raise TypeError if overlaps is empty:
@@ -155,13 +164,15 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
             type_counter[type_][0] += 1  # sites
             type_counter[type_][1] += int(segment[4])  # events
 
+    LOGGER.info('Extracting summary from data...')
     for segment in overlaps:
         # detect if segment contains new cross-link site:
         if segment.start != previous_segment.start or segment.strand != previous_segment.strand:
             finalize(site_types, previous_segment)
             site_types = []
         if subtype:
-            stype = re.match(r'.*{} "(.*)";'.format(subtype), segment[-1])  # Extract subtype attribute
+            # Extract subtype attribute:
+            stype = re.match(r'.*{} "(.*)";'.format(subtype), segment[-1])
             site_types.append('{} {}'.format(segment[8], stype.group(1) if stype else '.'))
         else:
             site_types.append(segment[8])
@@ -191,4 +202,5 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
             line = line[:1] + [round(i, int(ndigits)) for i in line[1:]]
             out.write('\t'.join(map(str, line)) + '\n')
 
+    LOGGER.info('Done. Results written in %s.', os.path.abspath(out_file))
     return os.path.abspath(out_file)

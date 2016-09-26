@@ -14,17 +14,19 @@ and other types of genomic regions)
 """
 
 import os
-import sys
-import time
 import shutil
+import logging
 import tempfile
-import multiprocessing
-
-import pybedtools
 
 from collections import Counter
 
+import pybedtools
+
+import iCount
+
 from pybedtools import create_interval_from_list
+
+LOGGER = logging.getLogger(__name__)
 
 
 def get_genes(gtf_in, gtf_out, name='gene', attribute='gene_id'):
@@ -174,11 +176,11 @@ def _check_consistency(intervals):
     strand = intervals[0].strand
 
     intervals = sorted(intervals, key=lambda x: x.start)
-    assert(transcript_interval.start == intervals[0].start)
-    assert(transcript_interval.stop == intervals[-1].stop)
+    assert transcript_interval.start == intervals[0].start
+    assert transcript_interval.stop == intervals[-1].stop
     for first, second in zip(intervals, intervals[1:]):
-        assert(first.stop == second.start)
-        assert(second[2] in can_follow[strand][first[2]])
+        assert first.stop == second.start
+        assert second[2] in can_follow[strand][first[2]]
 
 
 def _get_non_cds_exons(cdses, exons, intervals):
@@ -264,7 +266,7 @@ def _get_non_cds_exons(cdses, exons, intervals):
         else:
             # CDS in exons! Identify which one:
             cds = next((c for c in cdses if _a_in_b(c, exon)), None)
-            assert(cds is not None)
+            assert cds is not None
 
             if cds.start != exon.start:
                 # UTR in the beggining:
@@ -321,8 +323,7 @@ def _get_introns(exons):
     ex1 = exons[0]
     strand = ex1.strand
     return [create_interval_from_list(
-            ex1[:2] + ['intron', i[0], i[1], '.', strand, '.', col8])
-            for i in start_stop]
+        ex1[:2] + ['intron', i[0], i[1], '.', strand, '.', col8]) for i in start_stop]
 
 
 def _process_transcript_group(intervals):
@@ -361,14 +362,14 @@ def _process_transcript_group(intervals):
             i1[:2] + ['transcript', start + 1, stop] + i1[5:8] + [col8]))
 
     exons = [i for i in intervals if i[2] == 'exon']
-    assert(len(exons) != 0)
+    assert len(exons) != 0
 
     # Sort exones by exom number (reverse if strand == '-'):
     exons = sorted(exons, key=lambda x: int(x.attrs['exon_number']),
                    reverse=exons[0].strand == '-')
     # Confirm that they are really sorted: get their starts:
     starts = [exon.start for exon in exons]
-    assert(starts == sorted(starts))
+    assert starts == sorted(starts)
 
     # Gaps between exons are introns. Apend introns to regions container:
     regions.extend(_get_introns(exons))
@@ -380,7 +381,7 @@ def _process_transcript_group(intervals):
         cdses = [i for i in intervals if i[2] == 'CDS']
         # check that all CDSs are within exons:
         for cds in cdses:
-            assert(any([_a_in_b(cds, exon) for exon in exons]))
+            assert any([_a_in_b(cds, exon) for exon in exons])
 
         # Determine UTR regions and new_cds (cds joined with stop
         # codons where possible):
@@ -508,7 +509,7 @@ def _get_gene_content(gtf_in, chromosomes, show_progress=False):
                 else:
                     # New transcript - confirm that it is really a new one:
                     current_transcript = interval.attrs['transcript_id']
-                    assert(current_transcript not in transcript_ids)
+                    assert current_transcript not in transcript_ids
                     transcript_ids.append(current_transcript)
                     gene_content[current_transcript] = [interval]
 
@@ -518,7 +519,7 @@ def _get_gene_content(gtf_in, chromosomes, show_progress=False):
                     yield finalize(gene_content)
 
                 # Confirm that it is really new gene!
-                assert(interval.attrs['gene_id'] not in gene_ids)
+                assert interval.attrs['gene_id'] not in gene_ids
                 # Then add it to already processed genes:
                 current_gene = interval.attrs['gene_id']
                 gene_ids.append(current_gene)
@@ -529,7 +530,7 @@ def _get_gene_content(gtf_in, chromosomes, show_progress=False):
                     gene_content['gene'] = interval
                 elif 'transcript_id' in interval.attrs:
                     current_transcript = interval.attrs['transcript_id']
-                    assert(current_transcript not in transcript_ids)
+                    assert current_transcript not in transcript_ids
                     transcript_ids.append(current_transcript)
                     gene_content[current_transcript] = [interval]
                 else:
@@ -559,17 +560,31 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
     of theese names. Only consider GTF entries of chromosomes given in
     genome_file.
 
-    :param string gtf_in: path to input GTF file
-    :param string gtf_out: path to output GTF file
-    :param string genome_file: path to genome_file (*.fai file or similar )
-    :param int cores: number of computer cpu-s to use for calculation
-    :param bool show_progress: switch to show progress
-    :return: absolute path to output GTF file
-    :rtype: str
+    Parameters
+    ----------
+    gtf_in : str
+        Path to input GTF file.
+    gtf_out : str
+        Path to output GTF file.
+    genome_file : str
+        Path to genome_file (*.fai file or similar).
+    cores : int
+        Number of computer CPUs to use for calculation.
+    show_progress : bool
+        Switch to show progress.
+
+    Returns
+    -------
+    str
+        Absolute path to output GTF file.
+
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+
     # Container for storing intermediate data
     data = []
 
+    LOGGER.debug('Opening genome file: %s', genome_file)
     with open(genome_file) as gfile:
         chromosomes = [line.strip().split()[0] for line in gfile]
 
@@ -580,7 +595,7 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
         Process each transcript_group in gene_content, add 'biotype'
         attribute to all intervals and include them in `data`.
         """
-        assert('gene' in gene_content)
+        assert 'gene' in gene_content
 
         for id_, transcript_group in gene_content.items():
             if id_ == 'gene':
@@ -596,8 +611,10 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
             data.extend(transcript_group)
         data.append(gene_content['gene'])
 
+    LOGGER.debug('Processing genome annotation from: %s', gtf_in)
     for gene_content in _get_gene_content(gtf_in, chromosomes, show_progress):
         process_gene(gene_content)
+        LOGGER.debug('Just processed gene: %s', gene_content['gene'].attrs['gene_id'])
     # This can be replaced with: multiprocessing.Pool, but it causes huge
     # memory usage. Possible explanation and solution:
     # http://stackoverflow.com/questions/21485319/high-memory-usage-using-python-multiprocessing
@@ -607,6 +624,7 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
     # Produce GTF/GFF file from data:
     gs = pybedtools.BedTool(i.fields for i in data).saveas()
 
+    LOGGER.info('Calculating intergenic regions...')
     intergenic_pos = _complement(gs.fn, genome_file, '+')
     intergenic_neg = _complement(gs.fn, genome_file, '-')
 
@@ -616,4 +634,6 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
             shutil.copyfileobj(open(infile, 'rb'), f2)
     f2.close()
 
-    return pybedtools.BedTool(f2.name).sort().saveas(gtf_out).fn
+    f3 = pybedtools.BedTool(f2.name).sort().saveas(gtf_out)
+    LOGGER.info('Segmentation stored in %s', f3.fn)
+    return f3.fn

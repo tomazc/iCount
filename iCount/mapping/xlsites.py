@@ -374,21 +374,21 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     # generate BED with cross-linked positions
     val_index = ['cDNA', 'reads'].index(quant)
 
-    LOGGER.info('All records in BAM file: %d' % metrics.all_recs)
-    LOGGER.info('Reads not mapped: %d' % metrics.notmapped_recs)
-    LOGGER.info('Mapped reads records (hits): %d' % metrics.mapped_recs)
-    LOGGER.info('Hits ignored because of low MAPQ: %d' % metrics.lowmapq_recs)
-    LOGGER.info('Records used for quantification: %d' % metrics.used_recs)
-    LOGGER.info('Records with invalid randomer info in header: %d' % metrics.invalidrandomer_recs)
-    LOGGER.info('Records with no randomer info: %d' % metrics.norandomer_recs)
+    LOGGER.info('All records in BAM file: %d', metrics.all_recs)
+    LOGGER.info('Reads not mapped: %d', metrics.notmapped_recs)
+    LOGGER.info('Mapped reads records (hits): %d', metrics.mapped_recs)
+    LOGGER.info('Hits ignored because of low MAPQ: %d', metrics.lowmapq_recs)
+    LOGGER.info('Records used for quantification: %d', metrics.used_recs)
+    LOGGER.info('Records with invalid randomer info in header: %d', metrics.invalidrandomer_recs)
+    LOGGER.info('Records with no randomer info: %d', metrics.norandomer_recs)
     LOGGER.info('Ten most frequent randomers:')
     top10 = sorted([(cn, bc) for bc, cn in metrics.bc_cn.items()], reverse=True)[:10]
     for cn, bc in top10:
-        LOGGER.info('    %s: %d' % (bc, cn))
+        LOGGER.info('    %s: %d', bc, cn)
 
     iCount.files.bed.save_dict(unique, unique_fname, val_index=val_index)
-    LOGGER.info('Saved to BED file (uniquely mapped reads): %s' % unique_fname)
+    LOGGER.info('Saved to BED file (uniquely mapped reads): %s', unique_fname)
     iCount.files.bed.save_dict(multi, multi_fname, val_index=val_index)
-    LOGGER.info('Saved to BED file (multi-mapped reads): %s' % multi_fname)
+    LOGGER.info('Saved to BED file (multi-mapped reads): %s', multi_fname)
 
     return metrics

@@ -14,7 +14,11 @@ by passing the following parameters:
 """
 
 import os
+import logging
+
 import iCount
+
+LOGGER = logging.getLogger(__name__)
 
 
 def run(genome_fname, outdir, annotation_fname='', overhang=100, threads=1):
@@ -41,7 +45,10 @@ def run(genome_fname, outdir, annotation_fname='', overhang=100, threads=1):
         Star return code.
 
     """
-    assert os.path.isdir(outdir)
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+
+    if not os.path.isdir(outdir):
+        raise FileNotFoundError('Output directory does not exist. Make sure it does.')
     return iCount.externals.star.build_index(
         genome_fname,
         outdir,

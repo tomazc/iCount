@@ -7,13 +7,18 @@ import re
 import ftplib
 import gzip
 import shutil
+import logging
 import tempfile
 import subprocess
+
+import iCount
 
 BASE_URL = 'ftp.ensembl.org'
 
 MIN_RELEASE_SUPPORTED = 59
 MAX_RELEASE_SUPPORTED = 84
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _docstring_parameter(*sub):
@@ -26,12 +31,15 @@ def _docstring_parameter(*sub):
     return dec
 
 
+@_docstring_parameter(BASE_URL)
 def get_ftp_instance():
     """
-    Get ftplib.FTP object that is connected to BASE_URL
+    Get ftplib.FTP object that is connected to {0}
 
-    :return: FTP object connected to BASE_URL
-    :rtype: ftplib.FTP
+    Returns
+    -------
+    ftplib.FTP
+        FTP object connected to {0}
     """
     ftp = ftplib.FTP(BASE_URL)
     ftp.login()
@@ -55,15 +63,16 @@ def get_release_list():
     # set current working directory
     ftp.cwd('pub')
 
-    out = [item.strip('release-') for item in ftp.nlst() if
-           re.match(r'release-\d+', item) and
-           int(item.strip('release-')) >= MIN_RELEASE_SUPPORTED and
-           int(item.strip('release-')) <= MAX_RELEASE_SUPPORTED]
-
+    fetch = [int(item.strip('release-')) for item in ftp.nlst() if re.match(r'release-\d+', item)]
     ftp.quit()
-    return sorted(out, reverse=True)
+    out = [i for i in fetch if i >= MIN_RELEASE_SUPPORTED and i <= MAX_RELEASE_SUPPORTED]
+    out = sorted(out, reverse=True)
+
+    LOGGER.info('There are %d releases available: %s', len(out), ','.join(map(str, (out))))
+    return out
 
 
+@_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
 def get_species_list(release):
     """
     Get list of species for given release.
@@ -71,7 +80,8 @@ def get_species_list(release):
     Parameters
     ----------
     release : str
-        The release number of type str or int.
+        The release number (can be str or int). Only ENSEMBL releases
+        from {0} - {1} are available.
 
     Returns
     -------
@@ -79,15 +89,18 @@ def get_species_list(release):
         List of species.
 
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+
     ftp = get_ftp_instance()
     ftp.cwd('pub/' + 'release-' + str(release) + '/fasta/')
-    species_list = [item for item in ftp.nlst()]
-
+    spec_list = sorted([item for item in ftp.nlst()])
     ftp.quit()
-    if species_list:
-        return sorted(species_list)
+    LOGGER.info('There are %d species available: %s',
+                len(spec_list), ','.join(map(str, spec_list)))
+    return spec_list
 
 
+@_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
 def download_annotation(release, species, target_dir=None, target_fname=None):
     """
     Download annotation in GTF file fromat.
@@ -95,7 +108,7 @@ def download_annotation(release, species, target_dir=None, target_fname=None):
     Parameters
     ----------
     release : int
-        Release number.
+        Release number. Only ENSEMBL releases from {0} - {1} are available.
     species : str
         Species latin name.
     target_dir : str
@@ -112,11 +125,15 @@ def download_annotation(release, species, target_dir=None, target_fname=None):
     TODO: target_dir & target_fname into one parameter? But the default name is
     a quite useful feature...
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
 
     if not target_dir:
         target_dir = os.getcwd()
     if not os.path.isdir(target_dir):
         raise ValueError('Directory "{}" does not exist'.format(target_dir))
+    # Process filename
+    if not target_fname:
+        target_fname = '{}.{}.gtf.gz'.format(species, release)
 
     ftp = get_ftp_instance()
     server_dir = '/pub/release-{}/gtf/{}/'.format(release, species)
@@ -129,75 +146,64 @@ def download_annotation(release, species, target_dir=None, target_fname=None):
     for file_ in server_files:
         if re.match(regex, file_):
             annotation_file = file_
+            break
 
     if not annotation_file:
+        LOGGER.info('No GTF file found for species %s, release %s', species, str(release))
         return None
 
-    # Process filename
-    if not target_fname:
-        target_fname = '{}.{}.gtf.gz'.format(species, release)
-
-    saveas_fname = os.path.join(target_dir, target_fname)
-
     # Download to file on disk
+    saveas_fname = os.path.join(target_dir, target_fname)
+    LOGGER.info('Downloading annotation to: %s', saveas_fname)
     with open(saveas_fname, 'wb') as fhandle:
         ftp.retrbinary('RETR ' + annotation_file, fhandle.write)
-
     ftp.quit()
-    return saveas_fname
+
+    LOGGER.info('Done.')
+    return os.path.abspath(saveas_fname)
 
 
-def chrom_length(fasta_in, txt_out=None):
+def chrom_length(fasta_in):
     """
-    Compute chromosome lengths to a file
+    Compute chromosome lengths to a file by using samtools faidx.
 
-    Output file has one line per each chromosome::
+    More about the .fai file format can be found here:
+    http://www.htslib.org/doc/faidx.html
 
-        chr1    249250621
-        chr2    243199373
-        ...
+    Parameters
+    ----------
+    fasta_in : str
+        Path to genome fasta file (can be a .gz file)
 
-    :param string fasta_in: path to genome fasta file (can be *.gz file)
-    :param string txt_out: output *.txt file
-    :return: absoulute path to output file
-    :rtype: str
+    Returns
+    -------
+    str
+        Absoulute path to output file
+
     """
-    if fasta_in.endswith('.gz'):
-        f2 = tempfile.NamedTemporaryFile(delete=False)
-        with gzip.open(fasta_in, 'rb') as f1:
-            shutil.copyfileobj(f1, f2)
-        f2.close()
-        temp = f2.name
-    else:
-        temp = fasta_in
+    iCount.log_inputs(LOGGER, level=logging.INFO)
 
+    temp = iCount.files.temp.decompress_to_tempfile(fasta_in)
     command = ['samtools', 'faidx', temp]
     subprocess.check_call(command)
-    # This command makes fai file:
-    fai_file = temp + '.fai'
 
-    if not txt_out:
-        txt_out = fasta_in + '.chrom_length.txt'
-
-    with open(fai_file, 'r') as f1, open(txt_out, 'wt') as f2:
-        for line in f1:
-            chrom, length = line.strip().split()[:2]
-            f2.write('{}\t{}\n'.format(chrom, length))
-
-    # Clean up:
-    os.remove(fai_file)
-
-    return os.path.abspath(txt_out)
+    # This command makes fai file. Move move&rename this file to fasta_in.fai:
+    fai_file_temp = temp + '.fai'
+    fai_file = fasta_in + '.fai'
+    subprocess.check_call(['mv', fai_file_temp, fai_file])
+    LOGGER.info('Fai file just made and saved to : %s', os.path.abspath(fai_file))
+    return os.path.abspath(fai_file)
 
 
+@_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
 def download_sequence(release, species, target_dir=None, target_fname=None,
-                      tempdir=None, chromosomes=[]):
+                      tempdir=None, chromosomes=None):
     """
     Downloads genome file in FASTA fromat.
 
     Several steps are performed:
 
-        * querry for list off all FASTA files for given release and specias
+        * querry for list off all FASTA files for given release and species
         * filter this list to get only whole chromosome files
         * if chromosomes paramter is given, take only specified chromosomes
         * sort list of these files to have the correct order
@@ -206,7 +212,7 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
     Parameters
     ----------
     release : int
-        Release number.
+        Release number. Only ENSEMBL releases from {0} - {1} are available.
     species : str
         Species latin name.
     target_dir : str
@@ -228,6 +234,7 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
     TODO: target_dir & target_fname into one parameter? But the default name is
     a quite useful feature...
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
 
     if not target_dir:
         target_dir = os.getcwd()
@@ -274,41 +281,26 @@ def download_sequence(release, species, target_dir=None, target_fname=None,
             '_'.join(map(str, chromosomes)) + '.fa.gz'
 
     tempdir = tempfile.mkdtemp(dir=tempdir)
-    target_path = os.path.join(target_dir, target_fname)
+    target_path = os.path.abspath(os.path.join(target_dir, target_fname))
 
+    LOGGER.info('Downloading FASTA file into: %s', target_path)
     for fname in filtered_files:
+        LOGGER.debug('Downloading file: %s', fname)
         # Download all files to tempdir:
         temp_file = os.path.join(tempdir, fname)
         with open(temp_file, 'wb') as fhandle:
             ftp.retrbinary('RETR ' + fname, fhandle.write)
 
         # Write the content into final file (target_fname)
-        with gzip.open(temp_file, 'rb') as f_in, \
-             gzip.open(target_path, 'ab') as f_out:
+        with gzip.open(temp_file, 'rb') as f_in, gzip.open(target_path, 'ab') as f_out:
             shutil.copyfileobj(f_in, f_out)
 
     # Clean up: delete temporary files:
     ftp.quit()
     shutil.rmtree(tempdir)
 
-    # Conpute chromosome lengths:
-    _ = chrom_length(target_path)
+    # Compute chromosome lengths:
+    chrom_length(target_path)
 
+    LOGGER.info('Done.')
     return target_path
-
-
-# #############################################################
-
-if __name__ == '__main__':
-
-    releases = get_release_list()
-    release84 = releases[-2]
-    species = get_species_list(releases[-2])
-
-    # Choose random species
-    species = species[42]
-
-    # download_annotation(release84, species, '/home/jure/Desktop')
-
-    # Executing this command might take a looong time!
-    # download_genome(release84, species, '/home/jure/Desktop')

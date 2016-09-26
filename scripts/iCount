@@ -103,9 +103,9 @@ def _extract_parameter_data(function):
 
     for param in params:
         if param in optional:
-            data[param] = {'name': '--' + param, 'default': optional[param]}
+            data[param] = {'name': '--' + param, 'default': optional[param], 'metavar': ''}
         else:
-            data[param] = {'name': param}
+            data[param] = {'name': param, 'metavar': ''}
 
         # Extract help (parameter description) and type from function docstring:
         regex_help = r'.*:param {}: (.+?)\n.*'.format(param)
@@ -126,6 +126,7 @@ def _extract_parameter_data(function):
                 data[param]['action'] = 'store_true'
                 # If action == store_true, than `type` needs to be removed.
                 data[param].pop('type')
+                data[param].pop('metavar')
             if param_type == 'list_str':
                 data[param]['nargs'] = '+'
 
@@ -212,15 +213,16 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         name = values.pop('name')
         parser.add_argument(name, **values)
 
-    # Add loglevel argument:
-    parser.add_argument('--stdout_loglevel', '-S', default=logging.INFO, type=int,
-                        help="Log level (0-50). If 0")
-    parser.add_argument('--file_logpath', '-P', default=None, type=str,
-                        help="Path to logfile.")
-    parser.add_argument('--file_loglevel', '-F', default=0, type=int,
-                        help="Log level (1-50)")
-    parser.add_argument('--results_file', '-R', default=None, type=argparse.FileType('wt'),
-                        help="File into which Result object should be stored.")
+    parser.add_argument('-S', '--stdout_log', default=logging.INFO, type=int, metavar='',
+                        help='Threshold value (0-50) for logging ot stdout. If 0,'
+                        ' logging to stdout if turned OFF.')
+    parser.add_argument('-F', '--file_log', default=0, type=int, metavar='',
+                        help='Threshold value (0-50) for logging ot file. If 0,'
+                        ' logging to file if turned OFF.')
+    parser.add_argument('-P', '--file_logpath', default=None, type=str, metavar='',
+                        help="Path to log file.")
+    parser.add_argument('-M', '--results_file', default=None, type=argparse.FileType('wt'),
+                        metavar='', help="File into which to store Metrics.")
 
     # Connect parser with function to execute:
     parser.set_defaults(func=function)
@@ -236,29 +238,14 @@ root_parser = argparse.ArgumentParser(
     description=inspect.getdoc(iCount),
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
-root_parser.add_argument(
-    '-v', '--version',
-    action='version',
-    version='%%(prog)s %s' % iCount.__version__,
-)
-subparsers = root_parser.add_subparsers(title='Commands')
+# Parser (general) arguments
+root_parser.add_argument('-v', '--version', action='version',
+                         version='%%(prog)s %s' % iCount.__version__)
 
+subparsers = root_parser.add_subparsers(title='Commands', metavar=' ')
 ##################
 # Define commands:
 ##################
-
-# Analysis:
-make_parser_from_function(
-    iCount.analysis.annotate.annotate_cross_links, subparsers)
-make_parser_from_function(
-    iCount.analysis.clusters.run, subparsers)
-make_parser_from_function(
-    iCount.analysis.group.merge_bed, subparsers, module=iCount.analysis.group)
-make_parser_from_function(
-    iCount.analysis.peaks.run, subparsers)
-make_parser_from_function(
-    iCount.analysis.summary.make_summary_report, subparsers)
-
 
 # Genomes:
 make_parser_from_function(
@@ -269,18 +256,31 @@ make_parser_from_function(
     iCount.genomes.ensembl.download_annotation, subparsers, only_func=True)
 make_parser_from_function(
     iCount.genomes.ensembl.download_sequence, subparsers, only_func=True)
+make_parser_from_function(
+    iCount.genomes.segment.get_regions, subparsers)
 
-
-# Mapping:
-make_parser_from_function(iCount.mapping.map.run, subparsers)
+# Demultiplex and mapping:
+make_parser_from_function(iCount.demultiplex.run, subparsers)
 make_parser_from_function(iCount.mapping.mapindex.run, subparsers)
+make_parser_from_function(iCount.mapping.map.run, subparsers)
 make_parser_from_function(iCount.mapping.xlsites.run, subparsers)
+
+# # Analysis:
+make_parser_from_function(
+    iCount.analysis.annotate.annotate_cross_links, subparsers)
+make_parser_from_function(
+    iCount.analysis.clusters.run, subparsers)
+make_parser_from_function(
+    iCount.analysis.group.run, subparsers, module=iCount.analysis.group)
+make_parser_from_function(
+    iCount.analysis.peaks.run, subparsers)
+make_parser_from_function(
+    iCount.analysis.summary.make_summary_report, subparsers)
 
 
 def verbose_help(mode):
     if mode == 'txt':
         print(root_parser.format_help() + '\n')
-
         for name, parser in root_parser._action_groups[2]._actions[2].choices.items():
             if name == 'man':
                 continue
@@ -289,11 +289,9 @@ def verbose_help(mode):
             print(parser.format_help() + '\n')
     else:
         raise NotImplementedError('"{}" not supported.'.format(mode))
-
 # Add the man command:
 parser = subparsers.add_parser('man', help='Print help for all commands.')
-parser.add_argument('--mode', type=str, default='txt')
-parser.add_argument('--verbose', '-v', action='store_true')
+parser.add_argument('--mode', type=str, default='txt', metavar='')
 parser.set_defaults(func=verbose_help)
 
 #############################
@@ -311,22 +309,23 @@ try:
     func = args.pop('func')
 
     # Stdout logger
-    stdout_loglevel = args.pop('stdout_loglevel')
-    logger.log_to_stdout(is_on=True, level=stdout_loglevel)
+    stdout_loglevel = args.pop('stdout_log', 20)
+    is_on = not stdout_loglevel == 0
+    logger.log_to_stdout(is_on=is_on, level=stdout_loglevel)
 
     # File logger
-    file_loglevel = args.pop('file_loglevel')
-    file_logpath = args.pop('file_logpath')
-    is_on = any([file_loglevel, file_logpath])
+    file_loglevel = args.pop('file_log', 0)
+    file_logpath = args.pop('file_logpath', None)
+    is_on = all([file_loglevel, file_logpath])
     logger.log_to_file(is_on=is_on, level=file_loglevel, path=file_logpath)
 
     # Switch to output results to a file:
-    results_file = args.pop('results_file')
+    results_file = args.pop('results_file', None)
 
     # Execute the wrapped function:
     result_object = func(**args)
 
-    # Save results to results_file. If not given, don't report anything.
+    # Save results to results_file. If not given, don't do anything (don't print the result!)
     if results_file:
         print(result_object, file=results_file)
     sys.exit(0)

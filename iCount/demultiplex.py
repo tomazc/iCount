@@ -12,54 +12,49 @@ and counting number of cross-link events.
 
 
 import os
-import iCount.files
-import iCount.externals
+import logging
 
-# description and parameters needed for the analysis
-analysis_name = 'demultiplex'
-analysis_description_short = 'demultiplex FASTQ file'
-analysis_description = 'Split input FASTQ file into separate files, one for ' \
-                       'each barcode, and additional file for non-matching ' \
-                       'barcodes.'
-
-params_opt = [
-    (
-        'barcodes', 'str_list', [], True,
-        'List of barcodes used for library.'
-    ),
-    (
-        'adapter', 'string', 'AGATCGGAAGAGCGGTTCAG', False,
-        'Adapter sequence to remove from ends of reads.'
-    ),
-    (
-        'mismatches', 'int_range', (1, 0, 5), False,
-        'Number of tolerated mismatches when comparing barcodes.'
-    ),
-    (
-        'minimum_length', 'int_range', (15, 0, 100), False,
-        'Minimum length of trimmed sequence to keep.'
-    ),
-    (
-        'prefix', 'string', 'exp', False,
-        'Prefix of generated FASTQ files.'
-    ),
-    (
-        'outdir', 'string', '.', False,
-        'Output folder. Use local folder if none given.'
-    ),
-]
-
-params_pos = [
-    (
-        'sequences', 'FASTQ', 'in', 1,
-        '(input) sequences from a sequencing library.'
-    ),
-]
+import iCount
 
 
-def run(fastq_fn, barcodes, adapter, mismatches,
+LOGGER = logging.getLogger(__name__)
+
+
+def run(fastq_fn, adapter, mismatches, barcodes,
         minimum_length=15, prefix='demux', outdir='.'):
-    assert os.path.isdir(outdir)
+    """
+    Demultiplex FASTQ file.
+
+    Split input FASTQ file into separate files, one for each barcode, and
+    additional file for non-matching barcodes.
+
+    Parameters
+    ----------
+    fastq_fn : str
+        Path to reads from a sequencing library.
+    adapter : str
+        Adapter sequence to remove from ends of reads.
+    mismatches : int
+        Number of tolerated mismatches when comparing barcodes.
+    barcodes : list_str
+        List of barcodes used for library.
+    minimum_length : int
+        Minimum length of trimmed sequence to keep.
+    prefix : str
+        Prefix of generated FASTQ files.
+    outdir : str
+        Output folder. Use local folder if none given.
+
+    Returns
+    -------
+    str
+        List of filenames where separated reads are stored.
+
+    """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+
+    if not os.path.isdir(outdir):
+        raise FileNotFoundError('Output directory does not exist. Make sure it does.')
     out_fn_prefix = []
     for bc in ['nomatch'] + barcodes:
         out_fn_prefix.append(
@@ -73,16 +68,21 @@ def run(fastq_fn, barcodes, adapter, mismatches,
         out_fns = ['{:s}.fastq.gz'.format(fn) for fn in out_fn_prefix]
 
     # demultiplex
+    LOGGER.info('Allowing max %d mismatches in barcodes.', mismatches)
+    LOGGER.info('Demultiplexing file: %s', fastq_fn)
     demultiplex(fastq_fn, out_fns[1:], out_fns[0], barcodes, mismatches,
                 minimum_length)
+    LOGGER.info('Saving results to:')
+    for fn in out_fns:
+        LOGGER.info('    %s', fn)
 
+    LOGGER.info('Trimming adapters (discarding shorter than %d)...', minimum_length)
     # remove adapter, if requested
     if adapter:
         out_fns_intermediate = out_fns
         out_fns = ['{:s}.fastq.gz'.format(fn) for fn in out_fn_prefix]
         for fn_in, fn_out in zip(out_fns_intermediate, out_fns):
-            iCount.externals.cutadapt.run(fn_in, fn_out, adapter,
-                                          minimum_length=minimum_length)
+            remove_adapter(fn_in, fn_out, adapter, minimum_length=minimum_length)
             os.remove(fn_in)
 
     return out_fns
@@ -94,15 +94,27 @@ def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
 
     All non-matching reads are stored in FASTQ file not_matching_fastq_fname.
 
-    :param in_fastq_fname: filename to read,  must be FASTQ in order to
-    avoid duplicate read records.
-    :param out_fastq_fnames: list of filenames to store reads as determined
-    by barcodes
-    : not_matching_fastq_fname: fastq filename where to store reads not
-    matching
-    :param not_matching_fastq_fname: FASTQ to store reads non matchning reads
-    :param barcodes: experiment and randomer barcode definition
-    :param mismatches: number of allowed mismatches in sample barcode
+    Parameters
+    ----------
+    in_fastq_fname : str
+        Filename to read,  must be FASTQ in order to avoid duplicate read records.
+    out_fastq_fnames : list_str
+        List of filenames to store reads as determined by barcodes.
+    not_matching_fastq_fname : str
+        Fastq filename where to store non matching reads.
+    barcodes : list_str
+        Experiment and randomer barcode definition.
+    mismatches : int
+        Number of allowed mismatches in sample barcode.
+    minimum_length : int
+        Discard reads with length less than this.
+
+    Returns
+    -------
+    str
+        List of filenames where reads are stored (should be same as
+        out_fastq_fnames).
+
     """
 
     out_fastq = [iCount.files.fastq.Writer(fn) for fn in
@@ -149,7 +161,7 @@ def extract(seqs, barcodes, mismatches=1, minimum_length=15):
             assert set(ns) & valid_nucs == set(ns)
             for n2 in ns:
                 p2n2i.setdefault(p, {}).setdefault(n2, set()).add(bi)
-        assert(i2start_pos.setdefault(bi, len(bar5)) == len(bar5))
+        assert i2start_pos.setdefault(bi, len(bar5)) == len(bar5)
 
     # determine the randomer positions - those that cannot be distinguished
     # based on barcodes
