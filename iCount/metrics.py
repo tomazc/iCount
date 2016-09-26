@@ -14,4 +14,7 @@ class Metrics:
             setattr(self, arg, value)
 
     def __repr__(self):
-        return '{:s}\n{:s}'.format(self.context, self.__dict__.__repr__())
+        attrs = [(k, v) for k, v in self.__dict__.items() if k != 'context' and not callable(v)]
+        attrs = [('context', self.context)] + attrs
+        args = ', '.join('{}="{}"'.format(k, v.__repr__()) for k, v in attrs)
+        return 'Metrics({:s})'.format(args)
