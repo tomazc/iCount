@@ -24,6 +24,7 @@ import gzip
 
 from . import bam
 from . import bed
+from . import fasta
 from . import fastq
 from . import gtf
 from . import temp
