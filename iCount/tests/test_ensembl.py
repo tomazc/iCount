@@ -21,12 +21,12 @@ class TestEnsembl(unittest.TestCase):
 
         self.assertIsInstance(releases, list)
         self.assertTrue(len(releases) > 0)
-        self.assertIsInstance(releases[0], str)
-        self.assertEqual(min(releases), '59')
-        self.assertTrue(int(max(releases)) > 83)
+        self.assertIsInstance(releases[0], int)
+        self.assertEqual(min(releases), 59)
+        self.assertTrue(max(releases) > 83)
 
     def test_get_species_list(self):
-        species = ensembl.get_species_list('84')
+        species = ensembl.get_species_list(84)
 
         self.assertIsInstance(species, list)
         self.assertTrue(len(species) > 0)
@@ -55,7 +55,7 @@ class TestEnsemblDownload(unittest.TestCase):
             os.path.join(self.tempdir, 'homo_sapiens.84.chrMT.fa.gz')))
         # Confirm that chrom_length file was created!
         self.assertTrue(os.path.isfile(
-            os.path.join(self.tempdir, 'homo_sapiens.84.chrMT.fa.gz.chrom_length.txt')))
+            os.path.join(self.tempdir, 'homo_sapiens.84.chrMT.fa.gz.fai')))
 
     def tearDown(self):
         files = os.listdir(self.tempdir)

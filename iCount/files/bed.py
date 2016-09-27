@@ -1,8 +1,13 @@
 import os
 import shutil
+import logging
 import tempfile
 
 import pybedtools
+
+import iCount
+
+LOGGER = logging.getLogger(__name__)
 
 
 def load(fname):
@@ -65,6 +70,9 @@ def merge_bed(outfile, files):
         Absolute path to outfile
 
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+    LOGGER.info('Merging input files...')
+
     if len(files) == 0:
         raise ValueError(
             "At least one element expected in files list, but none found.")
@@ -91,6 +99,7 @@ def merge_bed(outfile, files):
     result = pybedtools.BedTool(pybedtools.create_interval_from_list(
         i[:3] + ['.', i[4], i[3]]) for i in merged).saveas(outfile)
 
+    LOGGER.info('Done. Results saved to: %s', os.path.abspath(result.fn))
     return os.path.abspath(result.fn)
 
 

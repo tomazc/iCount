@@ -7,11 +7,17 @@ significant sites.
 """
 import math
 import bisect
+import logging
+
 import numpy
-from collections import Counter
 
 import iCount
+
+from collections import Counter
+
 from iCount.files.bed import _f2s
+
+LOGGER = logging.getLogger(__name__)
 
 
 def sum_within_window(pos_val, hw=3):
@@ -158,16 +164,19 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         None
 
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
 
     # load annotation
     annotation = iCount.files.gtf.load(fin_annotation)
     sites = iCount.files.bed.load(fin_sites).sort().saveas()
 
     # assign cross-linked sites to regions
+    LOGGER.info('Calculating intersection between annotation and cross-link file...')
     overlaps = annotation.intersect(sites, sorted=True, s=True, wo=True).saveas()
     hits_by_name = {}
     name_sizes = {}
     features_skipped_cn = 0
+    LOGGER.info('Processing overlaps')
     for feature in overlaps:
         if feature[2] not in features:  # check if of correct feature type
             features_skipped_cn += 1
@@ -259,5 +268,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
     if fout_scores is not None:
         fout_scores.close()
 
-    if report_progress:
-        print('\ndone')
+    LOGGER.info('Bed file with significant peaks saved to %s', fout_peaks)
+    LOGGER.info('Scores for each cross-linked position saved to %s', fout_scores)
+
+    LOGGER.info('Done.')

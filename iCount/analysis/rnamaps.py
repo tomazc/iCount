@@ -9,6 +9,11 @@ Count frequency of cross-links relative to annotation features.
 Draw histograms and save tables with distributions.
 
 """
+import logging
+
+import iCount
+
+LOGGER = logging.getLogger(__name__)
 
 
 # description and parameters needed for the analysis

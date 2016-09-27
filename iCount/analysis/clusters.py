@@ -5,8 +5,14 @@ Read bedGraph with (significant) cross-linked sites. Cluster together sites that
 are apart at most a specified number of nucleotides. Return BED file with
 clusters' coordinates.
 """
+import logging
+import os
 
 import pybedtools
+
+import iCount
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _fix_proper_bed6_format(feature):
@@ -46,22 +52,14 @@ def run(fin_sites, fout_clusters, dist=20):  # , extend=0):
         BED file with clusters as elements
 
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+
     # It is required to pre-sort your data:
     sites = pybedtools.BedTool(fin_sites).sort().saveas()
-    # if extend:
-    #    sites = sites.slop(b=extend).saveas()
+
+    LOGGER.info('Merging cross links form file %s', fin_sites)
     merged = sites.merge(s=True, d=dist, c=[5, 4], o='sum,distinct').saveas()
     out = merged.sort().each(_fix_proper_bed6_format).saveas(fout_clusters)
+
+    LOGGER.info('Done. Results saved to: %s', os.path.abspath(out.fn))
     return out.fn
-
-#     # _lowFDR.bed
-#     desc = "peaks in %s, with %s permutations, %s nt neighborhood, FDR < %g, regions %s" % (
-
-#
-#     # clustered - cluster neighboring peaks, within +-15nt, report value (cDNA, tc,...) sum for region covered by cluster
-#     desc = "peaks in %s, with %s permutations, FDR < %g, regions %s, clustered within %s nt neighborhood" % (
-
-#
-#     # extended - extend clusters with neighboring non-lowFDR peaks, join clusters if 15nt or less apart
-#     desc = "peaks in %s, with %s permutations, FDR < %g, regions %s, clustered within %s nt neighborhood, extended to neighboring high FDR peaks or clusters %s nt or less apart" % (
-

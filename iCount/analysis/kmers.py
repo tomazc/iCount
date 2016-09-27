@@ -9,7 +9,11 @@ frequencies.
 Return ranked list of k-mer enrichment.
 
 """
+import logging
 
+import iCount
+
+LOGGER = logging.getLogger(__name__)
 
 
 # description and parameters needed for the analysis

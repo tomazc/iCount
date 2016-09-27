@@ -3,10 +3,15 @@ Annotate each cross link site with types of regions that intersect with it.
 """
 import re
 import os
+import logging
 
 import pybedtools
 
+import iCount
+
 from pybedtools import create_interval_from_list
+
+LOGGER = logging.getLogger(__name__)
 
 
 def annotate_cross_links(annotation_file, cross_links_file, out_file,
@@ -45,12 +50,14 @@ def annotate_cross_links(annotation_file, cross_links_file, out_file,
         Path to summary report file (should be equal to out_file parameter)
 
     """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
 
     excluded_types = excluded_types or []
     cross_links = pybedtools.BedTool(cross_links_file).sort().saveas()
     annotation = pybedtools.BedTool(annotation_file).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
 
+    LOGGER.info('Calculating overlaps between cross-link and annotation_file...')
     overlaps = cross_links.intersect(annotation, sorted=True, s=True, wb=True).saveas()
     try:
         # this will raise TypeError if overlaps is empty:
@@ -83,6 +90,7 @@ def annotate_cross_links(annotation_file, cross_links_file, out_file,
     finalize(site_types, previous_interval)
 
     # Produce annotated cross-link file:
+    LOGGER.info('Writing results to file...')
     pybedtools.BedTool(line for line in data).saveas(out_file)
-
+    LOGGER.info('Done. Output saved to: %s', os.path.abspath(out_file))
     return os.path.abspath(out_file)

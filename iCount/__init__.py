@@ -47,4 +47,3 @@ if not os.path.exists(tmp_root):
     print("tmp root folder does not exist. Will create it at: "
           "{0:s}".format(tmp_root))
     os.makedirs(tmp_root)
-

@@ -7,6 +7,11 @@ import pybedtools
 from numpy import random
 from pybedtools import create_interval_from_list
 
+from iCount.files.fasta import read_fasta
+
+
+BASES = ['A', 'C', 'G', 'T']
+
 
 def get_temp_file_name(tmp_dir=None):
     """
@@ -68,20 +73,24 @@ def reverse_strand(data):
         return [
             data[i][:6] + [rstrands[i]] + data[i][7:] for i in range(len(data))]
 
-def make_sequence(size):
+
+def make_sequence(size, include_N=False):
     """
     Makes random DNA segment of length `size`
     """
-    bases = 'ACGTN'
-    return ''.join([bases[i] for i in random.randint(0, high=5, size=size)])
+    if include_N:
+        bases = ['A', 'C', 'G', 'T', 'N']
+    else:
+        bases = ['A', 'C', 'G', 'T']
+    return ''.join(random.choice(bases, size))
 
 
-def make_quality_scores(size):
+def make_quality_scores(size, min_chr=33, max_chr=127):
     """
     Makes random DNA segment of length `size`
     """
-    scores = ''.join([chr(i) for i in range(64, 105)])
-    return ''.join([scores[i] for i in random.randint(0, high=41, size=size)])
+    scores = [chr(i) for i in range(min_chr, max_chr + 1)]
+    return ''.join(random.choice(scores, size))
 
 
 def make_aligned_segment(data):
@@ -137,7 +146,7 @@ def make_aligned_segment(data):
     a.template_length = 0
 
     length = sum([n2 for (n1, n2) in a.cigar])
-    a.query_sequence = make_sequence(size=length)
+    a.query_sequence = make_sequence(size=length, include_N=True)
     a.query_qualities = pysam.qualitystring_to_array(
         make_quality_scores(size=length))
 
@@ -187,3 +196,81 @@ def make_bam_file(data):
             outf.write(make_aligned_segment(segment_data))
 
     return os.path.abspath(fname)
+
+
+def make_fasta_file(headers=None, out_file=None, num_sequences=10, seq_len=80):
+    """
+    Make artificial FASTA file.
+
+    Headers should be a list with length equal num_sequences.
+    """
+    if headers is None:
+        headers = ['{}'.format(i + 1) for i in range(num_sequences)]
+
+    def make_fasta_entry(ofile, headers):
+        ofile.write('>' + headers.pop(0) + '\n')
+        ofile.write(make_sequence(seq_len) + '\n')
+
+    if out_file is None:
+        out_file = get_temp_file_name()
+    with open(out_file, 'wt') as ofile:
+        for i in range(num_sequences):
+            make_fasta_entry(ofile, headers)
+
+    return os.path.abspath(out_file)
+
+
+def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
+                    num_sequences=10, seq_len=80):
+    """
+    Make artificial FASTQ file.
+
+    File can be customized to with given barcodes and
+    """
+    if barcodes is None:
+        barcodes = ['NNN']
+
+    if genome is not None:
+        genome_data = read_fasta(genome)
+        num_sequences = len(genome_data)
+        seq_len = len(genome_data[0])
+
+    seq_len_reduced = seq_len - (len(barcodes[0]) if len(barcodes) != 0 else 0) - len(adapter)
+
+    qualities = [chr(i) for i in range(33, 127)]
+    num_barcodes = len(barcodes)
+
+    def make_fastq_entry(ofile):
+        description = 'artificial header {}'.format(random.random())
+
+        # Select random barcode and transform 'N'-s to nucleotids:
+        pre_barcode = barcodes[random.randint(0, num_barcodes)]
+        barcode = ''
+        for letter in pre_barcode:
+            if letter == 'N':
+                # Randomly select one of bases:
+                barcode += BASES[random.randint(0, 4)]
+            else:
+                barcode += letter
+
+        if genome:
+            r1 = random.randint(0, high=len(genome_data))
+            r2 = random.randint(0, high=len(genome_data[r1][1]))
+            random_piece = genome_data[r1][1][r2:r2 + seq_len_reduced]
+            seq = barcode + random_piece + adapter
+        else:
+            seq = barcode + make_sequence(seq_len_reduced) + adapter
+        quality_scores = make_quality_scores(len(seq))
+
+        ofile.write('@' + description + '\n')
+        ofile.write(seq + '\n')
+        ofile.write('+' + '\n')
+        ofile.write(quality_scores + '\n')
+
+    if out_file is None:
+        out_file = get_temp_file_name()
+    with open(out_file, 'wt') as ofile:
+        for i in range(num_sequences):
+            make_fastq_entry(ofile)
+
+    return os.path.abspath(out_file)
