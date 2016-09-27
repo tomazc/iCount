@@ -1,3 +1,7 @@
+"""
+Filters.
+"""
+
 
 def remove_duplicates(hits):
     """Remove duplicate hits that map to same position and have same randomer.
@@ -8,6 +12,7 @@ def remove_duplicates(hits):
     """
     return
 
+
 def group_by_start(hits):
     """Groups hits by start.
 
@@ -16,6 +21,7 @@ def group_by_start(hits):
     """
     return
 
+
 def group_by_end(hits):
     """Group hits by their end position.
 
@@ -23,6 +29,7 @@ def group_by_end(hits):
     contig.
     """
     return
+
 
 def remove_wrong_assignments(hits_list):
     """Remove low-frequency hits mapped to same position as frequent hits

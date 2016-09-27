@@ -21,7 +21,8 @@ def get_version():
         return None
 
 
-def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=8, threads=1):
+def build_index(genome_fname, outdir, annotation='', overhang=100,
+                overhang_min=8, threads=1, quiet=False):
     LOGGER.info('Building genome index with STAR for genome %s' % genome_fname)
     genome_fname2 = iCount.files.temp.decompress_to_tempfile(
         genome_fname, 'starindex')
@@ -44,7 +45,11 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
         annotation2 = annotation
 
     try:
-        ret_code = subprocess.call(args, shell=False)
+        if quiet:
+            quiet = subprocess.DEVNULL
+        process = subprocess.Popen(args, stdout=quiet, shell=False)
+        process.communicate()
+        ret_code = process.returncode
     finally:
         # remove temporary decompressed files
         if genome_fname != genome_fname2:
@@ -56,8 +61,8 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
     return ret_code
 
 
-def map_reads(sequences_fname, genomedir, outdir, annotation='',
-              multimax=10, mismatches=2, threads=1):
+def map_reads(sequences_fname, genomedir, outdir, annotation='', multimax=10, mismatches=2,
+              threads=1, quiet=False):
     LOGGER.info('Mapping reads from %s' % sequences_fname)
     sequences_fname2 = iCount.files.temp.decompress_to_tempfile(
         sequences_fname, 'starmap')
@@ -93,7 +98,11 @@ def map_reads(sequences_fname, genomedir, outdir, annotation='',
         annotation2 = annotation
 
     try:
-        ret_code = subprocess.call(args, shell=False)
+        if quiet:
+            quiet = subprocess.DEVNULL
+        process = subprocess.Popen(args, stdout=quiet, shell=False)
+        process.communicate()
+        ret_code = process.returncode
     finally:
         # remove temporary decompressed files
         if sequences_fname != sequences_fname2:
