@@ -204,7 +204,7 @@ class TestRun(unittest.TestCase):
 
     def test_error_open_bamfile(self):
         """
-        Provide onyl file with no content - error shoud be raised.
+        Provide only file with no content - erorr shoud be raised.
         """
         bam_fname = get_temp_file_name()
         unique_fname = get_temp_file_name()
