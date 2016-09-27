@@ -111,7 +111,9 @@ class TestOtherFunctions(unittest.TestCase):
         segment._check_consistency(intervals)
 
     def test_check_consistency_fail1(self):
-        """No transcript interval"""
+        """
+        No transcript interval.
+        """
         intervals = [create_interval_from_list(
             ['1', '.', 'UTR5', '1', '9', '.', '+', '.', '.'])]
 
@@ -120,7 +122,9 @@ class TestOtherFunctions(unittest.TestCase):
             segment._check_consistency(intervals)
 
     def test_check_consistency_fail2(self):
-        """Overlaping intervals."""
+        """
+        Overlaping intervals.
+        """
         intervals = list_to_intervals([
             ['1', '.', 'transcript', '1', '100', '.', '+', '.', '.'],
             ['1', '.', 'UTR5', '1', '50', '.', '+', '.', '.'],
@@ -131,7 +135,9 @@ class TestOtherFunctions(unittest.TestCase):
             segment._check_consistency(intervals)
 
     def test_check_consistency_fail3(self):
-        """Unallowed order of types."""
+        """
+        Unallowed order of types.
+        """
         intervals = list_to_intervals([
             ['1', '.', 'transcript', '1', '100', '.', '+', '.', '.'],
             ['1', '.', 'UTR3', '1', '49', '.', '+', '.', '.'],
@@ -400,7 +406,9 @@ class TestGetNonCdsExons(unittest.TestCase):
 class TestProcessTranscriptGroup(unittest.TestCase):
 
     def test_no_exons(self):
-        """Fail if no exons are given"""
+        """
+        Fail if no exons are given.
+        """
         intervals = list_to_intervals([
             ['1', '.', 'transcript', '1', '100', '.', '+', '.', '.'],
         ])
@@ -411,7 +419,8 @@ class TestProcessTranscriptGroup(unittest.TestCase):
     def test_no_transcript_interval(self):
         """
         If not transcript interval is given, it is determined by function
-        Also this is the case if no CDS are given - all exons turn to ncRNA"""
+        Also this is the case if no CDS are given - all exons turn to ncRNA.
+        """
         intervals = list_to_intervals([
             ['1', '.', 'exon', '1', '30', '.', '+', '.', 'exon_number "1";'],
             ['1', '.', 'exon', '60', '100', '.', '+', '.', 'exon_number "2";'],
@@ -535,7 +544,9 @@ class TestGetGeneContent(unittest.TestCase):
         self.assertEqual(gene2, expected2)
 
     def test_already_processed_transcript(self):
-        """Raise error if member of already processed transcript is found"""
+        """
+        Raise error if member of already processed transcript is found.
+        """
         gtf = make_file_from_list([
             ['1', '.', 'gene', '100', '300', '.', '+', '.',
              'gene_id "G1";'],
@@ -551,7 +562,9 @@ class TestGetGeneContent(unittest.TestCase):
             next((segment._get_gene_content(gtf, ['1', 'MT'])))
 
     def test_already_processed_gene(self):
-        """Raise error if member of already processed gene is found."""
+        """
+        Raise error if member of already processed gene is found.
+        """
         gtf = make_file_from_list([
             ['1', '.', 'gene', '100', '300', '.', '+', '.',
              'gene_id "G1";'],
@@ -567,7 +580,9 @@ class TestGetGeneContent(unittest.TestCase):
             list((segment._get_gene_content(gtf, ['1', 'MT'])))
 
     def test_no_required_attributes(self):
-        """Raise error if transcript_id attribute is not present."""
+        """
+        Raise error if transcript_id attribute is not present.
+        """
         gtf = make_file_from_list([
             ['1', '.', 'transcript', '500', '600', '.', '+', '.', 'gene_id "G1";'],
         ])

@@ -56,7 +56,6 @@ class TestMergeSimilarRandomers(unittest.TestCase):
                     'TTTTN': ['hit42']}
         self.assertEqual(by_bc, expected)
 
-
     @unittest.skip
     def test_todo(self):
         """
@@ -204,7 +203,9 @@ class TestRun(unittest.TestCase):
         self.assertEqual(result.bc_cn, {'': 2, 'ACG': 1, 'CCCC': 1})
 
     def test_error_open_bamfile(self):
-        """ Provide onyl file with no content - erorr shoud be raised. """
+        """
+        Provide onyl file with no content - error shoud be raised.
+        """
         bam_fname = get_temp_file_name()
         unique_fname = get_temp_file_name()
         multi_fname = get_temp_file_name()
@@ -221,8 +222,6 @@ class TestRun(unittest.TestCase):
         message = r'"NH" tag not set for record: .*'
         with self.assertRaisesRegex(ValueError, message):
             result = xlsites.run(bam_fname, unique_fname, multi_fname)
-
-
 
 
 if __name__ == '__main__':

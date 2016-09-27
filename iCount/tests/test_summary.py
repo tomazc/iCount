@@ -10,7 +10,7 @@ from iCount.tests.utils import make_file_from_list, make_list_from_file
 
 def _make_types_length(annotation, subtype='biotype', excluded_types=None):
     """
-    Run function `make_types_length_file` with data from `annotation`
+    Run function `make_types_length_file` with data from `annotation`.
     """
     annotation_file = make_file_from_list(annotation)
     out_file = tempfile.NamedTemporaryFile(delete=False).name
@@ -38,7 +38,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
 
     def test_merge_same_types(self):
         """
-        Test that merging same type is done as expected
+        Test that merging same type is done as expected.
 
         Confirm that:
 
@@ -57,7 +57,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
 
     def test_merge_respect_strand(self):
         """
-        Test that merging is sensitive to strand
+        Test that merging is sensitive to strand.
 
         Intervals differing only in strand are counted separately
         """
@@ -70,7 +70,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
         self.assertEqual(expected, _make_types_length(annotation))
 
     def test_mixed_types(self):
-        """Defect different types in same position correctly"""
+        """
+        Defect different types in same position correctly.
+        """
         annotation = [
             ['1', '.', 'intron', '10', '20', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'intron', '20', '30', '.', '+', '.', 'biotype "A";'],
@@ -86,7 +88,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
         self.assertEqual(expected, _make_types_length(annotation))
 
     def test_shuffled_input(self):
-        """Unsorted input does not make difference."""
+        """
+        Unsorted input does not make difference.
+        """
         annotation = [
             ['20', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "B";'],
@@ -100,7 +104,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
         self.assertEqual(expected, _make_types_length(annotation))
 
     def test_subtype_param1(self):
-        """Subtype parameter can be empty: type is just 3rd column."""
+        """
+        Subtype parameter can be empty: type is just 3rd column.
+        """
         annotation = [
             ['20', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "A";'],
             ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'biotype "C";']]
@@ -112,7 +118,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             annotation, subtype=None))
 
     def test_subtype_param2(self):
-        """Subtype can have any value - not just the default biotype."""
+        """
+        Subtype can have any value - not just the default biotype.
+        """
         annotation = [
             ['20', '.', 'intron', '20', '29', '.', '+', '.', 'attr42 "A";'],
             ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'attr42 "C";']]
@@ -124,7 +132,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             annotation, subtype='attr42'))
 
     def test_excluded_types(self):
-        """Exclude some annotation intervals by 3rd column value."""
+        """
+        Exclude some annotation intervals by 3rd column value.
+        """
         annotation = [
             ['20', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "A";'],
             ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'biotype "C";']]
@@ -144,7 +154,9 @@ class TestMakeSummaryReport(unittest.TestCase):
                        'events #', 'events %', 'events enrichment']
 
     def test_diff_chromosome_naming(self):
-        """Exception is raised if chromosome naming is inconsistent."""
+        """
+        Exception is raised if chromosome naming is inconsistent.
+        """
         cross_links = [
             ['chr1', '15', '16', '.', '5', '+']]
         annotation = [
@@ -154,7 +166,9 @@ class TestMakeSummaryReport(unittest.TestCase):
             _make_summary_report(annotation, cross_links, self.chrom_lengths)
 
     def test_diff_only_strand1(self):
-        """Same coords but diff strand and same type."""
+        """
+        Same coords but diff strand and same type.
+        """
         cross_links = [
             ['1', '5', '6', '.', '3', '+'],
             ['1', '5', '6', '.', '2', '-']]
@@ -169,7 +183,9 @@ class TestMakeSummaryReport(unittest.TestCase):
         self.assertEqual(out, expected)
 
     def test_diff_only_strand2(self):
-        """Same coords but diff strand and diff type."""
+        """
+        Same coords but diff strand and diff type.
+        """
         cross_links = [
             ['1', '5', '6', '.', '3', '+'],
             ['1', '5', '6', '.', '1', '-']]
@@ -185,7 +201,9 @@ class TestMakeSummaryReport(unittest.TestCase):
         self.assertEqual(out, expected)
 
     def test_many_regions(self):
-        """Multiple annotation regions intersecting one crosslink"""
+        """
+        Multiple annotation regions intersecting one crosslink.
+        """
         cross_links = [
             ['1', '5', '6', '.', '1', '+']]
         annotation = [
@@ -204,7 +222,9 @@ class TestMakeSummaryReport(unittest.TestCase):
         self.assertEqual(out, expected)
 
     def test_unsorted_input(self):
-        """Unsoreted input should make no difference."""
+        """
+        Unsoreted input should make no difference.
+        """
         cross_links = [
             ['1', '7', '8', '.', '2', '+'],
             ['1', '5', '6', '.', '1', '-']]
@@ -220,7 +240,9 @@ class TestMakeSummaryReport(unittest.TestCase):
         self.assertEqual(out, expected)
 
     def test_subtype_param1(self):
-        """Subtype parameter can be empty: type is just 3rd column."""
+        """
+        Subtype parameter can be empty: type is just 3rd column.
+        """
         cross_links = [
             ['1', '5', '6', '.', '1', '+']]
         annotation = [
@@ -231,11 +253,13 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['CDS', '10', '0.05', '1', '1.0', '20.0', '1', '1.0', '20.0']]
 
         out = _make_summary_report(annotation, cross_links,
-                                       self.chrom_lengths, subtype=None)
+                                   self.chrom_lengths, subtype=None)
         self.assertEqual(out, expected)
 
     def test_subtype_param2(self):
-        """Subtype can have any value - not just the default biotype."""
+        """
+        Subtype can have any value - not just the default biotype.
+        """
         cross_links = [
             ['1', '5', '6', '.', '1', '+']]
         annotation = [
@@ -249,11 +273,13 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['intron B', '4', '0.02', '0', '0.0', '0.0', '0', '0.0', '0.0']]
 
         out = _make_summary_report(annotation, cross_links,
-                                       self.chrom_lengths, subtype='attr42')
+                                   self.chrom_lengths, subtype='attr42')
         self.assertEqual(out, expected)
 
     def test_excluded_types(self):
-        """Exclude some annotation intervals by 3rd column value."""
+        """
+        Exclude some annotation intervals by 3rd column value.
+        """
         cross_links = [
             ['1', '5', '6', '.', '1', '+']]
         annotation = [
@@ -264,7 +290,7 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['ncRNA C', '20', '0.1', '1', '1.0', '10.0', '1', '1.0', '10.0']]
 
         out = _make_summary_report(annotation, cross_links,
-                                       self.chrom_lengths, excluded_types=['intron'])
+                                   self.chrom_lengths, excluded_types=['intron'])
         self.assertEqual(out, expected)
 
 if __name__ == '__main__':

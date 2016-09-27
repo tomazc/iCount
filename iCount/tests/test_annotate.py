@@ -57,7 +57,9 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             template(cross_links, annotation)
 
     def test_basic(self):
-        """Detect single cross_link and annotate it."""
+        """
+        Detect single cross_link and annotate it.
+        """
         cross_links = [
             ['1', '15', '16', '.', '5', '+'],
         ]
@@ -70,7 +72,9 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         self.assertEqual(template(cross_links, annotation), expected)
 
     def test_multiple_annotations(self):
-        """Single cross_link intersects with multiple annotations."""
+        """
+        Single cross_link intersects with multiple annotations.
+        """
         cross_links = [
             ['1', '15', '16', '.', '5', '+'],
         ]
@@ -89,7 +93,9 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         self.assertEqual(template(cross_links, annotation), expected)
 
     def test_shuffled_contents(self):
-        """Result should be sorted, even if inputs are not."""
+        """
+        Result should be sorted, even if inputs are not.
+        """
         cross_links = [
             ['1', '16', '17', '.', '5', '+'],
             ['1', '14', '15', '.', '5', '+'],
@@ -106,7 +112,9 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         self.assertEqual(template(cross_links, annotation), expected)
 
     def test_strand_specific(self):
-        """Two cross-links with same coordinate, but different strand."""
+        """
+        Two cross-links with same coordinate, but different strand.
+        """
         cross_links = [
             ['1', '15', '16', '.', '5', '+'],
             ['1', '15', '16', '.', '5', '-'],
@@ -124,7 +132,9 @@ class TestAnnotateCrossLinks(unittest.TestCase):
         self.assertEqual(template(cross_links, annotation), expected)
 
     def test_subtype_param1(self):
-        """Subtype parameter can be empty: type is just 3rd column."""
+        """
+        Subtype parameter can be empty: type is just 3rd column.
+        """
         cross_links = [
             ['1', '5', '6', '.', '1', '+'],
         ]
@@ -141,7 +151,9 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             cross_links, annotation, subtype=None), expected)
 
     def test_subtype_param2(self):
-        """Subtype can have any value - not just the default biotype."""
+        """
+        Subtype can have any value - not just the default biotype.
+        """
         cross_links = [
             ['1', '5', '6', '.', '1', '+'],
         ]
@@ -158,7 +170,9 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             cross_links, annotation, subtype='attr42'), expected)
 
     def test_excluded_types(self):
-        """Exclude annotation intervals by 3rd column value."""
+        """
+        Exclude annotation intervals by 3rd column value.
+        """
         cross_links = [
             ['1', '5', '6', '.', '1', '+'],
         ]
