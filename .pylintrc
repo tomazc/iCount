@@ -221,7 +221,7 @@ generated-members=REQUEST,acl_users,aq_parent,objects,id,_instance,_class_name,F
 [FORMAT]
 
 # Maximum number of characters on a single line.
-max-line-length=119
+max-line-length=99
 
 # Regexp for a line that is allowed to be longer than the limit.
 ignore-long-lines=^\s*(# )?<?https?://\S+>?$
