@@ -40,6 +40,7 @@ class TestStar(unittest.TestCase):
         self.dir = get_temp_dir()
         self.index_dir = get_temp_dir()
         self.genome = make_fasta_file(num_sequences=2, seq_len=1000)
+        self.reads = make_fastq_file(genome=self.genome)
         self.annotation = make_file_from_list([
             ['1', '.', 'gene', '10', '20', '.', '+', '.',
              'gene_id "A";'],
@@ -61,6 +62,12 @@ class TestStar(unittest.TestCase):
         version = star.get_version()
         self.assertIsNone(version)
 
+    def test_build_index_bad_outdir(self):
+
+        message = r'Output directory does not exist. Make sure it does.'
+        with self.assertRaisesRegex(FileNotFoundError, message):
+            star.build_index(self.genome, '/unexisting/outdir')
+
     def test_build_index(self):
         # No annotation
         return_code1 = star.build_index(self.genome, self.index_dir, overhang=100,
@@ -72,16 +79,28 @@ class TestStar(unittest.TestCase):
         self.assertEqual(return_code1, 0)
         self.assertEqual(return_code2, 0)
 
+    def test_map_reads_bad_genomedir(self):
+
+        message = r'Directory with genome index does not exist. Make sure it does.'
+        with self.assertRaisesRegex(FileNotFoundError, message):
+            star.map_reads(self.reads, '/unexisting/genomedir', self.dir)
+
+    def test_map_reads_bad_outdir(self):
+
+        message = r'Output directory does not exist. Make sure it does.'
+        with self.assertRaisesRegex(FileNotFoundError, message):
+            star.map_reads(self.reads, self.dir, '/unexisting/outdir')
+
     def test_map_reads(self):
         # First: make index:
         star.build_index(self.genome, self.index_dir, quiet=True)
 
         # No annotation
-        return_code1 = star.map_reads(self.genome, self.index_dir, self.dir, quiet=True)
+        return_code1 = star.map_reads(self.reads, self.index_dir, self.dir, quiet=True)
 
         # With annotation:
         return_code2 = star.map_reads(
-            self.genome, self.index_dir, self.dir, annotation=self.annotation,
+            self.reads, self.index_dir, self.dir, annotation=self.annotation,
             multimax=10, mismatches=2, threads=1, quiet=True)
 
         self.assertEqual(return_code1, 0)
