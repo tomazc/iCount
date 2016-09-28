@@ -160,6 +160,7 @@ class TestCLI(unittest.TestCase):
         fastq = make_fastq_file(genome=genome)
 
         command_basic = ['iCount', 'mapindex', genome, self.dir,
+                         '--quiet',
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         self.assertEqual(subprocess.call(command_basic), 0)
@@ -168,6 +169,7 @@ class TestCLI(unittest.TestCase):
                          fastq,
                          self.dir,
                          self.dir2,
+                         '--quiet',
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
 
@@ -178,9 +180,10 @@ class TestCLI(unittest.TestCase):
         fastq = make_fastq_file(genome=genome)
 
         command_full = ['iCount', 'mapindex', genome, self.dir,
-                        '--annotation_fname', self.gtf,
+                        '--annotation', self.gtf,
                         '--overhang', '100',
                         '--threads', '1',
+                        '--quiet',
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
         self.assertEqual(subprocess.call(command_full), 0)
@@ -189,10 +192,11 @@ class TestCLI(unittest.TestCase):
                         fastq,
                         self.dir,
                         self.dir2,
-                        # '--annotation_fname', self.gtf,
+                        '--annotation', self.gtf,
                         '--multimax', '50',
                         '--mismatches', '2',
                         '--threads', '1',
+                        '--quiet',
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
         self.assertEqual(subprocess.call(command_full), 0)
