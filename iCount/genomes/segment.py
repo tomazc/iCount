@@ -37,12 +37,22 @@ def get_genes(gtf_in, gtf_out, name='gene', attribute='gene_id'):
     We wish to get a "maximal frame" of it's coordinates for given gene
     name, chromosome and strand.
 
-    :param str gtf_in: absolute path to gtf input file
-    :param str gtf_out: absolute path to BED6 output file
-    :param str name: name for the 3rd column of output intervals
-    :param str attribute: attribute to use as unique identifier for output intervals
-    :return: sorted largest possible gene segments
-    :rtype: pybedtools.BedTool
+    Parameters
+    ----------
+    gtf_in : str
+        Absolute path to gtf input file.
+    gtf_out : str
+        Absolute path to BED6 output file.
+    name : str
+        Name for the 3rd column of output intervals.
+    attribute : str
+        Attribute to use as unique identifier for output intervals.
+
+    Returns
+    -------
+    pybedtools.BedTool
+        Sorted largest possible gene segments.
+
     """
 
     data = {}
@@ -76,17 +86,24 @@ def get_genes(gtf_in, gtf_out, name='gene', attribute='gene_id'):
 
 def _a_in_b(a, b):
     """
-    Check if interval a is inside interval b
+    Check if interval a is inside interval b.
 
-    :param pybedtools.Interval a: interval
-    :param pybedtools.Interval b: interval
-    :return: true if a is inside b, false otherwise
-    :rtype: bool
+    Parameters
+    ----------
+    a : pybedtools.Interval
+        First interval.
+    b : pybedtools.Interval
+        Second interval.
+
+    Returns
+    -------
+    bool
+        True if a is inside b, false otherwise.
     """
     return a.start >= b.start and a.stop <= b.stop
 
 
-def _add_biotype_attribute(gene_content_):
+def _add_biotype_attribute(gene_content):
     """
     Add `biotype` attribute to all intervals in gene_content
 
@@ -94,11 +111,18 @@ def _add_biotype_attribute(gene_content_):
     else gene_biotype if present else value in column 2 (index 1). The
     last option can only happen in some of early ensembl releases.
 
-    :param dict gene_content_: intervals in gene separated by transcript id
-    :return: same gene_content_ object with added `biotype` attributes
-    :rtype: dict
+
+    Parameters
+    ----------
+    gene_content_ : dict
+        Intervals in gene separated by transcript id.
+
+    Returns
+    -------
+    dict
+        Same gene_content_ object with added `biotype` attributes.
     """
-    gene_content = gene_content_.copy()
+    gene_content = gene_content.copy()
 
     # Determine gene biotype:
     gbiotype = gene_content['gene'].attrs.get('gene_biotype', None)
@@ -145,10 +169,22 @@ def _check_consistency(intervals):
         * that type of given interval is consistent with the type of
           the preceding one
 
-    :param list intervals: intervals representing transcript
-    :return: None
-    :rtype: None
-    :raises: AssertionError: if any of the assert statements fails
+
+    Parameters
+    ----------
+    intervals : list
+        Intervals representing transcript.
+
+    Returns
+    -------
+    None
+        None.
+
+    Raises
+    ------
+    AssertionError
+        IN case any of the assert statements fails.
+
     """
     can_follow = {
         '+': {
@@ -213,11 +249,21 @@ def _get_non_cds_exons(cdses, exons, intervals):
 
     Currently, all 5 cases are covered.
 
-    :param list cdses: list of all CDS in transcript group
-    :param list exons: list of all exons in transcript group
-    :param list intervals: list of all intervals in transcript group
-    :return: list of UTR intervals in transcript group
-    :rtype: list
+
+    Parameters
+    ----------
+    cdses : list
+        List of all CDS in transcript group.
+    exons : list
+        List of all exons in transcript group.
+    intervals : list
+        List of all intervals in transcript group.
+
+    Returns
+    -------
+    list
+        List of UTR intervals in transcript group.
+
     """
     utrs = []
     int0 = intervals[0]
@@ -235,7 +281,8 @@ def _get_non_cds_exons(cdses, exons, intervals):
             stop_codon.stop == cds[1].start or
             cds[1].stop == stop_codon.start), None)
         # in some GTF files stop_codon is also cds, identify such cases:
-        complete_overlap = any(cds.start == stop_codon.start and cds.stop == stop_codon.stop for cds in cdses)
+        complete_overlap = any(
+            cds.start == stop_codon.start and cds.stop == stop_codon.stop for cds in cdses)
         if complete_overlap:
             continue  # in this case stop_codon is already turned in cds...
         elif touching_cds:
@@ -286,10 +333,19 @@ def filter_col8(interval, keys=None):
     """
     Filter the content of last column in interval
 
-    :param pybedtools.Interval interval: interval
-    :param list keys: list of keys that should be kept in result
-    :return: filtered content of last column
-    :rtype: string
+
+    Parameters
+    ----------
+    interval : pybedtools.Interval
+        Interval.
+    keys : list
+        List of keys that should be kept in result.
+
+    Returns
+    -------
+    string
+        Filtered content of last column.
+
     """
     if keys is None:
         keys = ['gene_id', 'gene_name', 'transcript_id', 'transcript_name']
@@ -309,9 +365,17 @@ def _get_introns(exons):
         * the name of third column is set to 'intron'
         * content referring to exon is removed from last column
 
-    :param list exons: list of exons, sorted by coordinates
-    :return: list of pybedtools interval objects representing introns
-    :rtype: list
+
+    Parameters
+    ----------
+    exons : list
+        List of exons, sorted by coordinates.
+
+    Returns
+    -------
+    list
+        List of pybedtools interval objects representing introns.
+
     """
     # start of intron is on exon1.stop + 1
     # stop of intron is on exon2.start (since in GTF: e2.start = e2[3] - 1)
@@ -340,9 +404,15 @@ def _process_transcript_group(intervals):
         * UTR5
         * ncRNA
 
-    :param list intervals:
-    :return: Modified list of pybedtools interval objects
-    :rtype: list
+    Parameters
+    ----------
+    intervals : list
+        List of intervals in transcript to process.
+
+    Returns
+    -------
+    list
+        Modified list of pybedtools interval objects.
     """
     # Container for interval objects
     regions = []
@@ -414,11 +484,21 @@ def _complement(gs, genome_file, strand):
 
     Possible options for strand param: '+', '-' and '.'.
 
-    :param str gs: path to GTF file with content
-    :param str genome_file: path to genome_file (*.fai or similar)
-    :param string strand: Strand for which to compute complement.
-    :return: absolute path to GTF file with complement segments.
-    :rtype: str
+
+    Parameters
+    ----------
+    gs : str
+        Path to GTF file with content.
+    genome_file : str
+        Path to genome_file (*.fai or similar).
+    strand : string
+        Strand for which to compute complement.
+
+    Returns
+    -------
+    str
+        Absolute path to GTF file with complement segments.
+
     """
     assert(strand in ['+', '-', '.'])
 
@@ -459,11 +539,21 @@ def _get_gene_content(gtf_in, chromosomes, show_progress=False):
         * 'transcript_id#2': intervals corresponding to transcript_id#2
         ...
 
-    :param str gtf_in: path to gtf input file
-    :param list chromosomes: list of chromosomes to consider
-    :param bool show_progress: switch to show progress
-    :return: all intervals in gene, separated by transcript_id
-    :rtype: dict
+
+    Parameters
+    ----------
+    gtf_in : str
+        Path to gtf input file.
+    chromosomes : list
+        List of chromosomes to consider.
+    show_progress : bool
+        Awitch to show progress.
+
+    Returns
+    -------
+    dict
+        All intervals in gene, separated by transcript_id.
+
     """
     # Lists to keep track of all already processed genes/transcripts:
     gene_ids = []

@@ -129,9 +129,16 @@ def make_aligned_segment(data):
     Read more about SAM file specifications here:
     [1] https://samtools.github.io/hts-specs/SAMv1.pdf
 
-    :param tuple data: input data for AlignedSegment
-    :return: AlignedSegment, filled with given data
-    :rtype: pysam.AlignedSegment
+    Parameters
+    ----------
+    data : tuple
+        Input data for AlignedSegment.
+
+    Returns
+    -------
+    pysam.AlignedSegment
+        AlignedSegment, filled with given data.
+
     """
     a = pysam.AlignedSegment()
     a.query_name = data[0]
@@ -180,9 +187,16 @@ def make_bam_file(data):
     https://samtools.github.io/hts-specs/SAMv1.pdf
     http://pysam.readthedocs.io/en/stable/usage.html#creating-bam-cram-sam-files-from-scratch
 
-    :param dict data: Input data for BAM file
-    :return: Absoulte path to bamfile
-    :rtype: str
+    Parameters
+    ----------
+    data : dict
+        Input data for BAM file
+
+    Returns
+    -------
+    str
+        Absoulte path to bamfile.
+
     """
     fname = get_temp_file_name()
 

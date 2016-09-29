@@ -20,10 +20,18 @@ def template(cross_links, annotation, subtype='biotype',
 
     For example of how to use this function check any test that uses it.
 
-    :param list cross_links: list representation of cross-links file
-    :param list annotation: list representation of annotation file
-    :return: list representation of output file of analysis.annotate()
-    :rtype: list
+    Parameters
+    ----------
+    cross_links : list
+        List representation of cross-links file.
+    annotation : list
+        List representation of annotation file.
+
+    Returns
+    -------
+    list
+        List representation of output file of analysis.annotate().
+
     """
     cross_links_file = make_file_from_list(cross_links)
     annotation_file = make_file_from_list(annotation)
