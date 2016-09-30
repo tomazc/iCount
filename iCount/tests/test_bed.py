@@ -23,19 +23,25 @@ class TestMergeBed(unittest.TestCase):
         pass
 
     def test_no_inputs(self):
-        """Raise if no files are given."""
+        """
+        Raise if no files are given.
+        """
         message = "At least one element expected in files list, but none found."
         with self.assertRaisesRegex(ValueError, message):
             merge_bed('outfile_name', [])
 
     def test_bad_file_name(self):
-        """Raise error if bad filename given as input"""
+        """
+        Raise error if bad filename given as input.
+        """
         message = r"File .* not found."
         with self.assertRaisesRegex(ValueError, message):
             merge_bed('outfile_name', ['/bad/path/to/unexisting/file'])
 
     def test_merge_single_file(self):
-        """Test merging of single file"""
+        """
+        Test merging of single file
+        """
         bed1 = [
             ['1', '4', '5', '.', '1', '+'],
             ['1', '5', '6', '.', '1', '+'],
@@ -56,7 +62,9 @@ class TestMergeBed(unittest.TestCase):
         self.assertEqual(out, expected)
 
     def test_merge_more_files(self):
-        """Test that merging in sone well"""
+        """
+        Test that merging in sone well.
+        """
         bed1 = [
             ['1', '4', '5', '.', '1', '+'],
             ['1', '5', '6', '.', '1', '+'],

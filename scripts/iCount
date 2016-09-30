@@ -105,7 +105,7 @@ def _extract_parameter_data(function):
         if param in optional:
             data[param] = {'name': '--' + param, 'default': optional[param], 'metavar': ''}
         else:
-            data[param] = {'name': param, 'metavar': ''}
+            data[param] = {'name': param}
 
         # Extract help (parameter description) and type from function docstring:
         regex_help = r'.*:param {}: (.+?)\n.*'.format(param)
@@ -261,6 +261,8 @@ make_parser_from_function(
 
 # Demultiplex and mapping:
 make_parser_from_function(iCount.demultiplex.run, subparsers)
+make_parser_from_function(iCount.demultiplex.remove_adapter, subparsers,
+                          module=iCount.externals.cutadapt)
 make_parser_from_function(iCount.mapping.mapindex.run, subparsers)
 make_parser_from_function(iCount.mapping.map.run, subparsers)
 make_parser_from_function(iCount.mapping.xlsites.run, subparsers)

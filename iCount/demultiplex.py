@@ -16,6 +16,8 @@ import logging
 
 import iCount
 
+from iCount.externals.cutadapt import run as remove_adapter
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -121,8 +123,8 @@ def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
                  out_fastq_fnames + [not_matching_fastq_fname]]
     reader = iCount.files.fastq.Reader(in_fastq_fname)
     for r_id, exp_id, r_randomer, r_seq, r_plus, r_qual in \
-            extract(reader, barcodes, mismatches=mismatches,
-                    minimum_length=minimum_length):
+            _extract(reader, barcodes, mismatches=mismatches,
+                     minimum_length=minimum_length):
         if r_randomer:
             if r_id[-2] == '/':
                 r_pair = r_id[-2:]
@@ -137,14 +139,25 @@ def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
     return out_fastq_fnames
 
 
-def extract(seqs, barcodes, mismatches=1, minimum_length=15):
-    """Return iterator that returns experiment, randomer, and remaining
-    sequence.
+def _extract(seqs, barcodes, mismatches=1, minimum_length=15):
+    """
+    Iterator returning experiment, randomer, and remaining sequence.
 
-    :param seqs: input sequence of tuples (r_id, r_seq, r_qualL)
-    :param barcodes: dictionary of experiment annotation
-    :param mismatches: number of allowed mismatches in sample barcode
-    :return: iterator
+    Parameters
+    ----------
+    seqs : tuple
+        Input sequence of tuples (r_id, r_seq, r_qualL).
+    barcodes : list_str
+        Experiment and randomer barcode definition.
+    mismatches : int
+        Number of allowed mismatches in sample barcode.
+    minimum_length : int
+        Discard reads with length less than this.
+
+    Yields
+    ------
+    int
+        TODO
     """
     valid_nucs = {'A', 'T', 'C', 'G'}
 
@@ -201,19 +214,3 @@ def extract(seqs, barcodes, mismatches=1, minimum_length=15):
 
         if len(r_seq) >= minimum_length:
             yield r.r_id, exp_id, r_randomer, r_seq, r.r_plus, r_qual
-
-
-def remove_adapter(in_fastq, out_fastq, adapter, qual_trim=10,
-                   minimum_length=15):
-    """
-
-    :param in_fastq: FASTQ file with sequences
-    :param out_fastq: FASTQ file where to save adapter-trimmed sequences
-    :param adapter: sequence to be found at 3'
-    :param qual_trim: quality cutoff threshold (see cutadapt manual)
-    :return: exit status of cutadapt command line
-    """
-
-    return iCount.externals.cutadapt.run(in_fastq, out_fastq, adapter,
-                                         qual_trim=qual_trim,
-                                         minimum_length=minimum_length)

@@ -132,6 +132,29 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(subprocess.call(command_basic), 0)
         self.assertEqual(subprocess.call(command_full), 0)
 
+    def test_cutadapt(self):
+        adapter = 'CCCCCCCCC'
+        fastq = make_fastq_file(adapter=adapter, out_file=get_temp_file_name(extension='fastq'))
+
+        command_basic = ['iCount', 'cutadapt',
+                         fastq,
+                         self.tmp1,
+                         adapter,
+                         '-S', '40',  # Supress lower than ERROR messages.
+                         ]
+        command_full = ['iCount', 'cutadapt',
+                        fastq,
+                        self.tmp1,
+                        adapter,
+                        '--qual_base', '64',
+                        '--qual_trim', '20',
+                        '--minimum_length', '15',
+                        '-S', '40',  # Supress lower than ERROR messages.
+                        ]
+
+        self.assertEqual(subprocess.call(command_basic), 0)
+        self.assertEqual(subprocess.call(command_full), 0)
+
     def test_mapindex_and_map_basic(self):
         genome = make_fasta_file(num_sequences=2, seq_len=1000)
         fastq = make_fastq_file(genome=genome)
