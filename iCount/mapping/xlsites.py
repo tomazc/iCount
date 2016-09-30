@@ -36,11 +36,21 @@ def _match(s1, s2, allowed_mismatches):
     """
     Do sequence `s1` and `s2` have less or equal than `allowed_mismatches`?
 
-    :param str s1: First sequence
-    :param str s2: Second sequence
-    :param int allowed_mismatches: Number of allowed mismatches
-    :return:
-    :rtype: bool
+
+    Parameters
+    ----------
+    s1 : str
+        First sequence.
+    s2 : str
+        Second sequence.
+    allowed_mismatches : int
+        Number of allowed mismatches.
+
+    Returns
+    -------
+    bool
+        Do sequence `s1` and `s2` have less or equal than `allowed_mismatches`
+
     """
     s1, s2 = s1.upper(), s2.upper()
     cn = sum([(c1 == 'N' or c2 == 'N' or c1 == c2) for c1, c2 in zip(s1, s2)])
@@ -53,10 +63,16 @@ def _update(cur_vals, to_add):
 
     Note: cur_vals is updated in place!
 
-    :param dict cur_vals: dict to be updated
-    :param dict to_add: dict with update data
-    :return: None
-    :rtype: None
+    Parameters
+    ----------
+    to_add : dict
+        Dict with update data.
+
+    Returns
+    -------
+    None
+        None.
+
     """
     for pos, vals_to_add in to_add.items():
         prev_vals = cur_vals.get(pos, [0]*len(vals_to_add))
@@ -93,10 +109,18 @@ def _merge_similar_randomers(by_bc, randomer_mismatches):
     match with least difference should be found. Check also the skipped unit
     test in tests/test_xlsites.py
 
-    :param dict by_bc: dictionary of barcodes and their hits
-    :param int randomer_mismatches: number of allowed mismatches
-    :return: None, since input `by_bc` is modified in-place
-    :rtype: None
+    Parameters
+    ----------
+    by_bc : dict
+        Dictionary of barcodes and their hits
+    randomer_mismatches : int
+        Number of allowed mismatches.
+
+    Returns
+    -------
+    None
+        None, since input `by_bc` is modified in-place
+
     """
     # assign ambigious randomers to unambigious randomers
     accepted_bcs = set()  # accepted_barcodes
@@ -176,10 +200,22 @@ def _collapse(xlink_pos, by_bc, report_by, multimax=1):
         b = sum(read-lengths per barcode position)
         c = number of hits
 
-    :param int xlink_pos: cross link position (genomic coordinate)
-    :param dict by_bc: dict with hits for each barcode
-    :param str report_by: report by start, middle or end position
-    :param int multimax: consider only reads with multimax hits or fewer
+    Parameters
+    ----------
+    xlink_pos : int
+        Cross link position (genomic coordinate).
+    by_bc : dict
+        Dict with hits for each barcode.
+    report_by : str
+        Report by start, middle or end position.
+    multimax : int
+        Consider only reads with multimax hits or fewer.
+
+    Returns
+    -------
+    dict
+        TODO
+
     """
     gi = ['start', 'middle', 'end'].index(report_by)
 
