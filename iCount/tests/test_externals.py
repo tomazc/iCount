@@ -70,11 +70,11 @@ class TestStar(unittest.TestCase):
 
     def test_build_index(self):
         # No annotation
-        return_code1 = star.build_index(self.genome, self.index_dir, overhang=100,
-                                        overhang_min=8, threads=1, quiet=True)
+        return_code1 = star.build_index(self.genome, self.index_dir, overhang=100, overhang_min=8,
+                                        threads=1)
         # With annotation
         return_code2 = star.build_index(self.genome, self.index_dir, annotation=self.annotation,
-                                        overhang=100, overhang_min=8, threads=1, quiet=True)
+                                        overhang=100, overhang_min=8, threads=1)
 
         self.assertEqual(return_code1, 0)
         self.assertEqual(return_code2, 0)
@@ -93,15 +93,15 @@ class TestStar(unittest.TestCase):
 
     def test_map_reads(self):
         # First: make index:
-        star.build_index(self.genome, self.index_dir, quiet=True)
+        star.build_index(self.genome, self.index_dir)
 
         # No annotation
-        return_code1 = star.map_reads(self.reads, self.index_dir, self.dir, quiet=True)
+        return_code1 = star.map_reads(self.reads, self.index_dir, self.dir)
 
         # With annotation:
         return_code2 = star.map_reads(
             self.reads, self.index_dir, self.dir, annotation=self.annotation,
-            multimax=10, mismatches=2, threads=1, quiet=True)
+            multimax=10, mismatches=2, threads=1)
 
         self.assertEqual(return_code1, 0)
         self.assertEqual(return_code2, 0)
