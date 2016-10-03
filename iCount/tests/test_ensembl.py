@@ -2,6 +2,7 @@ import os
 import unittest
 import ftplib
 import tempfile
+import warnings
 
 from iCount.genomes import ensembl
 
@@ -15,6 +16,7 @@ class TestEnsembl(unittest.TestCase):
         self.assertIsInstance(ftp_instance.pwd(), str)
 
         ftp_instance.quit()
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_get_release_list(self):
         releases = ensembl.get_release_list()
@@ -40,6 +42,7 @@ class TestEnsemblDownload(unittest.TestCase):
         self.tempdir = tempfile.mkdtemp()
         self.gtf = 'test_file.gtf'
         self.fasta = 'test_file.fa.gz'
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_download_annotation(self):
         ann_file = ensembl.download_annotation(

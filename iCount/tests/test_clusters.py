@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 from pybedtools import create_interval_from_list
 
@@ -8,6 +9,9 @@ from iCount.tests.utils import make_file_from_list, make_list_from_file, \
 
 
 class TestClusters(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_fix_proper_bed6_format(self):
         feature = create_interval_from_list(['1', '1', '10', '+', '5'])

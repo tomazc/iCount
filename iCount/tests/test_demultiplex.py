@@ -1,6 +1,7 @@
 import os
 import shutil
 import unittest
+import warnings
 
 from iCount import demultiplex
 from iCount.tests.utils import make_fastq_file, make_list_from_file, get_temp_dir
@@ -19,6 +20,7 @@ class TestDemultiplex(unittest.TestCase):
             'NNNGGCGNN',
         ]
         self.reads = make_fastq_file(barcodes=self.barcodes, adapter=self.adapter)
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_run_fail(self):
         message = r'Output directory does not exist. Make sure it does.'

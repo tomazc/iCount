@@ -2,6 +2,7 @@ import os
 import gzip
 import unittest
 import tempfile
+import warnings
 
 import iCount
 
@@ -10,6 +11,7 @@ class TestFilesTemp(unittest.TestCase):
 
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_uncompressed(self):
         fn_in = os.path.join(self.tempdir, 'uncompressed.txt')

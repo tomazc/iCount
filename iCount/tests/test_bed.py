@@ -1,5 +1,6 @@
 import unittest
 import tempfile
+import warnings
 
 from iCount.files.bed import merge_bed
 from iCount.tests.utils import make_file_from_list, make_list_from_file
@@ -20,7 +21,7 @@ def merge_bed_wrapper(data):
 class TestMergeBed(unittest.TestCase):
 
     def setUp(self):
-        pass
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_no_inputs(self):
         """
