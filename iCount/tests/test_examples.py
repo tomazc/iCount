@@ -1,6 +1,7 @@
 import os
 import unittest
 import tempfile
+import warnings
 
 import iCount
 
@@ -10,6 +11,7 @@ class TestExamplesScriptsInstall(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         self.examples_dir = os.path.join(self.tempdir, 'examples')
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_examples(self):
         iCount.examples.run(in_dir=self.tempdir)

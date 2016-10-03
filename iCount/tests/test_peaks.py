@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 from iCount.analysis import peaks
 from iCount.tests.utils import get_temp_file_name, make_file_from_list, \
@@ -6,6 +7,9 @@ from iCount.tests.utils import get_temp_file_name, make_file_from_list, \
 
 
 class TestPeaks(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_sum_within_window(self):
         sites1 = [

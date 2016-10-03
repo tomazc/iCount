@@ -5,6 +5,7 @@ This script tests if CLI interface works as expexcted.
 import os
 import unittest
 import subprocess
+import warnings
 
 from iCount.tests.utils import make_bam_file, get_temp_file_name, \
     make_file_from_list, get_temp_dir, make_fastq_file, make_fasta_file
@@ -13,6 +14,8 @@ from iCount.tests.utils import make_bam_file, get_temp_file_name, \
 class TestCLI(unittest.TestCase):
 
     def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
         # Temporary file names to use for output:
         self.tmp1 = get_temp_file_name()
         self.tmp2 = get_temp_file_name()

@@ -1,6 +1,7 @@
 import os
 import unittest
 import tempfile
+import warnings
 
 import pybedtools
 
@@ -35,6 +36,9 @@ def _make_summary_report(annotation, cross_links, chrom_lengths,
 
 
 class TestMakeTypesLengthFile(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_merge_same_types(self):
         """
