@@ -1,5 +1,6 @@
 import os
 import unittest
+import warnings
 
 import pysam
 from numpy import random
@@ -10,6 +11,9 @@ from iCount.tests.utils import get_temp_file_name, make_bam_file
 
 
 class TestMatch(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_match_basic(self):
         self.assertFalse(xlsites._match('ACGT', 'ACGG', 0))
@@ -31,6 +35,9 @@ class TestMatch(unittest.TestCase):
 
 class TestUpdate(unittest.TestCase):
 
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
     def test_match_basic(self):
         cur_vals = {'A': [1, 2, 3], 'B': [4, 5, 0]}
         to_add = {'A': [1, 0, 1], 'C': [42, 2, 3]}
@@ -41,6 +48,9 @@ class TestUpdate(unittest.TestCase):
 
 
 class TestMergeSimilarRandomers(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_merge(self):
         # hit1, hit2, should be a 4-tuple, but for this test it is ok as is
@@ -75,6 +85,9 @@ class TestMergeSimilarRandomers(unittest.TestCase):
 
 
 class TestCollapse(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_start_1(self):
         xlink_pos = 1
@@ -177,6 +190,7 @@ class TestRun(unittest.TestCase):
             'segments': [
                 # No NH tag is set
                 ('name5', 0, 0, 300, 20, [(0, 200)], {})]}
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_run_simple(self):
         bam_fname = make_bam_file(self.data)
@@ -204,7 +218,7 @@ class TestRun(unittest.TestCase):
 
     def test_error_open_bamfile(self):
         """
-        Provide onyl file with no content - error shoud be raised.
+        Provide only file with no content - erorr shoud be raised.
         """
         bam_fname = get_temp_file_name()
         unique_fname = get_temp_file_name()

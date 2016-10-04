@@ -84,8 +84,7 @@ def run(fastq_fn, adapter, mismatches, barcodes,
         out_fns_intermediate = out_fns
         out_fns = ['{:s}.fastq.gz'.format(fn) for fn in out_fn_prefix]
         for fn_in, fn_out in zip(out_fns_intermediate, out_fns):
-            remove_adapter(fn_in, fn_out, adapter, minimum_length=minimum_length)
-            os.remove(fn_in)
+            iCount.externals.cutadapt.run(fn_in, fn_out, adapter, minimum_length=minimum_length)
 
     return out_fns
 
