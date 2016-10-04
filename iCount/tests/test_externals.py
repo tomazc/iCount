@@ -1,3 +1,4 @@
+import warnings
 import unittest
 from unittest import mock
 
@@ -17,6 +18,7 @@ class TestCutadapt(unittest.TestCase):
         self.reads = make_fastq_file(adapter=self.adapter, num_sequences=100,
                                      out_file=get_temp_file_name(extension='fastq'))
         self.tmp = get_temp_file_name(extension='fastq')
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_get_version_ok(self):
         version = cutadapt.get_version()
@@ -48,6 +50,7 @@ class TestStar(unittest.TestCase):
             ['1', '.', 'exon', '10', '20', '.', '+', '.',
              'gene_id "A"; transcript_id "AA"; exon_number "1";'],
         ])
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_get_version_ok(self):
         version = star.get_version()

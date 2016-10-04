@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import warnings
 
 import iCount  # pylint: disable=unused-import
 
@@ -14,6 +15,9 @@ from iCount.tests.utils import list_to_intervals, intervals_to_list, \
 
 
 class TestGetGenes(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_all_good(self):
 
@@ -40,6 +44,9 @@ class TestGetGenes(unittest.TestCase):
 
 
 class TestOtherFunctions(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_a_in_b(self):
         b = create_interval_from_list(['1', '10', '20', 'Name', '42', '+'])
@@ -180,6 +187,9 @@ class TestOtherFunctions(unittest.TestCase):
 
 
 class TestGetNonCdsExons(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_1(self):
         """
@@ -405,6 +415,9 @@ class TestGetNonCdsExons(unittest.TestCase):
 
 class TestProcessTranscriptGroup(unittest.TestCase):
 
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
     def test_no_exons(self):
         """
         Fail if no exons are given.
@@ -456,6 +469,9 @@ class TestProcessTranscriptGroup(unittest.TestCase):
 
 class TestComplement(unittest.TestCase):
 
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
     def test_complement(self):
 
         genome_file = make_file_from_list(
@@ -489,6 +505,9 @@ class TestComplement(unittest.TestCase):
 
 
 class TestGetGeneContent(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_all_good(self):
         """
@@ -593,6 +612,9 @@ class TestGetGeneContent(unittest.TestCase):
 
 
 class TestGetRegions(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_all_good(self):
         gtf_in_data = list_to_intervals([
