@@ -325,6 +325,8 @@ try:
     results_file = args.pop('results_file', None)
 
     # Execute the wrapped function:
+    command = 'iCount ' + ' '.join(sys.argv[1:])
+    LOGGER.info("Executing the following command: %s" % command)
     result_object = func(**args)
 
     # Save results to results_file. If not given, don't do anything (don't print the result!)
