@@ -26,3 +26,4 @@ Genomes
 """
 from . import ensembl
 from . import segment
+from . import genes

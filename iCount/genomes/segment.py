@@ -29,61 +29,6 @@ from pybedtools import create_interval_from_list
 LOGGER = logging.getLogger(__name__)
 
 
-def get_genes(gtf_in, gtf_out, name='gene', attribute='gene_id'):
-    """
-    Extract largest possible gene segments from input gtf file.
-
-    Each gene can have multiple entries: for exons, introns, UTR...
-    We wish to get a "maximal frame" of it's coordinates for given gene
-    name, chromosome and strand.
-
-    Parameters
-    ----------
-    gtf_in : str
-        Absolute path to gtf input file.
-    gtf_out : str
-        Absolute path to BED6 output file.
-    name : str
-        Name for the 3rd column of output intervals.
-    attribute : str
-        Attribute to use as unique identifier for output intervals.
-
-    Returns
-    -------
-    pybedtools.BedTool
-        Sorted largest possible gene segments.
-
-    """
-
-    data = {}
-
-    for interval in pybedtools.BedTool(gtf_in):
-        gene_id = interval.attrs[attribute]
-        chromosome = interval.chrom
-        strand = interval.strand
-        # Generate unique slug, since same gene name can appear on
-        # multiple chromosomes or on oppsite strands.
-        gene_unique_slug = '-'.join([gene_id, chromosome, strand])
-
-        if gene_unique_slug in data:
-            if interval.start < data[gene_unique_slug][1]:
-                data[gene_unique_slug][1] = interval.start
-
-            if interval.stop > data[gene_unique_slug][2]:
-                data[gene_unique_slug][2] = interval.stop
-
-        else:
-            data[gene_unique_slug] = [interval.chrom, interval.start,
-                                      interval.stop, interval.strand,
-                                      filter_col8(interval)]
-
-    gs = pybedtools.BedTool(pybedtools.create_interval_from_list(
-        [chrom, '.', name, start, stop, '.', strand, '.', col8])
-        for chrom, start, stop, strand, col8 in data.values()).saveas()
-
-    return os.path.abspath(gs.sort().saveas(gtf_out).fn)
-
-
 def _a_in_b(a, b):
     """
     Check if interval a is inside interval b.
@@ -329,7 +274,7 @@ def _get_non_cds_exons(cdses, exons, intervals):
     return cdses, utrs
 
 
-def filter_col8(interval, keys=None):
+def _filter_col8(interval, keys=None):
     """
     Filter the content of last column in interval
 
@@ -382,7 +327,7 @@ def _get_introns(exons):
     start_stop = [(e1.stop + 1, e2.start) for e1, e2 in zip(exons, exons[1:])]
 
     # For introns, keep only a subset of key-value pairs from column 8:
-    col8 = filter_col8(exons[0])
+    col8 = _filter_col8(exons[0])
 
     ex1 = exons[0]
     strand = ex1.strand
@@ -424,7 +369,7 @@ def _process_transcript_group(intervals):
     else:
         # Manually create "transcript interval":
         i1 = intervals[0]
-        col8 = filter_col8(i1)
+        col8 = _filter_col8(i1)
 
         start = min([i.start for i in intervals])
         stop = max([i.stop for i in intervals])
@@ -573,7 +518,7 @@ def _get_gene_content(gtf_in, chromosomes, show_progress=False):
         if 'gene' not in gene_content:
             # Manually create "gene interval":
             i1 = next(iter(gene_content.values()))[0]
-            col8 = filter_col8(i1)
+            col8 = _filter_col8(i1)
             start = min([i.start for j in gene_content.values() for i in j])
             stop = max([i.stop for j in gene_content.values() for i in j])
             gene_content['gene'] = create_interval_from_list(
