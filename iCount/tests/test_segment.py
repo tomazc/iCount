@@ -14,35 +14,6 @@ from iCount.tests.utils import list_to_intervals, intervals_to_list, \
     reverse_strand, make_file_from_list, make_list_from_file
 
 
-class TestGetGenes(unittest.TestCase):
-
-    def setUp(self):
-        warnings.simplefilter("ignore", ResourceWarning)
-
-    def test_all_good(self):
-
-        gtf = make_file_from_list([
-            ['1', '.', 'transcript', '200', '250', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1";'],
-            ['1', '.', 'transcript', '100', '300', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2";'],
-            ['2', '.', 'gene', '400', '500', '.', '+', '.', 'gene_id "G3";'],
-        ])
-
-        bed_out = tempfile.NamedTemporaryFile(mode='w+', delete=False)
-        bed_out.close()
-
-        result = make_list_from_file(
-            segment.get_genes(gtf, bed_out.name), fields_separator='\t')
-
-        expected = [
-            ['1', '.', 'gene', '99', '300', '.', '+', '.', 'gene_id "G1"; transcript_id "T1";'],
-            ['2', '.', 'gene', '399', '500', '.', '+', '.', 'gene_id "G3";'],
-        ]
-
-        self.assertEqual(result, expected)
-
-
 class TestOtherFunctions(unittest.TestCase):
 
     def setUp(self):
@@ -161,11 +132,11 @@ class TestOtherFunctions(unittest.TestCase):
         ])[0]
 
         expected = 'gene_name "B"; transcript_id "A";'
-        self.assertEqual(segment.filter_col8(interval), expected)
+        self.assertEqual(segment._filter_col8(interval), expected)
 
         expected = 'gene_name "B"; key42 "A";'
         self.assertEqual(
-            segment.filter_col8(interval, keys=['gene_name', 'key42']), expected)
+            segment._filter_col8(interval, keys=['gene_name', 'key42']), expected)
 
     def test_get_introns(self):
         exons = list_to_intervals([

@@ -97,9 +97,9 @@ class TestPeaks(unittest.TestCase):
 
     def test_run(self):
         fin_annotation = make_file_from_list([
-            ['1', '.', 'gene', '10', '20', '.', '+', '.', 'gene_name "A";'],
-            ['1', '.', 'transcript', '10', '20', '.', '+', '.', 'gene_name "B";'],
-            ['2', '.', 'CDS', '10', '20', '.', '+', '.', 'gene_name "C";'],
+            ['1', '.', 'gene', '10', '20', '.', '+', '.', 'gene_name "A"; gene_id "1";'],
+            ['1', '.', 'transcript', '10', '20', '.', '+', '.', 'gene_name "B"; gene_id "1";'],
+            ['2', '.', 'CDS', '10', '20', '.', '+', '.', 'gene_name "C"; gene_id "1";'],
         ])
 
         fin_sites = make_file_from_list([
@@ -120,12 +120,12 @@ class TestPeaks(unittest.TestCase):
         out_scores = out_scores[1:]
 
         expected_peaks = [
-            ['1', '14', '15', 'A', '3', '+'],
-            ['1', '16', '17', 'A', '5', '+'],
+            ['1', '14', '15', 'A', '1', '3', '+'],
+            ['1', '16', '17', 'A', '1', '5', '+'],
         ]
         expected_scores = [
-            ['1', '14', '+', 'A', '3', '8', '0.036198'],
-            ['1', '16', '+', 'A', '5', '8', '0.036198'],
+            ['1', '14', '+', 'A', '1', '3', '8', '0.036198'],
+            ['1', '16', '+', 'A', '1', '5', '8', '0.036198'],
         ]
 
         self.assertEqual(out_peaks, expected_peaks)

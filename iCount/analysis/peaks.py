@@ -129,9 +129,8 @@ def get_avg_rnd_distrib(size, total_hits, hw, perms=100):
     return cum_prob_ret
 
 
-def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
-        fdr=0.05, perms=100, rnd_seed=42, features=['gene'],
-        report_progress=True):
+def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3, fdr=0.05, perms=100,
+        rnd_seed=42, features=['gene'], report_progress=True, group_by='gene_id'):
     """
     Calculate FDR of interaction at each cross-linked site.
 
@@ -181,6 +180,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         if feature[2] not in features:  # check if of correct feature type
             features_skipped_cn += 1
             continue
+        group_id = feature.attrs[group_by]
         chrom = feature.chrom
         start = feature.start
         end = feature.stop
@@ -189,9 +189,8 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
         strand = feature.strand
         site_pos = int(feature.fields[10])
         site_score = float(feature.fields[13])
-        hits_by_name.setdefault((chrom, strand, name), []).append((site_pos,
-                                                                   site_score))
-        name_sizes.setdefault((chrom, strand, name), set()).add((start, end))
+        hits_by_name.setdefault((chrom, strand, group_id, name), []).append((site_pos, site_score))
+        name_sizes.setdefault((chrom, strand, group_id, name), set()).add((start, end))
 
     numpy.random.seed(rnd_seed)
     # calculate total length of each region
@@ -209,7 +208,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
     while hits_by_name:
         gid, hits = hits_by_name.pop()
         region_size = name_sizes[gid]
-        chrom, strand, name = gid
+        chrom, strand, group_id, name = gid
         region_hits = math.ceil(sum([v for _, v in hits]))
         new_perc = '\r{:.1f}%'.format(100.0*(1.0-len(hits_by_name)/all_recs))
         if report_progress and new_perc != cur_perc:
@@ -225,12 +224,12 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
             fdr_score = val2fdr[round(val_extended)]
             out_recs_scores.setdefault(chrom, {}).\
                 setdefault((p, strand), []).\
-                append((fdr_score, name, score, val_extended))
+                append((fdr_score, name, group_id, score, val_extended))
 
     fout_peaks = iCount.files.gz_open(fout_peaks, 'wt')
     if fout_scores is not None:
         fout_scores = iCount.files.gz_open(fout_scores, 'wt')
-        fout_scores.write('chrome\tposition\tstrand\tannotation\tscore'
+        fout_scores.write('chrome\tposition\tstrand\tname\tgroup_id\tscore'
                           '\tscore_extended\tFDR\n')
 
     for chrom, by_pos in sorted(out_recs_scores.items()):
@@ -238,12 +237,12 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
             annot_list = sorted(annot_list)
             if fout_scores:
                 # all records are recorded in the score file
-                for (fdr_score, name, score, val_extended) in annot_list:
+                for (fdr_score, name, group_id, score, val_extended) in annot_list:
                     # output in BED6 format:
                     # chrom, start, end, name, score, strand
                     fout_scores.write(
-                        '{:s}\t{:d}\t{:s}\t{:s}\t{:s}\t{:s}\t'
-                        '{:.6f}\n'.format(chrom, p, strand, name,
+                        '{:s}\t{:d}\t{:s}\t{:s}\t{:s}\t{:s}\t{:s}\t'
+                        '{:.6f}\n'.format(chrom, p, strand, name, group_id,
                                           _f2s(score, dec=6),
                                           _f2s(val_extended, dec=6), fdr_score
                                           )
@@ -253,14 +252,15 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3,
             min_fdr_score = annot_list[0][0]
             if min_fdr_score < fdr:
                 min_fdr_recs = [r for r in annot_list if r[0] == min_fdr_score]
-                _, s_name, s_score, s_val_extended = zip(*min_fdr_recs)
+                _, s_name, s_group_by, s_score, s_val_extended = zip(*min_fdr_recs)
                 assert len(set(s_score)) == 1
                 assert len(set(s_val_extended)) == 1  # this may not be true
                 #  at borders of annotated regions
                 score = s_score[0]
                 name = ','.join(s_name)
-                o_str = '{:s}\t{:d}\t{:d}\t{:s}\t{:s}\t{:s}'.format(
-                    chrom, p, p + 1, name, _f2s(score), strand
+                group_by = ','.join(s_group_by)
+                o_str = '{:s}\t{:d}\t{:d}\t{:s}\t{:s}\t{:s}\t{:s}'.format(
+                    chrom, p, p + 1, name, group_by, _f2s(score), strand
                 )
                 fout_peaks.write('{:s}\n'.format(o_str))
 

@@ -82,6 +82,25 @@ class TestCLI(unittest.TestCase):
 
         self.assertEqual(subprocess.call(command_full), 0)
 
+    def test_genes(self):
+        fai = make_file_from_list([
+                ['1', '2000'],
+                ['MT', '500'],
+        ], bedtool=False)
+
+        command_basic = ['iCount', 'genes', self.gtf, self.tmp1,
+                         '-S', '40',  # Supress lower than ERROR messages.
+                         ]
+        command_full = ['iCount', 'genes', self.gtf, self.tmp1,
+                        '--fai_file', fai,
+                        '--name', 'gene',
+                        '--attribute', 'gene_id',
+                        '-S', '40',  # Supress lower than ERROR messages.
+                        ]
+
+        self.assertEqual(subprocess.call(command_basic), 0)
+        self.assertEqual(subprocess.call(command_full), 0)
+
     def test_segment(self):
         fai = make_file_from_list([
                 ['1', '2000'],
