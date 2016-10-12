@@ -7,9 +7,11 @@ for mapping and for various analyses:
 
 - regions of genes (all isoforms and other parts merged into one region)
 - regions of individual region types (segment each gene into exonic, intronic, nc, utr, etc..)
-- landmarks (positions of exon-intron, intron-exon, exon-exon, and other types of genomic regions)
 
 """
+# TODO: segmentation should generate a list of landmarks (positions of exon-intron, intron-exon,
+# exon-exon, and other types of genomic regions) that can be used visualized and used in RNAmaps.
+
 
 import os
 import shutil

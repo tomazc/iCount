@@ -21,6 +21,9 @@ import iCount
 from iCount.externals.cutadapt import run as remove_adapter
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 def run(fastq_fn, adapter, mismatches, barcodes, minimum_length=15, prefix='demux', outdir='.'):
     """
     Demultiplex FASTQ file.
@@ -86,9 +89,6 @@ def run(fastq_fn, adapter, mismatches, barcodes, minimum_length=15, prefix='demu
             os.remove(fn_in)
 
     return out_fns
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,

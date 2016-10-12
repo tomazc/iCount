@@ -25,6 +25,7 @@ Commands:
                        Download annotation in GTF file fromat.
     download_sequence  Downloads genome file in FASTA fromat.
     segment            Segmentation
+    genes              Extract largest possible gene segments from GTF file.
     demultiplex        Demultiplexing
     cutadapt           Cutadapt
     mapindex           Generate STAR index
@@ -162,6 +163,30 @@ optional arguments:
   -M , --results_file   File into which to store Metrics.
 
 
+genes
+=====
+
+usage: iCount genes [-h] [--fai_file] [--name] [--attribute] [-S] [-F] [-P]
+                    [-M]
+                    gtf_in gtf_out
+
+Extract largest possible gene segments from GTF file.
+
+positional arguments:
+  gtf_in                Absolute path to gtf input file
+  gtf_out               Absolute path to BED6 output file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --fai_file            No description
+  --name                Name for the 3rd column of output intervals
+  --attribute           Attribute to use as unique identifier for output intervals
+  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  -P , --file_logpath   Path to log file.
+  -M , --results_file   File into which to store Metrics.
+
+
 demultiplex
 ===========
 
@@ -229,8 +254,8 @@ optional arguments:
 mapindex
 ========
 
-usage: iCount mapindex [-h] [--annotation_fname] [--overhang] [--threads] [-S]
-                       [-F] [-P] [-M]
+usage: iCount mapindex [-h] [--annotation] [--overhang] [--overhang_min]
+                       [--threads] [-S] [-F] [-P] [-M]
                        genome_fname outdir
 
 Generate STAR index
@@ -254,8 +279,9 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --annotation_fname    Annotation that defines splice junctions
+  --annotation          Annotation that defines splice junctions
   --overhang            Sequence length around annotated junctions to be used by STAR when
+  --overhang_min        TODO
   --threads             Number of threads that STAR can use for generating index
   -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
@@ -266,8 +292,8 @@ optional arguments:
 map
 ===
 
-usage: iCount map [-h] [--annotation_fname] [--multimax] [--mismatches]
-                  [--threads] [-S] [-F] [-P] [-M]
+usage: iCount map [-h] [--annotation] [--multimax] [--mismatches] [--threads]
+                  [-S] [-F] [-P] [-M]
                   sequences_fname genomedir outdir
 
 Map using STAR
@@ -296,7 +322,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --annotation_fname    TODO
+  --annotation          TODO
   --multimax            Number of allowed multiple hits
   --mismatches          Number of allowed mismatches
   --threads             Number of threads that STAR can use for generating index
@@ -438,8 +464,8 @@ peaks
 =====
 
 usage: iCount peaks [-h] [--fout_scores] [--hw] [--fdr] [--perms] [--rnd_seed]
-                    [--features  [...]] [--report_progress] [-S] [-F] [-P]
-                    [-M]
+                    [--features  [...]] [--report_progress] [--group_by] [-S]
+                    [-F] [-P] [-M]
                     fin_annotation fin_sites fout_peaks
 
 Peak finding
@@ -465,6 +491,7 @@ optional arguments:
   --rnd_seed            Seed for random generator
   --features  [ ...]    Features over which to perform analysis
   --report_progress     Print analysis progress. TODO refactor to logger
+  --group_by            No description
   -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.

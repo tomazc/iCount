@@ -4,10 +4,11 @@ How to cite
 
 iCount is developed and supported by `Tomaž Curk`_ from the `Bioinformatics Laboratory`_ at the
 `University of Ljubljana`_, `Faculty of Computer and Information Science`_ and in collaboration
-with `Jernej Ule`_ and members of the `Ule Laboratory`_.
+with `Jernej Ule`_ and members of the `Ule Laboratory`_. Starting in mid-2016, `Jure Zmrzlikar`_
+from `Genialis`_ helped in refactoring and improving the code greatly.
 
 Many researchers and programmers have been involved in the development of iCount, from its early
-prototype to this current form:
+prototype in late 2008 to its current form:
 
 * Tomaž Curk
 * Gregor Rot
@@ -24,7 +25,7 @@ prototype to this current form:
 
 If you use iCount in your research, please cite:
 
-Curk et al. (2016) iCount: protein-RNA interaction iCLIP data analysis
+Curk et al. (2016) iCount: protein-RNA interaction iCLIP data analysis (in preparation).
 
 .. _`Tomaž Curk`:
     http://curk.info
@@ -43,3 +44,9 @@ Curk et al. (2016) iCount: protein-RNA interaction iCLIP data analysis
 
 .. _`Ule Laboratory`:
     http://ulelab.info
+
+.. _`Genialis`:
+    http://www.genialis.com
+
+.. _`Jure Zmrzlikar`:
+    https://www.genialis.com/team/

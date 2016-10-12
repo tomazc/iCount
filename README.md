@@ -8,22 +8,14 @@ iCount is a Python module and associated command-line interface (CLI),
 which provides all the commands needed to process iCLIP data on 
 protein-RNA interactions and generate:
  
-+ Demultiplexed and adapter-trimmed FASTQ files.
-+ BAM files with mapped iCLIP reads.
-+ bedGraphs with information on identified protein-RNA cross-linked sites.
-+ bedGraphs with statistically significant cross-linked sites (peak finding).
-+ bedGraphs with clusters of significant cross-linkeds sites (cluster finding).
-+ Grouping of individual replicate experiments.
-+ RNAmap generation showing the positional distribution of cross-linked sites relative to genomic landmarks.
-+ kmer enrichment analysis.
-+ ...
++ demultiplexed and adapter-trimmed FASTQ files,
++ BAM files with mapped iCLIP reads,
++ identified protein-RNA cross-linked sites, saved to BED files,
++ peaks composed of statistically significant cross-linked sites, saved to BED files,
++ clusters of significant cross-linked sites, saved to BED files,
++ grouping of individual replicate experiments,
++ RNAmap generation showing the positional distribution of cross-linked sites relative to genomic landmarks,
++ kmer enrichment analysis,
++ and other.
 
-Let's start with a simple example...
-
-
-Docker
-------
-
-When working with docker, make sure that the docker-machine has enough memory:
-
-    docker-machine create -d virtualbox --virtualbox-memory 65536 default
+A introductory tutorial is provided [here](http://icount.readthedocs.io/en/latest/tutorial/index.html).
