@@ -2,24 +2,17 @@
 
 """
 Command line interface for iCount Python package.
+#################################################
 
 This module offers CL interface to iCount Python package. To separate Python
 package from CLI and to avoid code and docstring duplication, CL commands are
-semi-automatically created from functions that already exist in thre package.
-For this automation to work functions in Python modules need to respect the
-following rules:
+semi-automatically created from functions that already exist in the package.
+For this automation to work, some rules need to respected when writing functions
+that are later exposed to CLI.
 
-    * TODO!
-    * ONe module = one comamnd
-    * Correct docstrings (Numpy style)
-    * if liststs, str_list...
 
-If you just wish to add CLI for a function, look at the bottom of this file
-("Define commands" section). Exposing a Python function to CLI is done with a
-simple call to `make_parser_from_function`.
+.. autofunction:: iCount.scripts.make_parser_from_function
 
-If you want to modify the CLI generation proces, then look at the "Functions for
-atomated CLI generation" section.
 """
 
 import re
@@ -35,7 +28,7 @@ from iCount import logger
 
 from sphinx.ext.napoleon.docstring import NumpyDocstring
 
-LOGGER = logging.getLogger('iCount.scripts')
+LOGGER = logging.getLogger(__name__)
 
 
 ########################################
@@ -57,7 +50,7 @@ VALID_TYPES = {
 
 def _extract_parameter_data(function):
     """
-    Extract name, type, description, etc. of each parameter in `function`.
+    Extract name, type, description, etc. of each parameter in ``function``.
 
     The returned object should have the form::
 
@@ -139,41 +132,67 @@ def _extract_parameter_data(function):
 
 def make_parser_from_function(function, subparsers, module=None, only_func=False):
     """
-    Make a argparse parser from `function`and it to `subparsers`.
+    Make a argparse parser from ``function`` and add it to ``subparsers``.
 
-    Example usage:
+    A Python function is exposed in CLI by calling ``make_parser_from_function``.
+    Example call for exposing function ``iCount.analysis.peaks.run`` that makes
+    peaks analysis::
 
-        make_parser_form_function(iCount.analysis.peaks.run, subparsers)
+        make_parser_from_function(iCount.analysis.peaks.run, subparsers)
 
-    and the CLI for is made from function `iCount.analysis.peaks.run`. When
-    constructing the CLI, program assumes that:
+    What happens is such call?
+        * CLI command ``iCount peaks`` is created, with description, positional
+          and optional arguments exactly the same as the ones defined in
+          function.
+        * name of the command (peaks) equals to the name of the module where
+          function is defined.
+        * CLI help message is sourced from module's docstring
+        * Positional and optional arguments (and default values) are sourced
+          from function signature
+        * Help text for each of the arguments is sourced from function
+          docstring. For this to work functions needs to follow Nummpy docstrig
+          formatting. All parameters should have meaningful description. All
+          parameters should also have type equal to one of the keys in
+          VALID_TYPES.
+        * When function is executed, stdout logger with level INFO is registerd.
+          This prints descriptive messages to CL. Function should therefore log
+          its inputs (use iCount.logger.log_inputs function), outputs and most
+          important steps. If there are no errors/execptions command exits with
+          0 exit status code.
+        * If error/exception occurs, is it caught and stack is printed to logger
+          with ERROR level. Also, failed CLI command has status code 1.
+        * CLI exposed function should return Metric object that is instance of
+          iCount.metrics.Metric class. Function should set descriptive
+          attributes to the Metric object for analysis results and analysis
+          tatistics for inter-experimetal comparison.
+        * Each command also gets these additional arguments:
+            * ``--stdout_log`` - Threshold value (0-50) for logging to stdout. If 0
+              logging to stdout if turned OFF.
+            * ``--file_log`` - Threshold value (0-50) for logging to file. If 0
+              logging to stdout if turned OFF.
+            * ``--file_logpath`` - Path to log file.
+            * ``--results_file`` - File into which to store Metrics (result object).
+            * ``--help`` - Help message fot a command
 
-        * name of the subparser is set to name of module where function is defined.
-        * Subparser description is extracted from module docstring.
-        * type, default values and other info about function parameters is extracted
-          from function docstring, which has to follow Numpy docstring convention.
+            They control the level and location
+            of log inputs as well as string the result objects.
 
-    If module parameter is given, module docstring is sourced form this module
-    not from the one where function is defined.
 
-    If only_func=True, function doscring is used for command description.
-    Docstring is used onla until Parameters or Returns section fo the socstring.
+    Exceptional cases:
 
-    ----------------------------------------------------------------------------
+        * In some cases function that performs the work is only *imported* in the
+          correct module ("exposed module"), but the actual function definition is
+          loctated somewhere else ("source module"). It that case, one can use
+          ``module`` parameter with "source module" value. In this case, the
+          command name and CLI docstring will be defined from "exposed module" but
+          function, default values and parameter descriptions will be sourced from
+          "source module".
 
-    TODO: Reporting about cammand progress, steps in execution, success etc
-    should be done via logger statemnets. User can register a handler that
-    listens to particular module logger by providing --verbose/-v flag. The
-    handler prints logger calls to stdout
-    -v with no argument would juts turn on loggin to somo default level (INFO?)
-    -v 10 would set the logger level to 30 (30=WARNING)
-    By default, verbose flag is set to false, probably?
-    think also of intermediat values, like 25 for more interesting info
-    (results, for example) while keeping lveel 20 for all other info messages...
-    Mek decistion and stcik with it.
+        * In some cases, there will be more CLI exposed functions in the same
+          module. In such case, use set ``only_func`` parameter to ``True``. This will
+          use function name for CLI command name and use function docstring (form
+          beggining until "Parameters" section) for CLI help message.
 
-    https://pypi.python.org/pypi/autoargs/0.0.2
-    https://github.com/metaperture/autoargs
     """
 
     if module:
@@ -213,10 +232,10 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         parser.add_argument(name, **values)
 
     parser.add_argument('-S', '--stdout_log', default=logging.INFO, type=int, metavar='',
-                        help='Threshold value (0-50) for logging ot stdout. If 0,'
+                        help='Threshold value (0-50) for logging to stdout. If 0,'
                         ' logging to stdout if turned OFF.')
     parser.add_argument('-F', '--file_log', default=0, type=int, metavar='',
-                        help='Threshold value (0-50) for logging ot file. If 0,'
+                        help='Threshold value (0-50) for logging to file. If 0,'
                         ' logging to file if turned OFF.')
     parser.add_argument('-P', '--file_logpath', default=None, type=str, metavar='',
                         help="Path to log file.")
