@@ -1,6 +1,6 @@
 """
-k-mer enrichment analysis
--------------------------
+k-mer enrichment
+----------------
 
 Read bedGraph with cross-linked sites.
 Count k-mer frequencies.

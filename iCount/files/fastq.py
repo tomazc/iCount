@@ -1,3 +1,11 @@
+"""
+FASTQ
+-----
+
+Reading and writting `FASTQ`_ files.
+
+"""
+
 import io
 import gzip
 import math

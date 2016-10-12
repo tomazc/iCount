@@ -1,5 +1,12 @@
 """
-Functions to querry and download data from ENSEMBL ftp site
+Ensembl API
+-----------
+
+Functions to query and download data from the `Ensembl`_ FTP site.
+
+.. _Ensembl:
+    http://www.ensembl.org/index.html
+
 """
 
 import os
@@ -183,7 +190,7 @@ def chrom_length(fasta_in):
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    temp = iCount.files.temp.decompress_to_tempfile(fasta_in)
+    temp = iCount.files.decompress_to_tempfile(fasta_in)
     command = ['samtools', 'faidx', temp]
     subprocess.check_call(command)
 

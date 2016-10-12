@@ -1,3 +1,11 @@
+"""
+BED
+---
+
+Reading and writing `BED`_ files.
+
+"""
+
 import os
 import shutil
 import logging

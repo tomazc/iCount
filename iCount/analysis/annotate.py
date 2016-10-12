@@ -1,5 +1,9 @@
 """
+Cross-link site annotation
+--------------------------
+
 Annotate each cross link site with types of regions that intersect with it.
+
 """
 import re
 import os

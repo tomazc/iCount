@@ -1,5 +1,7 @@
 """
-Filters.
+Filter hits
+-----------
+
 """
 
 

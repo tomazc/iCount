@@ -12,9 +12,7 @@ with open(os.path.join(here, 'README.md')) as f:
 with open(os.path.join(here, 'CHANGES.md')) as f:
     CHANGES = f.read()
 
-install_requires = [
-    line.strip() for line in open(os.path.join(here, 'requirements.txt'))
-    ]
+install_requires = [line.strip() for line in open(os.path.join(here, 'requirements.txt'))]
 
 scripts = [
     'scripts/iCount',

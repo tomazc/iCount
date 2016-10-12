@@ -2,13 +2,13 @@
 Mapping
 =======
 
-.. automodule:: iCount.mapping.filter
+.. automodule:: iCount.mapping.mapindex
    :members:
 
 .. automodule:: iCount.mapping.map
    :members:
 
-.. automodule:: iCount.mapping.mapindex
+.. automodule:: iCount.mapping.filter
    :members:
 
 .. automodule:: iCount.mapping.xlsites

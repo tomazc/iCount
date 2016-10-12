@@ -1,4 +1,7 @@
 """
+Peak finding
+------------
+
 Determine local clusters of significantly cross-linked sites.
 
 Read annotation and bedGraph with cross-linked sites. Perform permutation

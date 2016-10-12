@@ -1,4 +1,7 @@
 """
+STAR aligner
+------------
+
 Interface to running STAR.
 """
 
@@ -89,7 +92,7 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
 
     LOGGER.info('Building genome index with STAR for genome %s' % genome_fname)
-    genome_fname2 = iCount.files.temp.decompress_to_tempfile(
+    genome_fname2 = iCount.files.decompress_to_tempfile(
         genome_fname, 'starindex')
     args = [
         'STAR',
@@ -100,7 +103,7 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
         '--alignSJoverhangMin', '{:d}'.format(overhang_min),
     ]
     if annotation:
-        annotation2 = iCount.files.temp.decompress_to_tempfile(annotation,
+        annotation2 = iCount.files.decompress_to_tempfile(annotation,
                                                                'starindex')
         args.extend([
             '--sjdbGTFfile', annotation2,
@@ -134,7 +137,7 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
 def map_reads(sequences_fname, genomedir, outdir, annotation='', multimax=10, mismatches=2,
               threads=1):
     """
-    Map docstring... TODO
+    Map FASTQ file reads to reference genome. TODO
 
     Parameters
     ----------
@@ -166,7 +169,7 @@ def map_reads(sequences_fname, genomedir, outdir, annotation='', multimax=10, mi
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
 
     LOGGER.info('Mapping reads from %s' % sequences_fname)
-    sequences_fname2 = iCount.files.temp.decompress_to_tempfile(
+    sequences_fname2 = iCount.files.decompress_to_tempfile(
         sequences_fname, 'starmap')
 
     args = [
@@ -191,7 +194,7 @@ def map_reads(sequences_fname, genomedir, outdir, annotation='', multimax=10, mi
         '--outSAMunmapped', 'Within', 'KeepPairs',
     ])
     if annotation:
-        annotation2 = iCount.files.temp.decompress_to_tempfile(annotation,
+        annotation2 = iCount.files.decompress_to_tempfile(annotation,
                                                                'starmap')
         args.extend([
             '--sjdbGTFfile', annotation,

@@ -1,6 +1,6 @@
 """
 Demultiplexing
---------------
+==============
 
 Split FASTQ file into separate FASTQ files, one for each sample barcode.
 Saved FASTQ files contain sequences where sample barcode, random
@@ -8,8 +8,10 @@ barcode, and adapter sequences were removed. Random barcode is moved into
 the header line, because needed in later steps, when removing PCR duplicates
 and counting number of cross-link events.
 
-"""
+.. autofunction:: iCount.demultiplex.run
+.. autofunction:: iCount.demultiplex.demultiplex
 
+"""
 
 import os
 import logging
@@ -22,8 +24,7 @@ from iCount.externals.cutadapt import run as remove_adapter
 LOGGER = logging.getLogger(__name__)
 
 
-def run(fastq_fn, adapter, mismatches, barcodes,
-        minimum_length=15, prefix='demux', outdir='.'):
+def run(fastq_fn, adapter, mismatches, barcodes, minimum_length=15, prefix='demux', outdir='.'):
     """
     Demultiplex FASTQ file.
 
