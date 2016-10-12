@@ -9,6 +9,8 @@ Contents of this documentation:
    tutorial
    installation
    ref
+   contributing
+   auto_cli
    versions
    license
    cite

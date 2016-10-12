@@ -602,7 +602,7 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
     gtf_out : str
         Path to output GTF file.
     genome_file : str
-        Path to genome_file (*.fai file or similar).
+        Path to genome_file (.fai file or similar).
     cores : int
         Number of computer CPUs to use for calculation.
     show_progress : bool
