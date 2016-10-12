@@ -83,5 +83,9 @@ setup(name='iCount',
           ],
       },
       test_suite='iCount.tests.suite',
-      scripts=scripts,
+      entry_points={
+          'console_scripts': [
+              'iCount = iCount.scripts:main',
+          ],
+      },
       )

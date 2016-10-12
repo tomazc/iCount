@@ -35,7 +35,7 @@ from iCount import logger
 
 from sphinx.ext.napoleon.docstring import NumpyDocstring
 
-LOGGER = logging.getLogger('iCount.scripts.iCount')
+LOGGER = logging.getLogger('iCount.scripts')
 
 
 ########################################
@@ -203,7 +203,7 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         name,
         description=description,
         help=short_description,
-        formatter_class=argparse.RawTextHelpFormatter # ArgumentDefaultsHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter  # ArgumentDefaultsHelpFormatter
     )
 
     # Add each of the function parameter as CLI argument:
@@ -229,119 +229,121 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
 # #########################################################################
 # #########################################################################
 
-#####################
-# Define root parser:
-#####################
 
-root_parser = argparse.ArgumentParser(
-    description=inspect.getdoc(iCount).split('\n..')[0],
-    formatter_class=argparse.RawTextHelpFormatter # ArgumentDefaultsHelpFormatter,
-)
-# Parser (general) arguments
-root_parser.add_argument('-v', '--version', action='version',
-                         version='%%(prog)s %s' % iCount.__version__)
+def main():
 
-subparsers = root_parser.add_subparsers(title='Commands', metavar=' ')
-##################
-# Define commands:
-##################
+    #####################
+    # Define root parser:
+    #####################
 
-# Genomes:
-make_parser_from_function(
-    iCount.genomes.ensembl.get_release_list, subparsers, only_func=True)
-make_parser_from_function(
-    iCount.genomes.ensembl.get_species_list, subparsers, only_func=True)
-make_parser_from_function(
-    iCount.genomes.ensembl.download_annotation, subparsers, only_func=True)
-make_parser_from_function(
-    iCount.genomes.ensembl.download_sequence, subparsers, only_func=True)
-make_parser_from_function(
-    iCount.genomes.segment.get_regions, subparsers)
-make_parser_from_function(
-    iCount.genomes.genes.get_genes, subparsers)
+    root_parser = argparse.ArgumentParser(
+        description=inspect.getdoc(iCount).split('\n..')[0],
+        formatter_class=argparse.RawTextHelpFormatter  # ArgumentDefaultsHelpFormatter,
+    )
+    # Parser (general) arguments
+    root_parser.add_argument('-v', '--version', action='version',
+                             version='%%(prog)s %s' % iCount.__version__)
 
-# Demultiplex and mapping:
-make_parser_from_function(iCount.demultiplex.run, subparsers)
-make_parser_from_function(iCount.demultiplex.remove_adapter, subparsers,
-                          module=iCount.externals.cutadapt)
-make_parser_from_function(iCount.mapping.mapindex.run, subparsers, module=iCount.mapping.mapindex)
-make_parser_from_function(iCount.mapping.map.run, subparsers, module=iCount.mapping.map)
-make_parser_from_function(iCount.mapping.xlsites.run, subparsers)
+    subparsers = root_parser.add_subparsers(title='Commands', metavar=' ')
+    ##################
+    # Define commands:
+    ##################
 
-# # Analysis:
-make_parser_from_function(
-    iCount.analysis.annotate.annotate_cross_links, subparsers)
-make_parser_from_function(
-    iCount.analysis.clusters.run, subparsers)
-make_parser_from_function(
-    iCount.analysis.group.run, subparsers, module=iCount.analysis.group)
-make_parser_from_function(
-    iCount.analysis.peaks.run, subparsers)
-make_parser_from_function(
-    iCount.analysis.summary.make_summary_report, subparsers)
+    # Genomes:
+    make_parser_from_function(
+        iCount.genomes.ensembl.get_release_list, subparsers, only_func=True)
+    make_parser_from_function(
+        iCount.genomes.ensembl.get_species_list, subparsers, only_func=True)
+    make_parser_from_function(
+        iCount.genomes.ensembl.download_annotation, subparsers, only_func=True)
+    make_parser_from_function(
+        iCount.genomes.ensembl.download_sequence, subparsers, only_func=True)
+    make_parser_from_function(
+        iCount.genomes.segment.get_regions, subparsers)
+    make_parser_from_function(
+        iCount.genomes.genes.get_genes, subparsers)
 
+    # Demultiplex and mapping:
+    make_parser_from_function(iCount.demultiplex.run, subparsers)
+    make_parser_from_function(iCount.demultiplex.remove_adapter, subparsers,
+                              module=iCount.externals.cutadapt)
+    make_parser_from_function(iCount.mapping.mapindex.run, subparsers,
+                              module=iCount.mapping.mapindex)
+    make_parser_from_function(iCount.mapping.map.run, subparsers, module=iCount.mapping.map)
+    make_parser_from_function(iCount.mapping.xlsites.run, subparsers)
 
-def verbose_help(mode):
-    if mode == 'txt':
-        print(root_parser.format_help() + '\n')
-        for name, parser in root_parser._action_groups[2]._actions[2].choices.items():
-            if name == 'man':
-                continue
-            print(name)
-            print('=' * len(name) + '\n')
-            print(parser.format_help() + '\n')
-    else:
-        raise NotImplementedError('"{}" not supported.'.format(mode))
+    # # Analysis:
+    make_parser_from_function(
+        iCount.analysis.annotate.annotate_cross_links, subparsers)
+    make_parser_from_function(
+        iCount.analysis.clusters.run, subparsers)
+    make_parser_from_function(
+        iCount.analysis.group.run, subparsers, module=iCount.analysis.group)
+    make_parser_from_function(
+        iCount.analysis.peaks.run, subparsers)
+    make_parser_from_function(
+        iCount.analysis.summary.make_summary_report, subparsers)
 
-# Add the man command:
-parser = subparsers.add_parser('man', help='Print help for all commands.')
-parser.add_argument('--mode', type=str, default='txt', metavar='')
-parser.set_defaults(func=verbose_help)
+    def verbose_help(mode):
+        if mode == 'txt':
+            print(root_parser.format_help() + '\n')
+            for name, parser in root_parser._action_groups[2]._actions[2].choices.items():
+                if name == 'man':
+                    continue
+                print(name)
+                print('=' * len(name) + '\n')
+                print(parser.format_help() + '\n')
+        else:
+            raise NotImplementedError('"{}" not supported.'.format(mode))
 
-#############################
-# Parse and execute commands:
-#############################
+    # Add the man command:
+    parser = subparsers.add_parser('man', help='Print help for all commands.')
+    parser.add_argument('--mode', type=str, default='txt', metavar='')
+    parser.set_defaults(func=verbose_help)
 
-# Parse agrs and run:
-parsed_args = root_parser.parse_args()
+    #############################
+    # Parse and execute commands:
+    #############################
 
-if not vars(parsed_args):
-    root_parser.print_help()
-    root_parser.exit(1)
-try:
-    args = vars(parsed_args)
-    func = args.pop('func')
+    # Parse agrs and run:
+    parsed_args = root_parser.parse_args()
 
-    # Stdout logger
-    stdout_loglevel = args.pop('stdout_log', 20)
-    is_on = not stdout_loglevel == 0
-    logger.log_to_stdout(is_on=is_on, level=stdout_loglevel)
+    if not vars(parsed_args):
+        root_parser.print_help()
+        root_parser.exit(1)
+    try:
+        args = vars(parsed_args)
+        func = args.pop('func')
 
-    # File logger
-    file_loglevel = args.pop('file_log', 0)
-    file_logpath = args.pop('file_logpath', None)
-    is_on = all([file_loglevel, file_logpath])
-    logger.log_to_file(is_on=is_on, level=file_loglevel, path=file_logpath)
+        # Stdout logger
+        stdout_loglevel = args.pop('stdout_log', 20)
+        is_on = not stdout_loglevel == 0
+        logger.log_to_stdout(is_on=is_on, level=stdout_loglevel)
 
-    # Switch to output results to a file:
-    results_file = args.pop('results_file', None)
+        # File logger
+        file_loglevel = args.pop('file_log', 0)
+        file_logpath = args.pop('file_logpath', None)
+        is_on = all([file_loglevel, file_logpath])
+        logger.log_to_file(is_on=is_on, level=file_loglevel, path=file_logpath)
 
-    # Execute the wrapped function:
-    command = 'iCount ' + ' '.join(sys.argv[1:])
-    LOGGER.info("Executing the following command: %s" % command)
-    result_object = func(**args)
+        # Switch to output results to a file:
+        results_file = args.pop('results_file', None)
 
-    # Save results to results_file. If not given, don't do anything (don't print the result!)
-    if results_file:
-        print(result_object, file=results_file)
-    sys.exit(0)
+        # Execute the wrapped function:
+        command = 'iCount ' + ' '.join(sys.argv[1:])
+        LOGGER.info("Executing the following command: %s" % command)
+        result_object = func(**args)
 
-except Exception as exception:
-    exception_message = exception.args[0]
-    exception_type = exception.__class__.__name__
+        # Save results to results_file. If not given, don't do anything (don't print the result!)
+        if results_file:
+            print(result_object, file=results_file)
+        sys.exit(0)
 
-    LOGGER = logging.getLogger('iCount.scripts.iCount')
-    LOGGER.error('[%s] %s' % (exception_type, exception_message))
-    for line in traceback.format_list(traceback.extract_tb(exception.__traceback__)):
-        LOGGER.error(line)
-    sys.exit(1)
+    except Exception as exception:
+        exception_message = exception.args[0]
+        exception_type = exception.__class__.__name__
+
+        LOGGER.error('[%s] %s' % (exception_type, exception_message))
+        for line in traceback.format_list(traceback.extract_tb(exception.__traceback__)):
+            LOGGER.error(line)
+        sys.exit(1)
