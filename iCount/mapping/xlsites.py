@@ -39,7 +39,6 @@ def _match(s1, s2, allowed_mismatches):
     """
     Do sequence `s1` and `s2` have less or equal than `allowed_mismatches`?
 
-
     Parameters
     ----------
     s1 : str
@@ -174,34 +173,91 @@ def _merge_similar_randomers(by_bc, randomer_mismatches):
                 break
 
 
+def _separate_by_second_starts(hits):
+    """
+    Separate reads from ``hits`` in groups with same second start.
+
+    Elemennts of list ``hits`` are tuples with the following entries::
+
+        (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
+
+    Parameters
+    ----------
+    hits : list
+        List of tuples containing read information (described in upper section)
+
+    Returns
+    -------
+    dict
+        Entries from hits separated in groups with unique second start value.
+    """
+    # Sort reads from ``hits``:
+    #     * first by their second start (sixth column)
+    #     * than by read size in decreasing order (third column)
+    hits = sorted(hits, key=lambda x: (x[5], -x[2]))
+
+    # Determine the number of second start groups:
+    second_starts = set([read[5] for read in hits])
+
+    # separate hits into second_start groups:
+    second_start_groups = {}
+    for read in hits:
+        second_start_groups.setdefault(read[5], []).append(read)
+
+    return second_start_groups
+
+
 def _collapse(xlink_pos, by_bc, report_by, multimax=1):
     """
     Report number of cDNAs and reads in cross-link site on xlink_pos
 
     Input parameter `by_bc` has te following structure:
     by_bc = {
-        'AAA': [(middle_pos, end_pos, read_len, num_mapped),  # hit1
-                (middle_pos, end_pos, read_len, num_mapped),  # hit2
-                (middle_pos, end_pos, read_len, num_mapped),  # ...
+        'AAA': [(middle_pos, end_pos, read_len, num_mapped, cigar, second_start),  # hit1
+                (middle_pos, end_pos, read_len, num_mapped, cigar, second_start),  # hit2
+                (middle_pos, end_pos, read_len, num_mapped, cigar, second_start),  # ...
         ]
-        'AAT': [(middle_pos, end_pos, read_len, num_mapped),  # hit1
-                (middle_pos, end_pos, read_len, num_mapped),  # hit2
+        'AAT': [(middle_pos, end_pos, read_len, num_mapped, cigar, second_start),  # hit1
+                (middle_pos, end_pos, read_len, num_mapped, cigar, second_start),  # hit2
                 ]
 
     Counting the number of reads is easy - just count the number of hits per
     cross-link site.
 
     Counting the number of cDNAs is also easy - just count the number of
-    different barcodes. However, this is not the case, when one read has been
-    mapped to many sites. In this case, the "contribution" of such read has to
-    be divided equally to all positions that it maps to. Also, longer reads,
-    should have greater influence. This is why the weight for cDNA count is:
+    different barcodes. However, following scenarions also need to be handled:
 
-        weight = a / (b * c)
+        * one read ban be mapped to multiple sites. In this case, the
+          "contribution" of such read has to be divided equally to all positions
+          that it maps to.
+        * Also, longer reads should have proportionally greater "contribution".
+          than the short ones.
 
-        a = read length
-        b = sum(read-lengths per barcode position)
-        c = number of hits
+    Upper two scenarions imply that each read contributes::
+
+        weight = 1 * 1/a * b/c
+        # a = number of hits
+        # b = read length
+        # c = sum(read lengths per same barcode)
+
+    Another factor to take into account is also the possibility that a group of
+    reads with equal start position and barcode represents multiple cross-links.
+    Imagine a read starting 10 bp before exon-intron junction. One group of
+    reads maps in the intron section and other reads skip the intron and map on
+    next exon with the second part of the read. This can be solved by grouping
+    by "second_start", which is the coordinate of the first nucleotide of the
+    second part of the read. Each group with unique second start is treated as
+    an independent cross-link event. This is done in function
+    ``_separate_by_second_starts``
+
+    Returns an object ``counts``::
+
+        counts = {
+            position: [cDNA_count, reads_count],
+            123: [3.14, 42],
+            123: [3.14, 42],
+            ...
+        }
 
     Parameters
     ----------
@@ -222,77 +278,90 @@ def _collapse(xlink_pos, by_bc, report_by, multimax=1):
     """
     gi = ['start', 'middle', 'end'].index(report_by)
 
-    cDNAs = {}
-    reads = {}
+    # Container for cDNA and read counts:
+    counts = {}
+
     for bc, hits in by_bc.items():
-        cdna_cn = {}  # cDNA count
-        read_cn = {}  # read count
-        # Sum of all read lengths per barcode:
-        sum_len_per_barcode = sum([i[2] for i in hits if i[3] <= multimax])
-        for middle_pos, end_pos, read_len, num_mapped in hits:
-            if num_mapped > multimax:
-                continue
-            grp_pos = (xlink_pos, middle_pos, end_pos)[gi]
-            w = read_len / (num_mapped * sum_len_per_barcode)
-            cdna_cn[grp_pos] = cdna_cn.get(grp_pos, 0) + w
-            read_cn[grp_pos] = read_cn.get(grp_pos, 0) + 1
 
-        # update cDNAs supporting the site (by which we group by)
-        for grp_pos, w in cdna_cn.items():
-            cDNAs[grp_pos] = cDNAs.get(grp_pos, 0) + w
+        ss_groups = _separate_by_second_starts(hits)
+        for ss_group in ss_groups.values():
 
-        # update number of reads supporting the site (by which we group by)
-        for grp_pos, cn in read_cn.items():
-            reads[grp_pos] = reads.get(grp_pos, 0) + cn
+            # Sum of all read lengths per ss_group:
+            sum_len_per_barcode = sum([i[2] for i in ss_group if i[3] <= multimax])
 
-    # merge cDNAs and reads into a tuple
-    retd = {}
-    for grp_pos, tot_cDNA in cDNAs.items():
-        tot_reads = reads[grp_pos]
-        retd[grp_pos] = (tot_cDNA, tot_reads)
-    return retd
+            for middle_pos, end_pos, read_len, num_mapped, _, _ in ss_group:
+                if num_mapped > multimax:
+                    continue
+                grp_pos = (xlink_pos, middle_pos, end_pos)[gi]
+                w = read_len / (num_mapped * sum_len_per_barcode)
+
+                current_values = counts.get(grp_pos, (0, 0))
+                upadated_values = (current_values[0] + w, current_values[1] + 1)
+                counts[grp_pos] = upadated_values
+
+    return counts
 
 
-def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
-        randomer_mismatches=2, mapq_th=0, multimax=50):
+def _second_start(start_positon, cigar):
     """
-    Interpret mapped sites and generate BED file with coordinates and
-    number of cross-linked events.
+    Get the coordinate of the first nucleotide in the second part of a read.
 
-    MAPQ is calculated mapq=int(-10*log10(1-1/Nmap)). By default we set
-    the mapq_th to 0 to include all reads. Mapq score is very useful,
-    because values coming from STAR are from a very limited set: 0 (5 or
-    more multiple hits), 1 (4 or 3 multiple hits), 3 (2 multiple hits),
-    255 (unique hit)
+    Read thas is mapped in two parts will look something like so::
+
+        |-----exon-----|-----intron-----|
+
+          |----R2.1----|      |---R2.2---|
+       ...01234567890123456789012345...
+
+    The corresopnding CIGAR value is ``((0,13), (3,7), (0,11))``. If the
+    coordinate of the first nucleotide in the first part is 1000, than the
+    coordinate of the first nucleotide in the second part is 1020.
+    """
+    first_hole_index = next((i for i, (code, _) in enumerate(cigar) if code == 3), None)
+    if first_hole_index is None:
+        return 0
+    else:
+        return start_positon + sum([num_nucs for _, num_nucs in cigar[:first_hole_index]])
+
+
+def _processs_bam_file(bam_fname, metrics, mapq_th):
+    """
+    Extract BAM file to a dictionary.
+
+    The structire of dictionary is the following::
+
+        grouped = {
+            ('chr1', '+'): (
+                xlink_pos1: {
+                    (barcode1, [
+                        (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
+                        ...
+                    ]),
+                    (barcode2, [
+                        (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
+                        ...
+                    ]),
+                    ....
+                }),
+            ),
+        }
 
     Parameters
     ----------
     bam_fname : str
         Path to bam filename.
-    unique_fname : str
-        File to store data from uniquely mapped reads
-    multi_fname : str
-        File to store data from multi-mapped reads
-    group_by : str
-        Blah blah
-    quant : str
-        Blah blah
-    randomer_mismatches : int
-        Blah blah
     mapq_th : int
         Ignore hits with MAPQ lower than this threshold value.
-    multimax : int
-        Blah blah
+    metrics : iCount.Metrics
+        Metrics object for storing analysis metadata.
+    cigar : bool
+        Wheather to include cigar values for each read or not.
 
     Returns
     -------
-    bool
-        Some random result
+    dict
+        Internal structure of BAM file, described in docstring.
     """
-    iCount.log_inputs(LOGGER, level=logging.INFO)
-
-    assert quant in ['cDNA', 'reads']
-    assert group_by in ['start', 'middle', 'end']
     try:
         bamfile = pysam.AlignmentFile(bam_fname, 'rb')
     except OSError as e:
@@ -302,19 +371,18 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     assert all(bamfile.getrname(i) == rname
                for i, rname in enumerate(bamfile.references))
 
-    # counters
-    metrics = iCount.Metrics(
-        all_recs=0,  # All records
-        notmapped_recs=0,  # Not mapped records
-        mapped_recs=0,  # Mapped records
-        lowmapq_recs=0,  # Records with insufficient quality
-        used_recs=0,  # Records used in analysis (all - unmapped - lowmapq)
-        invalidrandomer_recs=0,  # Records with invalid randomer
-        norandomer_recs=0,  # Records with no randomer
-        bc_cn={},  # Barcode counter
-    )
-
     _cache_bcs = {}
+
+    # counters
+    metrics.all_recs = 0
+    metrics.all_recs = 0  # All records
+    metrics.notmapped_recs = 0  # Not mapped records
+    metrics.mapped_recs = 0  # Mapped records
+    metrics.lowmapq_recs = 0  # Records with insufficient quality
+    metrics.used_recs = 0  # Records used in analysis (all - unmapped - lowmapq)
+    metrics.invalidrandomer_recs = 0  # Records with invalid randomer
+    metrics.norandomer_recs = 0  # Records with no randomer
+    metrics.bc_cn = {}  # Barcode counter
 
     # group by start
     grouped = {}
@@ -382,12 +450,61 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
         middle_pos = poss[i]
         read_len = len(r.seq)
 
+        read_data = (middle_pos, end_pos, read_len, num_mapped, r.cigar,
+                     _second_start(xlink_pos, r.cigar))
+
         # store hit data in a "dict of dicts" structure:
         grouped.setdefault((chrome, strand), {}).\
             setdefault(xlink_pos, {}).\
             setdefault(bc, []).\
-            append((middle_pos, end_pos, read_len, num_mapped))
+            append(read_data)
     bamfile.close()
+    return grouped
+
+
+def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
+        randomer_mismatches=2, mapq_th=0, multimax=50):
+    """
+    Interpret mapped sites and generate BED file with coordinates and
+    number of cross-linked events.
+
+    MAPQ is calculated mapq=int(-10*log10(1-1/Nmap)). By default we set
+    the mapq_th to 0 to include all reads. Mapq score is very useful,
+    because values coming from STAR are from a very limited set: 0 (5 or
+    more multiple hits), 1 (4 or 3 multiple hits), 3 (2 multiple hits),
+    255 (unique hit)
+
+    Parameters
+    ----------
+    bam_fname : str
+        Path to bam filename.
+    unique_fname : str
+        File to store data from uniquely mapped reads
+    multi_fname : str
+        File to store data from multi-mapped reads
+    group_by : str
+        Blah blah
+    quant : str
+        Blah blah
+    randomer_mismatches : int
+        Blah blah
+    mapq_th : int
+        Ignore hits with MAPQ lower than this threshold value.
+    multimax : int
+        Blah blah
+
+    Returns
+    -------
+    bool
+        Some random result
+    """
+    iCount.log_inputs(LOGGER, level=logging.INFO)
+
+    assert quant in ['cDNA', 'reads']
+    assert group_by in ['start', 'middle', 'end']
+
+    metrics = iCount.Metrics()
+    grouped = _processs_bam_file(bam_fname, metrics, mapq_th)
 
     # collapse duplicates
     unique = {}
