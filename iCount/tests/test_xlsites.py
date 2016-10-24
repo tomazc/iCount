@@ -90,40 +90,58 @@ class TestCollapse(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_start_1(self):
-        xlink_pos = 1
-        report_by = 'start'
+        """
+        Two barcodes, one with two second_start groups.
+        No multimax situation yet.
+        """
         by_bc = {
             'AAAAA': [
-                # (middle_pos, end_pos, read_len, num_mapped)
-                (5, 10, 10, 1),
-                (5, 11, 10, 1),
-                (5, 12, 80, 8)],
+                # (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
+                (5, 10, 10, 1, [(0, 10)], 0),
+                (5, 10, 10, 1, [(0, 10)], 0),
+                (5, 30, 20, 1, [(0, 10), (3, 10), (0, 10)], 20),
+            ],
             'CCCCC': [
-                (5, 10, 10, 1),
-                (5, 10, 90, 9)]}
-
-        # Multimax = 1
-        result1 = xlsites._collapse(xlink_pos, by_bc, report_by, multimax=1)
-        expected1 = {1: (2.0, 3)}
+                (5, 10, 10, 1, [(0, 10)], 0),
+                (5, 10, 10, 1, [(0, 10)], 0),
+            ],
+        }
+        result1 = xlsites._collapse(1, by_bc, 'start', multimax=1)
+        expected1 = {1: (3.0, 5)}
         self.assertEqual(result1, expected1)
 
-        # Multimax = 10
-        result2 = xlsites._collapse(xlink_pos, by_bc, report_by, multimax=10)
-        expected2 = {1: (0.5, 5)}
-        self.assertEqual(result2, expected2)
+    def test_start_2(self):
+        """
+        Two barcodes, multimax case.
+        """
+        by_bc = {
+            'AAAAA': [
+                # (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
+                (5, 10, 10, 1, [(0, 10)], 0),
+                (5, 10, 10, 1, [(0, 10)], 0),
+                (15, 30, 20, 2, [(0, 10)], 0),
+            ],
+            'CCCCC': [
+                (5, 10, 10, 1, [(0, 10)], 0),
+                (5, 10, 10, 100, [(0, 10)], 0),  # Excluded becouse of multimax
+            ],
+        }
+        result1 = xlsites._collapse(1, by_bc, 'start', multimax=10)
+        expected1 = {1: (1.75, 4)}
+        self.assertEqual(result1, expected1)
 
     def test_middle(self):
         xlink_pos = 1
         report_by = 'middle'
         by_bc = {
             'AAAAA': [
-                # (middle_pos, end_pos, read_len, num_mapped)
-                (5, 10, 10, 1),
-                (5, 11, 10, 1),
-                (10, 12, 80, 8)],
+                # (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
+                (5, 10, 10, 1, [(0, 10)], 0),
+                (5, 10, 10, 1, [(0, 10)], 0),
+                (40, 80, 80, 8, [(0, 80)], 0)],
             'CCCCC': [
-                (5, 10, 10, 1),
-                (20, 30, 10, 10)]}
+                (5, 10, 10, 1, [(0, 10)], 0),
+                (25, 30, 10, 10, [(0, 10)], 0)]}
 
         # Multimax = 1
         result1 = xlsites._collapse(xlink_pos, by_bc, report_by, multimax=1)
@@ -132,7 +150,7 @@ class TestCollapse(unittest.TestCase):
 
         # Multimax = 10
         result2 = xlsites._collapse(xlink_pos, by_bc, report_by, multimax=10)
-        expected2 = {5: (0.7, 3), 10: (0.1, 1), 20: (0.05, 1)}
+        expected2 = {5: (0.7, 3), 40: (0.1, 1), 25: (0.05, 1)}
         self.assertEqual(result2, expected2)
 
     def test_end(self):
@@ -140,23 +158,82 @@ class TestCollapse(unittest.TestCase):
         report_by = 'end'
         by_bc = {
             'AAAAA': [
-                # (middle_pos, end_pos, read_len, num_mapped)
-                (1, 5, 10, 1),
-                (1, 5, 10, 1),
-                (1, 10, 80, 8)],
+                # (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
+                (1, 10, 10, 1, [(0, 10)], 0),
+                (1, 10, 10, 1, [(0, 10)], 0),
+                (1, 80, 80, 8, [(0, 80)], 0),
+            ],
             'CCCCC': [
-                (1, 5, 10, 1),
-                (1, 20, 10, 10)]}
+                (1, 10, 10, 1, [(0, 10)], 0),
+                (15, 20, 10, 10, [(0, 10)], 0),
+            ],
+        }
 
         # Multimax = 1
         result1 = xlsites._collapse(xlink_pos, by_bc, report_by, multimax=1)
-        expected1 = {5: (2.0, 3)}
+        expected1 = {10: (2.0, 3)}
         self.assertEqual(result1, expected1)
 
         # Multimax = 10
         result2 = xlsites._collapse(xlink_pos, by_bc, report_by, multimax=10)
-        expected2 = {5: (0.7, 3), 10: (0.1, 1), 20: (0.05, 1)}
+        expected2 = {10: (0.7, 3), 80: (0.1, 1), 20: (0.05, 1)}
         self.assertEqual(result2, expected2)
+
+
+class TestProcessBamFile(unittest.TestCase):
+
+    def setUp(self):
+        self.data = {
+            'chromosomes': [('chr1', 3000), ('chr2', 2000)],
+            'segments': [
+                # Unmapped read (FLAG=4):
+                ('name1', 4, 0, 100, 20, [(0, 100)], {'NH': 1}),
+                # Name not containing ':' or ':rbc:'
+                # Mappped read and + strand (FLAG=0)
+                # chr1 (RNAME=0):
+                ('name2', 0, 0, 100, 20, [(0, 201)], {'NH': 7}),
+                # Correct name (contains ':rbc:')
+                # Mappped read on - strand (FLAG=16)
+                # chr1 (RNAME=0):
+                # Cigar value says middle 20 bp is skipped before continuation
+                ('name3:rbc:CCCC:', 16, 0, 100, 20, [(0, 50), (3, 20), (0, 50)], {'NH': 1}),
+                # Bad name - has ':' char but randomer is 'ABC' which is invalid
+                # Length is divisible by 2 on positive strand
+                # chr2 (RNAME=1):
+                ('name4:ABC', 0, 1, 300, 20, [(0, 200)], {'NH': 11}),
+                # Bad name - has ':' char but randomer is 'ACG' which is OK
+                # chr2 (RNAME=1):
+                ('name4:ACG', 0, 1, 300, 20, [(0, 200)], {'NH': 11}),
+                # Low quality(MAPQ=3)
+                ('name5', 0, 1, 300, 3, [(0, 200)], {'NH': 13})]}
+
+        self.data_no_NH = {
+            'chromosomes': [('chr1', 3000)],
+            'segments': [
+                # No NH tag is set
+                ('name5', 0, 0, 300, 20, [(0, 200)], {})]}
+        warnings.simplefilter("ignore", ResourceWarning)
+
+    def test_error_open_bamfile(self):
+        """
+        Provide onyl file with no content - error shoud be raised.
+        """
+        bam_fname = get_temp_file_name()
+        unique_fname = get_temp_file_name()
+        multi_fname = get_temp_file_name()
+
+        message = r"Error opening BAM file: .*"
+        with self.assertRaisesRegex(ValueError, message):
+            result = xlsites.run(bam_fname, unique_fname, multi_fname)
+
+    def test_no_NH_tag(self):
+        bam_fname = make_bam_file(self.data_no_NH)
+        unique_fname = get_temp_file_name()
+        multi_fname = get_temp_file_name()
+
+        message = r'"NH" tag not set for record: .*'
+        with self.assertRaisesRegex(ValueError, message):
+            result = xlsites.run(bam_fname, unique_fname, multi_fname)
 
 
 class TestRun(unittest.TestCase):
@@ -174,7 +251,7 @@ class TestRun(unittest.TestCase):
                 # Correct name (contains ':rbc:')
                 # Mappped read on - strand (FLAG=16)
                 # chr1 (RNAME=0):
-                ('name3:rbc:CCCC:', 16, 0, 100, 20, [(0, 100)], {'NH': 1}),
+                ('name3:rbc:CCCC:', 16, 0, 100, 20, [(0, 50), (3, 20), (0, 50)], {'NH': 1}),
                 # Bad name - has ':' char but randomer is 'ABC' which is invalid
                 # Length is divisible by 2 on positive strand
                 # chr2 (RNAME=1):
@@ -185,11 +262,6 @@ class TestRun(unittest.TestCase):
                 # Low quality(MAPQ=3)
                 ('name5', 0, 1, 300, 3, [(0, 200)], {'NH': 13})]}
 
-        self.data_no_NH = {
-            'chromosomes': [('chr1', 3000)],
-            'segments': [
-                # No NH tag is set
-                ('name5', 0, 0, 300, 20, [(0, 200)], {})]}
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_run_simple(self):
@@ -215,27 +287,6 @@ class TestRun(unittest.TestCase):
         self.assertEqual(result.norandomer_recs, 1)
         # Barcode counter:
         self.assertEqual(result.bc_cn, {'': 2, 'ACG': 1, 'CCCC': 1})
-
-    def test_error_open_bamfile(self):
-        """
-        Provide onyl file with no content - error shoud be raised.
-        """
-        bam_fname = get_temp_file_name()
-        unique_fname = get_temp_file_name()
-        multi_fname = get_temp_file_name()
-
-        message = r"Error opening BAM file: .*"
-        with self.assertRaisesRegex(ValueError, message):
-            result = xlsites.run(bam_fname, unique_fname, multi_fname)
-
-    def test_no_NH_tag(self):
-        bam_fname = make_bam_file(self.data_no_NH)
-        unique_fname = get_temp_file_name()
-        multi_fname = get_temp_file_name()
-
-        message = r'"NH" tag not set for record: .*'
-        with self.assertRaisesRegex(ValueError, message):
-            result = xlsites.run(bam_fname, unique_fname, multi_fname)
 
 
 if __name__ == '__main__':
