@@ -29,6 +29,19 @@ from pybedtools import create_interval_from_list
 LOGGER = logging.getLogger(__name__)
 
 
+def _first_two_columns(input_file):
+    """
+    Keep just first two columns of file.
+    """
+    ofile = tempfile.NamedTemporaryFile(mode='wt', delete=False)
+    with open(input_file) as ifile:
+        for line in ifile:
+            col_1_2 = line.strip().split()[:2]
+            ofile.write('\t'.join(col_1_2) + '\n')
+    ofile.close()
+    return os.path.abspath(ofile.name)
+
+
 def _a_in_b(a, b):
     """
     Check if interval a is inside interval b.
@@ -620,6 +633,9 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
     data = []
 
     LOGGER.debug('Opening genome file: %s', genome_file)
+
+    # Keep just first two column or _complement will fail...
+    genome_file = _first_two_columns(genome_file)
     with open(genome_file) as gfile:
         chromosomes = [line.strip().split()[0] for line in gfile]
 
