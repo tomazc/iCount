@@ -246,8 +246,6 @@ def sequence(release, species, target_dir=None, target_fname=None, tempdir=None,
         target_dir = os.getcwd()
     if not os.path.isdir(target_dir):
         raise ValueError('Directory "{}" does not exist'.format(target_dir))
-    if not target_fname:
-        target_fname = '{}.{}.fa.gz'.format(species, release)
 
     ftp = get_ftp_instance()
     server_dir = '/pub/release-{}/fasta/{}/dna'.format(release, species)
@@ -283,13 +281,16 @@ def sequence(release, species, target_dir=None, target_fname=None, tempdir=None,
                 else:
                     pass
         filtered_files = subset_list
-        target_fname = target_fname.rstrip('.fa.gz') + '.chr' + \
-            '_'.join(map(str, chromosomes)) + '.fa.gz'
+        if not target_fname:
+            target_fname = '{}.{}.chr{}.fa.gz'.format(
+                species, release, '_'.join(map(str, chromosomes)))
 
-    tempdir = tempfile.mkdtemp(dir=tempdir)
+    if not target_fname:
+        target_fname = '{}.{}.fa.gz'.format(species, release)
     target_path = os.path.abspath(os.path.join(target_dir, target_fname))
 
     LOGGER.info('Downloading FASTA file into: %s', target_path)
+    tempdir = tempfile.mkdtemp(dir=tempdir)
     for fname in filtered_files:
         LOGGER.debug('Downloading file: %s', fname)
         # Download all files to tempdir:
