@@ -270,13 +270,13 @@ def main():
 
     # Genomes:
     make_parser_from_function(
-        iCount.genomes.ensembl.get_release_list, subparsers, only_func=True)
+        iCount.genomes.ensembl.releases, subparsers, only_func=True)
     make_parser_from_function(
-        iCount.genomes.ensembl.get_species_list, subparsers, only_func=True)
+        iCount.genomes.ensembl.species, subparsers, only_func=True)
     make_parser_from_function(
-        iCount.genomes.ensembl.download_annotation, subparsers, only_func=True)
+        iCount.genomes.ensembl.annotation, subparsers, only_func=True)
     make_parser_from_function(
-        iCount.genomes.ensembl.download_sequence, subparsers, only_func=True)
+        iCount.genomes.ensembl.sequence, subparsers, only_func=True)
     make_parser_from_function(
         iCount.genomes.segment.get_regions, subparsers)
     make_parser_from_function(

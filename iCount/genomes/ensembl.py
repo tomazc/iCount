@@ -54,7 +54,7 @@ def get_ftp_instance():
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
-def get_release_list():
+def releases():
     """
     Get list of available ENSEMBL releases.
 
@@ -80,7 +80,7 @@ def get_release_list():
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
-def get_species_list(release):
+def species(release):
     """
     Get list of species for given release.
 
@@ -108,7 +108,7 @@ def get_species_list(release):
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
-def download_annotation(release, species, target_dir=None, target_fname=None):
+def annotation(release, species, target_dir=None, target_fname=None):
     """
     Download annotation in GTF file fromat.
 
@@ -194,17 +194,16 @@ def chrom_length(fasta_in):
     command = ['samtools', 'faidx', temp]
     subprocess.check_call(command)
 
-    # This command makes fai file. Move move&rename this file to fasta_in.fai:
+    # This command makes fai file. Move & rename this file to fasta_in.fai:
     fai_file_temp = temp + '.fai'
     fai_file = fasta_in + '.fai'
     subprocess.check_call(['mv', fai_file_temp, fai_file])
-    LOGGER.info('Fai file just made and saved to : %s', os.path.abspath(fai_file))
+    LOGGER.info('Fai file just saved to : %s', os.path.abspath(fai_file))
     return os.path.abspath(fai_file)
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
-def download_sequence(release, species, target_dir=None, target_fname=None,
-                      tempdir=None, chromosomes=None):
+def sequence(release, species, target_dir=None, target_fname=None, tempdir=None, chromosomes=None):
     """
     Downloads genome file in FASTA fromat.
 

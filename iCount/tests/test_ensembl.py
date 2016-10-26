@@ -18,8 +18,8 @@ class TestEnsembl(unittest.TestCase):
         ftp_instance.quit()
         warnings.simplefilter("ignore", ResourceWarning)
 
-    def test_get_release_list(self):
-        releases = ensembl.get_release_list()
+    def test_releases(self):
+        releases = ensembl.releases()
 
         self.assertIsInstance(releases, list)
         self.assertTrue(len(releases) > 0)
@@ -27,8 +27,8 @@ class TestEnsembl(unittest.TestCase):
         self.assertEqual(min(releases), 59)
         self.assertTrue(max(releases) > 83)
 
-    def test_get_species_list(self):
-        species = ensembl.get_species_list(84)
+    def test_species(self):
+        species = ensembl.species(84)
 
         self.assertIsInstance(species, list)
         self.assertTrue(len(species) > 0)
@@ -44,14 +44,14 @@ class TestEnsemblDownload(unittest.TestCase):
         self.fasta = 'test_file.fa.gz'
         warnings.simplefilter("ignore", ResourceWarning)
 
-    def test_download_annotation(self):
-        ann_file = ensembl.download_annotation(
+    def test_annotation(self):
+        ann_file = ensembl.annotation(
             '84', 'homo_sapiens', target_dir=self.tempdir, target_fname=self.gtf)
 
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, self.gtf)))
 
-    def test_download_sequence(self):
-        fasta_file = ensembl.download_sequence(
+    def test_sequence(self):
+        fasta_file = ensembl.sequence(
             '84', 'homo_sapiens', target_dir=self.tempdir, chromosomes=['MT'])
 
         self.assertTrue(os.path.isfile(
