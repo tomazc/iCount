@@ -62,6 +62,19 @@ Wrong way::
     def test_something(self):
         """The docstring."""
 
+Commit messages
+---------------
+
+If the core change that commit is introducing originates from module
+``the_module``, commit message should be::
+
+    the_module: Commit message
+
+If commit is somehow connected with an issue, commit message should reference
+issue number::
+
+    the_module: Commit message, relates to #42, resolves #14
+
 
 Logging logic
 =============
