@@ -49,20 +49,20 @@ class TestCLI(unittest.TestCase):
 
     def test_releases(self):
         # TODO: rename to get_releases?
-        command_basic = ['iCount', 'get_release_list',
+        command_basic = ['iCount', 'releases',
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         self.assertEqual(subprocess.call(command_basic), 0)
 
     def test_species(self):
-        command_basic = ['iCount', 'get_species_list', '84',
+        command_basic = ['iCount', 'species', '84',
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         self.assertEqual(subprocess.call(command_basic), 0)
 
-    def test_get_annotation(self):
+    def test_annotation(self):
         # Execute only full command, to avoid downloading to cwd.
-        command_full = ['iCount', 'download_annotation', '84', 'homo_sapiens',
+        command_full = ['iCount', 'annotation', '84', 'homo_sapiens',
                         '--target_dir', self.dir,
                         '--target_fname', self.tmp1,
                         '-S', '40',  # Supress lower than ERROR messages.
@@ -70,11 +70,11 @@ class TestCLI(unittest.TestCase):
 
         self.assertEqual(subprocess.call(command_full), 0)
 
-    def test_get_sequence(self):
-        # Download just MT chromosome, or this can last too long...
-        command_full = ['iCount', 'download_sequence', '84', 'homo_sapiens',
+    def test_sequence(self):
+        # Download just MT and Y chromosome, or this can last too long...
+        command_full = ['iCount', 'sequence', '84', 'homo_sapiens',
                         '--target_dir', self.dir,
-                        '--target_fname', self.tmp1,
+                        '--target_fname', self.tmp1 + '.gz',
                         '--tempdir', self.dir,
                         '--chromosomes', 'MT', 'Y',
                         '-S', '40',  # Supress lower than ERROR messages.
