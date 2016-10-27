@@ -291,7 +291,7 @@ def main():
     make_parser_from_function(iCount.mapping.map.run, subparsers, module=iCount.mapping.map)
     make_parser_from_function(iCount.mapping.xlsites.run, subparsers)
 
-    # # Analysis:
+    # Analysis:
     make_parser_from_function(
         iCount.analysis.annotate.annotate_cross_links, subparsers)
     make_parser_from_function(
@@ -302,6 +302,10 @@ def main():
         iCount.analysis.peaks.run, subparsers)
     make_parser_from_function(
         iCount.analysis.summary.make_summary_report, subparsers)
+
+    # Examples:
+    make_parser_from_function(
+        iCount.examples.run, subparsers)
 
     def verbose_help(mode):
         if mode == 'txt':

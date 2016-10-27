@@ -133,7 +133,7 @@ def get_avg_rnd_distrib(size, total_hits, hw, perms=100):
 
 
 def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3, fdr=0.05, perms=100,
-        rnd_seed=42, features=['gene'], report_progress=True, group_by='gene_id'):
+        rnd_seed=42, features=['gene'], report_progress=False, group_by='gene_id'):
     """
     Calculate FDR of interaction at each cross-linked site.
 
@@ -158,7 +158,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3, fdr=0.05,
     features : list_str
         Features over which to perform analysis.
     report_progress : bool
-        Print analysis progress. TODO refactor to logger.
+        Print analysis progress.
 
     Returns
     -------
@@ -272,6 +272,7 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3, fdr=0.05,
         fout_scores.close()
 
     LOGGER.info('Bed file with significant peaks saved to %s', fout_peaks)
-    LOGGER.info('Scores for each cross-linked position saved to %s', fout_scores)
+    if fout_scores:
+        LOGGER.info('Scores for each cross-linked position saved to %s', fout_scores)
 
     LOGGER.info('Done.')

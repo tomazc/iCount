@@ -138,7 +138,7 @@ def _reader(fname, qual_xform):
     if is_gzip(fname):
         f = gzip.open(fname, 'rt')
     else:
-        f = io.open(fname, 'rt')
+        f = open(fname, 'rt')
 
     # get file size
     f_size = os.path.getsize(fname)
