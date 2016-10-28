@@ -200,7 +200,7 @@ def make_bam_file(data):
         Absoulte path to bamfile.
 
     """
-    fname = get_temp_file_name()
+    fname = get_temp_file_name(extension='.bam')
 
     # Make header:
     chromosomes = [dict(

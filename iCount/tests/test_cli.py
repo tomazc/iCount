@@ -221,6 +221,9 @@ class TestCLI(unittest.TestCase):
 
     def test_xlsites(self):
         # Make a sample bam file
+        unique = get_temp_file_name(extension='.bed')
+        multi = get_temp_file_name(extension='.bed')
+        strange = get_temp_file_name(extension='.bam')
         bam = make_bam_file({
             'chromosomes': [
                 ('chr1', 3000),
@@ -235,10 +238,10 @@ class TestCLI(unittest.TestCase):
                 ('name5', 0, 1, 300, 3, [(0, 200)], {'NH': 13})],
             })
 
-        command_basic = ['iCount', 'xlsites', bam, self.tmp1, self.tmp2,
+        command_basic = ['iCount', 'xlsites', bam, unique, multi, strange,
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
-        command_full = ['iCount', 'xlsites', bam, self.tmp1, self.tmp2,
+        command_full = ['iCount', 'xlsites', bam, unique, multi, strange,
                         '--group_by', 'start',
                         '--quant', 'cDNA',
                         '--mismatches', '2',

@@ -684,3 +684,59 @@ def get_regions(annotation, segmentation, fai, report_progress=False):
     f3 = pybedtools.BedTool(f2.name).sort().saveas(segmentation)
     LOGGER.info('Segmentation stored in %s', f3.fn)
     return f3.fn
+
+
+def _prepare_annotation(ann_file):
+    """
+    Parse annotation file to hierarchical structure.
+
+    Utility function to transformn internal annotation file to the following
+    hierarchical structure::
+
+        annotation = {
+            (chr1, +): {
+                gene_id#1: {
+                    'gene_segment': gene_segment,
+                    transcript_id#1: [transcript_segment, exon1, intron1, exon2, ...],
+                    transcript_id#2: [transcript_segment, exon1, intron1, exon2, ...],
+                    ...
+                },
+                gene_id#2: {},
+                ...
+            },
+            (chr1, -),
+            (chr2, +),
+            ...
+        }
+
+    Note that intergenic segments have multiple roles: the same intergenic
+    segment has the role of gene, transcript and sub-transcript segment. This
+    eases the treatment of intergenic regions in algorithms that use this
+    function (rnamaps, xlsites, ...)
+
+    Parameters
+    ----------
+    ann_file : str
+        Path to GTF file, produces by ``get_regions`` function.
+
+    Returns
+    -------
+    dict
+        Annotation, wrapped in dict with chrom-strand/gene/transcript levels of
+        depth.
+    """
+    annotation = {}
+
+    for segment in pybedtools.BedTool(ann_file):
+        if segment[2] == 'gene' or segment[2] == 'intergenic':
+            annotation.setdefault((segment.chrom, segment.strand), {}). \
+                setdefault(segment.attrs['gene_id'], {}). \
+                setdefault('gene_segment', segment)
+
+        if segment[2] != 'gene':  # normal segment, transcript or intergenic segment
+            annotation.setdefault((segment.chrom, segment.strand), {}). \
+                setdefault(segment.attrs['gene_id'], {}). \
+                setdefault(segment.attrs['transcript_id'], []). \
+                append(segment)
+
+    return annotation

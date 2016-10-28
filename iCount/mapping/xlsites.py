@@ -2,23 +2,76 @@
 Identify and quantify cross-linked sites
 ----------------------------------------
 
-Transforms information in BAM file on mapped reads and their randomers into BED file.
+Determine positions and quantity of cross-link events.
 
+The simplest version of this script would oprate on such example::
 
-Reads information on mapped reads and their associated randomer sequence
-to produce BED file with cross-link sites.
+    |--a---b--- reference sequence, chr 14, positive strand ------------
+        |rbc1---R1--------|
+        |rbc1---R2------|
+        |rbc2---R3------|
+            |rbc1--------R4-------------|
+            |rbc3------R5-----|
 
-Reads are first grouped by the start position. Multiple reads that start on
-same position and have the same (similar) randomer are collapsed into one (
-most common, if many of same frequency, take longest) read.
+Five reads (R1-R5) are mapped to a reference sequence (chromosome 14, positive
+strand). Reads start on two distinct positons. On first position, there is
+R1-R3. Cross-link site is located one nucleotide before start of the read (on
+negative strand, one nucleotide after end of read). However, we wish to count
+number of cDNA molecules, not the number of reads. This can be done by counting
+the number of distinct random barcodes (sometimes also called randomers). So in
+upper example, we have:
 
-Collapsed reads can then be grouped in three different ways: by the start,
-middle or end position.
+    Postion a: 3 reads, 2 distinct random barcodes = 2 cDNA's
+    Postion b: 2 reads, 2 distinct random barcodes = 2 cDNA's
 
-When grouping by the start, we report one positions before read start. That
-is the most likely cross-linked site.
+However, things can get complicated when a single read is mapped in multiple
+parts. This can happen for several reasons. One common example is that introns
+are removed during transcription. This can be illustrated with the following
+image::
 
-Grouping by middle and end positions can be used for diagnostic purposes.
+    |---------------- reference -----------------------
+
+    |--------------------------transcript--------------------------|
+    |---UTR5---||---intron---||---exon---||---intron---||---exon---|
+
+                                |-------R1-------|
+                                |--R2.1-->              <-R2.2-|
+                      |-R3.1->      <-R3.2->            <-R3.3-|
+                        |-R4.1->      <-R4.2-|
+
+Read R1 and R2 are starting on same position. For the sake of argument, let's
+also pretend they also have same random barcode. In so, we would count them as a
+single cDNA molecule (= single cross-link event), even though it is obvious that
+they represent two separate cross-link events. In order to fix this, we count
+not just the number of different randomers on same position, but also number of
+different "second-start" coordinates. Second-start coordinate is just the
+coordinate of the second part of the read. This way, the actual number of
+cross-link events can be determined more accurately. If read is not split, it's
+second-start coordinate is 0. If read has multiple "holes" (as read R3) we
+determine second-start from the largest hole.
+
+Reads whose second-start do NOT fall on segmentation (like R4) are stored in a
+separate BAM file ``sites_strange``. They should be treated with special care,
+since they can indicate not-yet annotated features in genome. If segmentation is
+not given, all reads with holes, bigger than ``holesize_th`` are considered
+strange.
+
+Another parameter needs more explanation: ``group_by``. When algorithm starts,
+reads from BAM file are grouped in hierarchical structure by::
+
+    * chromosome and strand
+    * cross-link position
+    * random barcode
+    * second-start
+
+Each second-start group receives 1 cDNA score. This score is divided to each
+read in group (if there are 5 reads in group, each one gets 1/5 score). This
+enables that each read has it's cDNA score and of course, 1 "read score". This
+scores can be assigned to start (actually, to cross-link position), midlle or
+end position of read. By default, score is of course assigned to cross-link
+location. But for diagnostic purpuses, scores can also be assigned to middle or
+end coordinate of the read.
+
 
 
 TODO: check overlap between unique and multimap BED files, should be small,
@@ -27,12 +80,35 @@ of randomers among) unique mapped sites that overlap with multimapped reads
 
 """
 
-import pysam
+import tempfile
 import logging
+
+import pysam
+
 import iCount
 
 
 LOGGER = logging.getLogger(__name__)
+VALID_NUCLEOTIDES = set('ATCGN')
+
+
+def _get_random_barcode(query_name, metrics):
+    """
+    Extract random barcode from ``query_name``.
+    """
+    if ':rbc:' in query_name:
+        bc = query_name.rsplit(':rbc:', 1)[1].split(':')[0]
+    elif ':' in query_name:
+        bc = query_name.rsplit(':', 1)[1]
+        if set(bc) - VALID_NUCLEOTIDES:
+            # invalid barcode characters
+            bc = ''
+            metrics.invalidrandomer_recs += 1
+    else:
+        bc = ''
+        metrics.norandomer_recs += 1
+
+    return bc
 
 
 def _match(s1, s2, mismatches):
@@ -87,12 +163,12 @@ def _merge_similar_randomers(by_bc, mismatches):
 
     Input parameter `by_bc` has te following structure:
     by_bc = {
-        'AAA': [(middle_pos, end_pos, read_len, num_mapped),  # hit1
-                (middle_pos, end_pos, read_len, num_mapped),  # hit2
-                (middle_pos, end_pos, read_len, num_mapped),  # ...
+        'AAA': [(middle_pos, end_pos, read_len, num_mapped, second_start),  # hit1
+                (middle_pos, end_pos, read_len, num_mapped, second_start),  # hit2
+                (middle_pos, end_pos, read_len, num_mapped, second_start),  # ...
         ]
-        'AAT': [(middle_pos, end_pos, read_len, num_mapped),  # hit1
-                (middle_pos, end_pos, read_len, num_mapped),  # hit2
+        'AAT': [(middle_pos, end_pos, read_len, num_mapped, second_start),  # hit1
+                (middle_pos, end_pos, read_len, num_mapped, second_start),  # hit2
         ]
 
     Steps in function:
@@ -174,40 +250,6 @@ def _merge_similar_randomers(by_bc, mismatches):
                 break
 
 
-def _separate_by_second_starts(hits):
-    """
-    Separate reads from ``hits`` in groups with same second start.
-
-    Elemennts of list ``hits`` are tuples with the following entries::
-
-        (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
-
-    Parameters
-    ----------
-    hits : list
-        List of tuples containing read information (described in upper section).
-
-    Returns
-    -------
-    dict
-        Entries from hits separated in groups with unique second start value.
-    """
-    # Sort reads from ``hits``:
-    #     * first by their second start (sixth column)
-    #     * than by read size in decreasing order (third column)
-    hits = sorted(hits, key=lambda x: (x[5], -x[2]))
-
-    # Determine the number of second start groups:
-    second_starts = set([read[5] for read in hits])
-
-    # separate hits into second_start groups:
-    second_start_groups = {}
-    for read in hits:
-        second_start_groups.setdefault(read[5], []).append(read)
-
-    return second_start_groups
-
-
 def _collapse(xlink_pos, by_bc, group_by, multimax=1):
     """
     Report number of cDNAs and reads in cross-link site on xlink_pos
@@ -284,13 +326,17 @@ def _collapse(xlink_pos, by_bc, group_by, multimax=1):
 
     for bc, hits in by_bc.items():
 
-        ss_groups = _separate_by_second_starts(hits)
+        # separate in groups by second-start
+        ss_groups = {}
+        for read in hits:
+            ss_groups.setdefault(read[4], []).append(read)
+
         for ss_group in ss_groups.values():
 
             # Sum of all read lengths per ss_group:
             sum_len_per_barcode = sum([i[2] for i in ss_group if i[3] <= multimax])
 
-            for middle_pos, end_pos, read_len, num_mapped, _, _ in ss_group:
+            for middle_pos, end_pos, read_len, num_mapped, _ in ss_group:
                 if num_mapped > multimax:
                     continue
                 grp_pos = (xlink_pos, middle_pos, end_pos)[gi]
@@ -303,31 +349,64 @@ def _collapse(xlink_pos, by_bc, group_by, multimax=1):
     return counts
 
 
-def _second_start(start_positon, cigar):
+def _intersects_with_annotaton(second_start, annotation, chrom, strand):
     """
-    Get the coordinate of the first nucleotide in the second part of a read.
+    Does a second_start corresopnd to any entry in annotation?
 
-    Read thas is mapped in two parts will look something like so::
-
-        |-----exon-----|-----intron-----|
-
-          |----R2.1----|      |---R2.2---|
-       ...01234567890123456789012345...
-
-    The corresopnding CIGAR value is ``((0,13), (3,7), (0,11))``. If the
-    coordinate of the first nucleotide in the first part is 1000, than the
-    coordinate of the first nucleotide in the second part is 1020.
+    Returns
+    -------
+        bool
+    Does the read's second_start corresopnd to any known segment in annotation
     """
-    first_hole_index = next((i for i, (code, _) in enumerate(cigar) if code == 3), None)
-    if first_hole_index is None:
-        return 0
+    for gene_id, gene_content in annotation[(chrom, strand)].items():
+        for transcript_id, transcript_content in gene_content.items():
+            if transcript_id == 'gene_segment':
+                continue
+            for segment in transcript_content:
+                if strand == '+':
+                    if second_start == segment.start:
+                        return True
+                else:
+                    if second_start == segment.stop:
+                        return True
+    return False
+
+
+def _second_start(read, poss, strange, strand, chrom, annotation, holesize_th):
+    """
+    Return the coordinate of second start. If read is not split or we wish algorithm
+    to think of read as linear, second_start equals to 0.
+
+    """
+    holes = [j-i-1 for i, j in zip(poss, poss[1:])]
+    # Get the size of the biggest hole:
+    biggest_hole_size = max(holes) if holes else 0
+
+    second_start = 0
+    if not annotation:
+        # Effectively this means, that read is considered as it has no holes.
+        if biggest_hole_size > holesize_th:
+            # Still, read is not treated as on with distinct second_start.
+            # However, it is reported as starnge:
+            strange.append(read)
     else:
-        return start_positon + sum([num_nucs for _, num_nucs in cigar[:first_hole_index]])
+        biggest_hole_size_index = holes.index(biggest_hole_size)
+        # Take right border of hole on "+" and left border on "-" strand:
+        if strand == '+':
+            second_start = poss[biggest_hole_size_index + 1]
+        else:
+            second_start = poss[biggest_hole_size_index]
+
+        if not _intersects_with_annotaton(second_start, annotation, chrom, strand):
+            strange.append(read)
+            second_start = 0
+
+    return second_start
 
 
-def _processs_bam_file(bam_fname, metrics, mapq_th):
+def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=None, holesize_th=4):
     """
-    Extract BAM file to a dictionary.
+    Extract data from BAM file into dictionary.
 
     The structire of dictionary is the following::
 
@@ -351,31 +430,38 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
     ----------
     bam_fname : str
         BAM file with mapped reads.
+    metrics : iCount.Metrics
+        Metrics object for storing analysis metadata.
     mapq_th : int
         Ignore hits with MAPQ < mapq_th.
-    metrics : iCount.Metrics
-        Metrics object, storing analysis metadata.
-    cigar : bool
-        Wheather to include cigar values for each read or not.
+    sites_strange : str
+        Output BED6 file to store reads with strange properties. If read's
+        second start does not fall on any of annotation borders, it is
+        considered strange. If segmentation is not provided, every read in two
+        parts, longer than holesize_th is considered as strange.
+    annotation : str
+        File with custon annotation format (obtained by ``iCount segment``).
+    holesize_th : int
+        Raeads with size of holes less than holesize_th are treted as if they
+        would have no holes.
 
     Returns
     -------
     dict
         Internal structure of BAM file, described in docstring.
+    list
+        BAM file with
     """
+    # Process annotation, if given:
+    if annotation:
+        annotation = iCount.genomes.segment._prepare_annotation(annotation)
+
     try:
         bamfile = pysam.AlignmentFile(bam_fname, 'rb')
     except OSError as e:
         raise ValueError('Error opening BAM file: {:s}'.format(bam_fname))
 
-    # sanity check
-    assert all(bamfile.getrname(i) == rname
-               for i, rname in enumerate(bamfile.references))
-
-    _cache_bcs = {}
-
     # counters
-    metrics.all_recs = 0
     metrics.all_recs = 0  # All records
     metrics.notmapped_recs = 0  # Not mapped records
     metrics.mapped_recs = 0  # Mapped records
@@ -385,9 +471,12 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
     metrics.norandomer_recs = 0  # Records with no randomer
     metrics.bc_cn = {}  # Barcode counter
 
-    # group by start
+    # root container for reads (grouped by chromosome, strand, position and random barcode)
     grouped = {}
-    valid_nucs = set('ATCGN')
+    # Container for reads with strange properties:
+    strange = []
+
+    _cache_bcs = {}
     for r in bamfile:
         metrics.all_recs += 1
         if r.is_unmapped:
@@ -406,21 +495,10 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
         if r.has_tag('NH'):
             num_mapped = r.get_tag('NH')
         else:
-            raise ValueError('"NH" tag not set for record: {}'.format(r.qname))
+            raise ValueError('"NH" tag not set for record: {}'.format(r.query_name))
 
-        # Extract randomer sequence - it should be part of read id:
-        if ':rbc:' in r.qname:
-            bc = r.qname.rsplit(':rbc:', 1)[1].split(':')[0]
-        elif ':' in r.qname:
-            bc = r.qname.rsplit(':', 1)[1]
-            if set(bc) - valid_nucs:
-                # invalid barcode characters
-                bc = ''
-                metrics.invalidrandomer_recs += 1
-        else:
-            bc = ''
-            metrics.norandomer_recs += 1
-
+        # Extract randomer sequence (``bc``) from querry name (= read name)
+        bc = _get_random_barcode(r.query_name, metrics)
         bc = _cache_bcs.setdefault(bc, bc)  # reduce memory consumption
         metrics.bc_cn[bc] = metrics.bc_cn.get(bc, 0) + 1
 
@@ -434,7 +512,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
             strand = '+'
             xlink_pos = poss[0] - 1
             end_pos = poss[-1]
-        chrome = bamfile.references[r.tid]
+        chrom = bamfile.references[r.tid]
 
         # middle position is position of middle nucleotide. Because we can have
         # spliced reads, middle position is not necessarily the middle of
@@ -451,20 +529,47 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
         middle_pos = poss[i]
         read_len = len(r.seq)
 
-        read_data = (middle_pos, end_pos, read_len, num_mapped, r.cigar,
-                     _second_start(xlink_pos, r.cigar))
+        second_start = _second_start(r, poss, strange, strand, chrom, annotation, holesize_th)
 
-        # store hit data in a "dict of dicts" structure:
-        grouped.setdefault((chrome, strand), {}).\
+        read_data = (middle_pos, end_pos, read_len, num_mapped, second_start)
+
+        # store hit data in a "grouped" contianer:
+        grouped.setdefault((chrom, strand), {}).\
             setdefault(xlink_pos, {}).\
             setdefault(bc, []).\
             append(read_data)
+
+    # Write strange behaved reads to a BAM file:
+    metrics.strange_recs = len(strange)
+    if strange:
+        with pysam.AlignmentFile(sites_strange, "w", header=bamfile.header) as outf:
+            for read in strange:
+                outf.write(read)
+
     bamfile.close()
+
+    # Report:
+    LOGGER.info('All records in BAM file: %d', metrics.all_recs)
+    LOGGER.info('Reads not mapped: %d', metrics.notmapped_recs)
+    LOGGER.info('Mapped reads records (hits): %d', metrics.mapped_recs)
+    LOGGER.info('Hits ignored because of low MAPQ: %d', metrics.lowmapq_recs)
+    LOGGER.info('Records used for quantification: %d', metrics.used_recs)
+    LOGGER.info('Records with invalid randomer info in header: %d', metrics.invalidrandomer_recs)
+    LOGGER.info('Records with no randomer info: %d', metrics.norandomer_recs)
+    LOGGER.info('Ten most frequent randomers:')
+    top10 = sorted([(cn, bc) for bc, cn in metrics.bc_cn.items()], reverse=True)[:10]
+    for cn, bc in top10:
+        LOGGER.info('    %s: %d', bc, cn)
+    LOGGER.info('There are {} reads with second-start not falling on annotation. They are '
+                'reported in file: {}'.format(metrics.strange_recs, sites_strange))
+
     return grouped
 
 
-def run(bam, sites_unique, sites_multi, group_by='start', quant='cDNA',
-        mismatches=2, mapq_th=0, multimax=50, report_progress=False):
+def run(bam, sites_unique, sites_multi, sites_strange, group_by='start', quant='cDNA',
+        segmentation=None, mismatches=2, mapq_th=0, multimax=50, holesize_th=4,
+        report_progress=False):
+
     """
     Interpret mapped sites and generate BED file with coordinates and
     number of cross-linked events.
@@ -483,19 +588,29 @@ def run(bam, sites_unique, sites_multi, group_by='start', quant='cDNA',
         Output BED6 file to store data from uniquely mapped reads.
     sites_multi : str
         Output BED6 file to store data from multi-mapped reads.
+    sites_strange : str
+        Output BAM file to store reads with strange properties. If read's
+        second start does not fall on any of annotation borders, it is
+        considered strange. If segmentation is not provided, every read in two
+        parts, longer than holesize_th is considered as strange.
     group_by : str
-        Group reads together by 'start', 'middle' or 'end' nucleotide.
+        Assign score of a read to either 'start', 'middle' or 'end' nucleotide.
     quant : str
         Report number of 'cDNA' or number of 'reads'.
     mismatches : int
         Reads on same position with random barcode differing less than
         ``mismatches`` are grouped together.
+    segmentation : str
+        File with custon annotation format (obtained by ``iCount segment``).
     mapq_th : int
         Ignore hits with MAPQ < mapq_th.
     multimax : int
         Ignore reads, mapped to more than ``multimax`` places.
     report_progress : bool
         Switch to report progress.
+    holesize_th : int
+        Raeads with size of holes less than holesize_th are treted as if they
+        would have no holes.
 
     Returns
     -------
@@ -505,55 +620,41 @@ def run(bam, sites_unique, sites_multi, group_by='start', quant='cDNA',
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
+    assert sites_unique.endswith(('.bed', '.bed.gz'))
+    assert sites_multi.endswith(('.bed', '.bed.gz'))
+    assert sites_strange.endswith(('.bam', '.bam.gz'))
     assert quant in ['cDNA', 'reads']
     assert group_by in ['start', 'middle', 'end']
 
     metrics = iCount.Metrics()
-    grouped = _processs_bam_file(bam, metrics, mapq_th)
+    LOGGER.info('Processing BAM file to internal structure...')
+    grouped = _processs_bam_file(bam, metrics, mapq_th, sites_strange, segmentation, holesize_th)
 
-    # collapse duplicates
-    unique = {}
-    multi = {}
+    LOGGER.info('Detecting cross-links...')
+    unique, multi = {}, {}
     length = len(grouped)
     progress = 0
-    while grouped:
-        (chrome, strand), by_pos = grouped.popitem()
-
+    for (chrom, strand), by_pos in grouped.items():
         if report_progress:
             new_progress = 1 - len(grouped) / length
             progress = iCount._log_progress(new_progress, progress, LOGGER)
 
         unique_by_pos = {}
         multi_by_pos = {}
-        while by_pos:
-            xlink_pos, by_bc = by_pos.popitem()
+        for xlink_pos, by_bc in by_pos.items():
 
             _merge_similar_randomers(by_bc, mismatches)
+
             # count uniquely mapped reads only
-            _update(unique_by_pos, _collapse(xlink_pos, by_bc, group_by,
-                                             multimax=1))
-            # count also multi mapped reads
-            _update(multi_by_pos, _collapse(xlink_pos, by_bc, group_by,
-                                            multimax=multimax))
+            _update(unique_by_pos, _collapse(xlink_pos, by_bc, group_by, multimax=1))
+            # count all reads mapped les than multimax times
+            _update(multi_by_pos, _collapse(xlink_pos, by_bc, group_by, multimax=multimax))
 
-        unique[(chrome, strand)] = unique_by_pos
-        multi[(chrome, strand)] = multi_by_pos
+        unique[(chrom, strand)] = unique_by_pos
+        multi[(chrom, strand)] = multi_by_pos
 
-    # generate BED with cross-linked positions
+    # Write output
     val_index = ['cDNA', 'reads'].index(quant)
-
-    LOGGER.info('All records in BAM file: %d', metrics.all_recs)
-    LOGGER.info('Reads not mapped: %d', metrics.notmapped_recs)
-    LOGGER.info('Mapped reads records (hits): %d', metrics.mapped_recs)
-    LOGGER.info('Hits ignored because of low MAPQ: %d', metrics.lowmapq_recs)
-    LOGGER.info('Records used for quantification: %d', metrics.used_recs)
-    LOGGER.info('Records with invalid randomer info in header: %d', metrics.invalidrandomer_recs)
-    LOGGER.info('Records with no randomer info: %d', metrics.norandomer_recs)
-    LOGGER.info('Ten most frequent randomers:')
-    top10 = sorted([(cn, bc) for bc, cn in metrics.bc_cn.items()], reverse=True)[:10]
-    for cn, bc in top10:
-        LOGGER.info('    %s: %d', bc, cn)
-
     iCount.files.bed.save_dict(unique, sites_unique, val_index=val_index)
     LOGGER.info('Saved to BED file (uniquely mapped reads): %s', sites_unique)
     iCount.files.bed.save_dict(multi, sites_multi, val_index=val_index)
