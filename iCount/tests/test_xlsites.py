@@ -60,7 +60,7 @@ class TestMergeSimilarRandomers(unittest.TestCase):
                  'GGGGG': ['hit4', 'hit5'],
                  'NAAAN': ['hit6']}
 
-        xlsites._merge_similar_randomers(by_bc, randomer_mismatches=2)
+        xlsites._merge_similar_randomers(by_bc, mismatches=2)
         expected = {'GGGGG': ['hit4', 'hit5'],
                     'AAAAA': ['hit1', 'hit2', 'hit6', 'hit3'],
                     'TTTTN': ['hit42']}
@@ -78,7 +78,7 @@ class TestMergeSimilarRandomers(unittest.TestCase):
         by_bc = {'AAAAA': ['hit1'],
                  'AACGG': ['hit2', 'hit3'],
                  'NAAAN': ['hit4']}
-        xlsites._merge_similar_randomers(by_bc, randomer_mismatches=2)
+        xlsites._merge_similar_randomers(by_bc, mismatches=2)
         expected = {'AACGG': ['hit2', 'hit3'],
                     'AAAAA': ['hit1', 'hit4']}
         self.assertEqual(by_bc, expected)

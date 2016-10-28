@@ -241,7 +241,7 @@ class TestCLI(unittest.TestCase):
         command_full = ['iCount', 'xlsites', bam, self.tmp1, self.tmp2,
                         '--group_by', 'start',
                         '--quant', 'cDNA',
-                        '--randomer_mismatches', '2',
+                        '--mismatches', '2',
                         '--mapq_th', '0',
                         '--multimax', '50',
                         '-S', '40',  # Supress lower than ERROR messages.
