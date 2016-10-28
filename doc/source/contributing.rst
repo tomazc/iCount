@@ -3,6 +3,39 @@ Contributing
 ************
 
 
+Installation for development
+============================
+
+Fork the main `iCount git repository`_.
+
+If you don’t have Git installed on your system, follow `these instructions`_.
+
+Clone your fork (replace <username> with your GitHub account name) and change
+directory::
+
+    git clone https://github.com/<username>/iCount.git
+    cd iCount
+
+Prepare iCount for development::
+
+    pip install -e .[test]
+
+.. note::
+
+    We strongly recommend to install iCount in `virtualenv`_ to create an
+    isolated Python environment.
+
+
+.. _`iCount git repository`:
+    https://github.com/tomazc/iCount
+
+.. _`these instructions`:
+    https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+
+.. _`virtualenv`:
+    https://virtualenv.pypa.io/en/stable/
+
+
 Python module and CLI living together
 =====================================
 
