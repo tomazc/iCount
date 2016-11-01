@@ -74,10 +74,11 @@ class TestStar(unittest.TestCase):
     def test_build_index(self):
         # No annotation
         return_code1 = star.build_index(self.genome, self.index_dir, overhang=100, overhang_min=8,
-                                        threads=1)
+                                        threads=1, logfile_path=get_temp_file_name())
         # With annotation
         return_code2 = star.build_index(self.genome, self.index_dir, annotation=self.annotation,
-                                        overhang=100, overhang_min=8, threads=1)
+                                        overhang=100, overhang_min=8, threads=1,
+                                        logfile_path=get_temp_file_name())
 
         self.assertEqual(return_code1, 0)
         self.assertEqual(return_code2, 0)
@@ -96,7 +97,8 @@ class TestStar(unittest.TestCase):
 
     def test_map_reads(self):
         # First: make index:
-        star.build_index(self.genome, self.index_dir)
+        # Give logfile_path to some /tmp location to not pollute woking directory
+        star.build_index(self.genome, self.index_dir, logfile_path=get_temp_file_name())
 
         # No annotation
         return_code1 = star.map_reads(self.reads, self.index_dir, self.dir)

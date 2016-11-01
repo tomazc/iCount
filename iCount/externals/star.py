@@ -60,7 +60,7 @@ def get_version():
         return None
 
 
-def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=8, threads=1):
+def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=8, threads=1, logfile_path='./'):
     """
     Call STAR to generate genome index, which is used for mapping.
 
@@ -79,6 +79,8 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
         TODO
     threads : int
         Number of threads that STAR can use for generating index.
+    logfile_path : str
+        Location of logfile. Can be absolute or relative path.
 
     Returns
     -------
@@ -101,6 +103,7 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
         '--genomeDir', '{:s}'.format(outdir),
         '--genomeFastaFiles', '{:s}'.format(genome_fname2),
         '--alignSJoverhangMin', '{:d}'.format(overhang_min),
+        '--outFileNamePrefix', '{:s}'.format(logfile_path),
     ]
     if annotation:
         annotation2 = iCount.files.decompress_to_tempfile(annotation, 'starindex')
