@@ -14,20 +14,22 @@ mkdir -p ${analysis_dir}
 ##############################
 # ## general steps
 # step 1: download genome sequence
+# if parameter --release is omitted, the newest supported release is used
 genome="hs84.fa.gz"
 if [ ! -f "${genome_dir}/${genome}" ];
 then
-iCount sequence 84 homo_sapiens --target_dir ${genome_dir} \
+iCount sequence homo_sapiens --release 84 --target_dir ${genome_dir} \
     --target_fname ${genome}
 fi
 genome="${genome_dir}/${genome}"
 
 
 # step 2: download annotation
+# if parameter --release is omitted, the newest supported release is used
 annotation="hs84.gtf.gz"
 if [ ! -f "${genome_dir}/${annotation}" ];
 then
-    iCount annotation 84 homo_sapiens --target_dir ${genome_dir} \
+    iCount annotation homo_sapiens --release 84 --target_dir ${genome_dir} \
         --target_fname ${annotation}
 fi
 annotation="${genome_dir}/${annotation}"

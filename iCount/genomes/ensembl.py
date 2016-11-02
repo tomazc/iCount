@@ -80,7 +80,7 @@ def releases():
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
-def species(release):
+def species(release=MAX_RELEASE_SUPPORTED):
     """
     Get list of species for given release.
 
@@ -108,16 +108,16 @@ def species(release):
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
-def annotation(release, species, target_dir=None, target_fname=None):
+def annotation(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_fname=None):
     """
     Download annotation in GTF file fromat.
 
     Parameters
     ----------
-    release : int
-        Release number. Only ENSEMBL releases from {0} - {1} are available.
     species : str
         Species latin name.
+    release : int
+        Release number. Only ENSEMBL releases from {0} - {1} are available.
     target_dir : str
         Download to this directory (if not given, current working directory).
     target_fname : str
@@ -203,7 +203,8 @@ def chrom_length(fasta_in):
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
-def sequence(release, species, target_dir=None, target_fname=None, tempdir=None, chromosomes=None):
+def sequence(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_fname=None,
+             tempdir=None, chromosomes=None):
     """
     Downloads genome file in FASTA fromat.
 
@@ -217,10 +218,10 @@ def sequence(release, species, target_dir=None, target_fname=None, tempdir=None,
 
     Parameters
     ----------
-    release : int
-        Release number. Only ENSEMBL releases from {0} - {1} are available.
     species : str
         Species latin name.
+    release : int
+        Release number. Only ENSEMBL releases from {0} - {1} are available.
     target_dir : str
         Download to this directory (if not given, current working directory).
     target_fname : str
