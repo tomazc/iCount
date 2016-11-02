@@ -207,16 +207,17 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3, fdr=0.05,
     out_recs_scores = {}
     hits_by_name = sorted(hits_by_name.items())
     all_recs = len(hits_by_name)
-    cur_perc = 0
+    progress = 0
     while hits_by_name:
         gid, hits = hits_by_name.pop()
         region_size = name_sizes[gid]
         chrom, strand, group_id, name = gid
         region_hits = math.ceil(sum([v for _, v in hits]))
-        new_perc = '\r{:.1f}%'.format(100.0*(1.0-len(hits_by_name)/all_recs))
-        if report_progress and new_perc != cur_perc:
-            cur_perc = new_perc
-            print(cur_perc, end="", flush=True),
+
+        if report_progress:
+            new_progress = 1.0 - len(hits_by_name) / all_recs
+            progress = iCount._log_progress(new_progress, progress, LOGGER)
+
         true_ps, hits_extended = cum_prob_within_window(hits, region_hits, hw)
         rnd_ps = get_avg_rnd_distrib(region_size, region_hits, hw, perms=perms)
         assert len(rnd_ps) == len(rnd_ps)

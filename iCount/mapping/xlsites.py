@@ -464,7 +464,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
 
 
 def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
-        mismatches=2, mapq_th=0, multimax=50):
+        mismatches=2, mapq_th=0, multimax=50, report_progress=False):
     """
     Interpret mapped sites and generate BED file with coordinates and
     number of cross-linked events.
@@ -494,6 +494,8 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
         Ignore hits with MAPQ < mapq_th.
     multimax : int
         Ignore reads, mapped to more than ``multimax`` places.
+    report_progress : bool
+        Switch to report progress
 
     Returns
     -------
@@ -511,8 +513,15 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     # collapse duplicates
     unique = {}
     multi = {}
+    length = len(grouped)
+    progress = 0
     while grouped:
         (chrome, strand), by_pos = grouped.popitem()
+
+        if report_progress:
+            new_progress = 1 - len(grouped) / length
+            progress = iCount._log_progress(new_progress, progress, LOGGER)
+
         unique_by_pos = {}
         multi_by_pos = {}
         while by_pos:
