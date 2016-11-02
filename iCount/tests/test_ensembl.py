@@ -28,12 +28,15 @@ class TestEnsembl(unittest.TestCase):
         self.assertTrue(max(releases) > 83)
 
     def test_species(self):
-        species = ensembl.species(84)
+        species = ensembl.species()
 
         self.assertIsInstance(species, list)
         self.assertTrue(len(species) > 0)
         self.assertIsInstance(species[0], str)
         self.assertTrue('homo_sapiens' in species)
+
+        species2 = ensembl.species(84)
+        self.assertEqual(species2, species)
 
 
 class TestEnsemblDownload(unittest.TestCase):
@@ -46,13 +49,13 @@ class TestEnsemblDownload(unittest.TestCase):
 
     def test_annotation(self):
         ann_file = ensembl.annotation(
-            '84', 'homo_sapiens', target_dir=self.tempdir, target_fname=self.gtf)
+            'homo_sapiens', release=84, target_dir=self.tempdir, target_fname=self.gtf)
 
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, self.gtf)))
 
     def test_sequence(self):
         fasta_file = ensembl.sequence(
-            '84', 'homo_sapiens', target_dir=self.tempdir, chromosomes=['MT'])
+            'homo_sapiens', release=84, target_dir=self.tempdir, chromosomes=['MT'])
 
         self.assertTrue(os.path.isfile(
             os.path.join(self.tempdir, 'homo_sapiens.84.chrMT.fa.gz')))

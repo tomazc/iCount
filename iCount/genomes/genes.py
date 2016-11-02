@@ -70,5 +70,5 @@ def get_genes(gtf_in, gtf_out, fai_file=None, name='gene', attribute='gene_id'):
         for chrom, start, stop, strand, col8 in data.values()).saveas()
 
     gs1 = gs.sort().saveas(gtf_out)
-    LOGGER.info('Done.')
+    LOGGER.info('Results saved to {}.'.format(os.path.abspath(gs1.fn)))
     return os.path.abspath(gs1.fn)

@@ -35,9 +35,9 @@ import iCount
 LOGGER = logging.getLogger(__name__)
 
 
-def _match(s1, s2, allowed_mismatches):
+def _match(s1, s2, mismatches):
     """
-    Do sequence `s1` and `s2` have less or equal than `allowed_mismatches`?
+    Do sequence `s1` and `s2` have less or equal than ``mismatches``?
 
     Parameters
     ----------
@@ -45,18 +45,18 @@ def _match(s1, s2, allowed_mismatches):
         First sequence.
     s2 : str
         Second sequence.
-    allowed_mismatches : int
-        Number of allowed mismatches.
+    mismatches : int
+        Number of allowed mismatches between given sequences.
 
     Returns
     -------
     bool
-        Do sequence `s1` and `s2` have less or equal than `allowed_mismatches`
+        Do sequence `s1` and `s2` have less or equal than ``mismatches``
 
     """
     s1, s2 = s1.upper(), s2.upper()
     cn = sum([(c1 == 'N' or c2 == 'N' or c1 == c2) for c1, c2 in zip(s1, s2)])
-    return max(len(s1), len(s2)) - cn <= allowed_mismatches
+    return max(len(s1), len(s2)) - cn <= mismatches
 
 
 def _update(cur_vals, to_add):
@@ -81,9 +81,9 @@ def _update(cur_vals, to_add):
         cur_vals[pos] = [p + n for p, n in zip(prev_vals, vals_to_add)]
 
 
-def _merge_similar_randomers(by_bc, randomer_mismatches):
+def _merge_similar_randomers(by_bc, mismatches):
     """
-    Merge randomers on same site that are max `randomer_mismatches` different
+    Merge randomers on same site that are max ``mismatches`` different
 
     Input parameter `by_bc` has te following structure:
     by_bc = {
@@ -115,8 +115,9 @@ def _merge_similar_randomers(by_bc, randomer_mismatches):
     ----------
     by_bc : dict
         Dictionary of barcodes and their hits
-    randomer_mismatches : int
-        Number of allowed mismatches.
+    mismatches : int
+        Reads on same position with random barcode differing less than
+        ``mismatches`` are grouped together.
 
     Returns
     -------
@@ -148,7 +149,7 @@ def _merge_similar_randomers(by_bc, randomer_mismatches):
                             bc in accepted_bcs], reverse=True)
 
         for _, bc in order_bcs:
-            if _match(bc, amb_bc, randomer_mismatches):
+            if _match(bc, amb_bc, mismatches):
                 matches = True
                 by_bc[bc].extend(by_bc.pop(amb_bc))
                 break
@@ -166,7 +167,7 @@ def _merge_similar_randomers(by_bc, randomer_mismatches):
         merged = False
         for i, (_, bc) in enumerate(order_bcs):
             for _, bc2 in order_bcs[i + 1:]:
-                if _match(bc, bc2, randomer_mismatches):
+                if _match(bc, bc2, mismatches):
                     merged = True
                     by_bc[bc].extend(by_bc.pop(bc2))
             if merged:
@@ -207,7 +208,7 @@ def _separate_by_second_starts(hits):
     return second_start_groups
 
 
-def _collapse(xlink_pos, by_bc, report_by, multimax=1):
+def _collapse(xlink_pos, by_bc, group_by, multimax=1):
     """
     Report number of cDNAs and reads in cross-link site on xlink_pos
 
@@ -255,7 +256,7 @@ def _collapse(xlink_pos, by_bc, report_by, multimax=1):
         counts = {
             position: [cDNA_count, reads_count],
             123: [3.14, 42],
-            123: [3.14, 42],
+            124: [5.79, 16],
             ...
         }
 
@@ -265,18 +266,18 @@ def _collapse(xlink_pos, by_bc, report_by, multimax=1):
         Cross link position (genomic coordinate).
     by_bc : dict
         Dict with hits for each barcode.
-    report_by : str
+    group_by : str
         Report by start, middle or end position.
     multimax : int
-        Consider only reads with multimax hits or fewer.
+        Ignore reads, mapped to more than ``multimax`` places.
 
     Returns
     -------
     dict
-        TODO
+        Number of cDNA and reads for each position.
 
     """
-    gi = ['start', 'middle', 'end'].index(report_by)
+    gi = ['start', 'middle', 'end'].index(group_by)
 
     # Container for cDNA and read counts:
     counts = {}
@@ -349,11 +350,11 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
     Parameters
     ----------
     bam_fname : str
-        Path to bam filename.
+        BAM file with mapped reads.
     mapq_th : int
-        Ignore hits with MAPQ lower than this threshold value.
+        Ignore hits with MAPQ < mapq_th.
     metrics : iCount.Metrics
-        Metrics object for storing analysis metadata.
+        Metrics object, storing analysis metadata.
     cigar : bool
         Wheather to include cigar values for each read or not.
 
@@ -463,7 +464,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
 
 
 def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
-        randomer_mismatches=2, mapq_th=0, multimax=50):
+        mismatches=2, mapq_th=0, multimax=50):
     """
     Interpret mapped sites and generate BED file with coordinates and
     number of cross-linked events.
@@ -477,26 +478,27 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     Parameters
     ----------
     bam_fname : str
-        Path to bam filename.
+        BAM file with mapped reads.
     unique_fname : str
         File to store data from uniquely mapped reads
     multi_fname : str
         File to store data from multi-mapped reads
     group_by : str
-        Blah blah
+        Group reads together by 'start', 'middle' or 'end' nucleotide.
     quant : str
-        Blah blah
-    randomer_mismatches : int
-        Blah blah
+        Report number of 'cDNA' or number of 'reads'.
+    mismatches : int
+        Reads on same position with random barcode differing less than
+        ``mismatches`` are grouped together.
     mapq_th : int
-        Ignore hits with MAPQ lower than this threshold value.
+        Ignore hits with MAPQ < mapq_th.
     multimax : int
-        Blah blah
+        Ignore reads, mapped to more than ``multimax`` places.
 
     Returns
     -------
-    bool
-        Some random result
+    iCount.Metrics
+        Metrics object, storing analysis metadata.
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
@@ -516,7 +518,7 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
         while by_pos:
             xlink_pos, by_bc = by_pos.popitem()
 
-            _merge_similar_randomers(by_bc, randomer_mismatches)
+            _merge_similar_randomers(by_bc, mismatches)
             # count uniquely mapped reads only
             _update(unique_by_pos, _collapse(xlink_pos, by_bc, group_by,
                                              multimax=1))

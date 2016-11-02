@@ -48,21 +48,21 @@ class TestCLI(unittest.TestCase):
         ])
 
     def test_releases(self):
-        # TODO: rename to get_releases?
         command_basic = ['iCount', 'releases',
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         self.assertEqual(subprocess.call(command_basic), 0)
 
     def test_species(self):
-        command_basic = ['iCount', 'species', '84',
+        command_basic = ['iCount', 'species',
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         self.assertEqual(subprocess.call(command_basic), 0)
 
     def test_annotation(self):
-        # Execute only full command, to avoid downloading to cwd.
-        command_full = ['iCount', 'annotation', '84', 'homo_sapiens',
+        # Execute only full command (with --target_dir), to avoid downloading to cwd.
+        command_full = ['iCount', 'annotation', 'homo_sapiens',
+                        '--release', '84',
                         '--target_dir', self.dir,
                         '--target_fname', self.tmp1,
                         '-S', '40',  # Supress lower than ERROR messages.
@@ -71,8 +71,9 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(subprocess.call(command_full), 0)
 
     def test_sequence(self):
-        # Download just MT and Y chromosome, or this can last too long...
-        command_full = ['iCount', 'sequence', '84', 'homo_sapiens',
+        # Download just MT and Y chromosome, or test can last too long...
+        command_full = ['iCount', 'sequence', 'homo_sapiens',
+                        '--release', '84',
                         '--target_dir', self.dir,
                         '--target_fname', self.tmp1 + '.gz',
                         '--tempdir', self.dir,
@@ -182,6 +183,7 @@ class TestCLI(unittest.TestCase):
         fastq = make_fastq_file(genome=genome)
 
         command_basic = ['iCount', 'mapindex', genome, self.dir,
+                         '--logfile_path', get_temp_file_name(),
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         self.assertEqual(subprocess.call(command_basic), 0)
@@ -203,6 +205,7 @@ class TestCLI(unittest.TestCase):
                         '--annotation', self.gtf,
                         '--overhang', '100',
                         '--threads', '1',
+                        '--logfile_path', get_temp_file_name(),
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
         self.assertEqual(subprocess.call(command_full), 0)
@@ -241,7 +244,7 @@ class TestCLI(unittest.TestCase):
         command_full = ['iCount', 'xlsites', bam, self.tmp1, self.tmp2,
                         '--group_by', 'start',
                         '--quant', 'cDNA',
-                        '--randomer_mismatches', '2',
+                        '--mismatches', '2',
                         '--mapq_th', '0',
                         '--multimax', '50',
                         '-S', '40',  # Supress lower than ERROR messages.
