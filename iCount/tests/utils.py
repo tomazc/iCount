@@ -4,10 +4,10 @@ import tempfile
 import pysam
 import pybedtools
 
+import iCount
+
 from numpy import random
 from pybedtools import create_interval_from_list
-
-from iCount.files.fasta import read_fasta
 
 
 BASES = ['A', 'C', 'G', 'T']
@@ -48,7 +48,7 @@ def make_file_from_list(data, bedtool=True):
 def make_list_from_file(fname, fields_separator=None):
     """Read file to list of lists"""
     data = []
-    with open(fname) as file_:
+    with iCount.files.gz_open(fname, 'rt') as file_:
         for line in file_:
             data.append(line.strip().split(fields_separator))
     return data
@@ -247,7 +247,7 @@ def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
         barcodes = ['NNN']
 
     if genome is not None:
-        genome_data = read_fasta(genome)
+        genome_data = iCount.files.fasta.read_fasta(genome)
         num_sequences = len(genome_data)
         seq_len = len(genome_data[0])
 
