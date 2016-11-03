@@ -174,6 +174,22 @@ def log_inputs(logger, level=logging.INFO):
         logger.log(level, "    {}: {}".format(arg[0], arg[1]))
 
 
+def _log_progress(new_ratio, old_ratio, logger, decimals=2):
+    """
+    If progress has insreased sufficiently, log it to ``logger``.
+
+    If ``new_ratio``, rounded to ``decimals`` differs from ``old_ratio``, log to
+    logger with INFO level and return rounded new_ratio. Else return unmodified
+    ``old_ratio``.
+    """
+    new_ratio = round(new_ratio, decimals)
+    if new_ratio != old_ratio:
+        logger.info('%s', '{}%'.format(new_ratio * 100))
+        return new_ratio
+    else:
+        return old_ratio
+
+
 def _log_all_uncaught_exceptions(exc_type, exc_value, exc_traceback):
     """Log all uncaught exceptions in non-interactive mode.
 

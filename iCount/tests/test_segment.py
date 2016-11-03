@@ -515,7 +515,7 @@ class TestGetGeneContent(unittest.TestCase):
         ])
         gtf = make_file_from_list(intervals_to_list(gtf_data))
 
-        gene1, gene2 = list(segment._get_gene_content(gtf, ['1', 'MT'], show_progress=True))
+        gene1, gene2 = list(segment._get_gene_content(gtf, ['1', 'MT'], report_progress=True))
 
         expected1 = {
             'gene': gtf_data[0],

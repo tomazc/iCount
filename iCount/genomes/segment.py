@@ -485,7 +485,7 @@ def _complement(gs, genome_file, strand):
     return os.path.abspath(gtf.fn)
 
 
-def _get_gene_content(gtf_in, chromosomes, show_progress=False):
+def _get_gene_content(gtf_in, chromosomes, report_progress=False):
     """
     Generator giving groups of intervals belonging to one gene
 
@@ -504,8 +504,8 @@ def _get_gene_content(gtf_in, chromosomes, show_progress=False):
         Path to gtf input file.
     chromosomes : list
         List of chromosomes to consider.
-    show_progress : bool
-        Awitch to show progress.
+    report_progress : bool
+        Switch to show progress.
 
     Returns
     -------
@@ -521,9 +521,6 @@ def _get_gene_content(gtf_in, chromosomes, show_progress=False):
     current_gene = None
     gene_content = {}
 
-    length = pybedtools.BedTool(gtf_in).count()
-    j = 0
-
     def finalize(gene_content):
         """
         Procedure before returning group of intervals belonging to one gene
@@ -538,14 +535,13 @@ def _get_gene_content(gtf_in, chromosomes, show_progress=False):
                 i1[:2] + ['gene', start + 1, stop] + i1[5:8] + [col8])
         return gene_content
 
-    previous_progress = ''
+    length = pybedtools.BedTool(gtf_in).count()
+    progress, j = 0, 0
     for interval in pybedtools.BedTool(gtf_in):
         j += 1
-        if show_progress:
-            progress = '\r{0:.1f} %'.format(j / length * 100)
-            if progress != previous_progress:
-                print(progress, end="", flush=True)
-                previous_progress = progress
+        if report_progress:
+            new_progress = j / length
+            progress = iCount._log_progress(new_progress, progress, LOGGER)
 
         if interval.chrom in chromosomes:
             # Segments without 'transcript_id' attributes are the ones that
@@ -588,7 +584,7 @@ def _get_gene_content(gtf_in, chromosomes, show_progress=False):
     yield finalize(gene_content)
 
 
-def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
+def get_regions(gtf_in, gtf_out, genome_file, cores=1, report_progress=False):
     """
     Create new gtf file with custom annotation and filtered content.
 
@@ -618,7 +614,7 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
         Path to genome_file (.fai file or similar).
     cores : int
         Number of computer CPUs to use for calculation.
-    show_progress : bool
+    report_progress : bool
         Switch to show progress.
 
     Returns
@@ -663,7 +659,7 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, show_progress=False):
         data.append(gene_content['gene'])
 
     LOGGER.debug('Processing genome annotation from: %s', gtf_in)
-    for gene_content in _get_gene_content(gtf_in, chromosomes, show_progress):
+    for gene_content in _get_gene_content(gtf_in, chromosomes, report_progress):
         process_gene(gene_content)
         LOGGER.debug('Just processed gene: %s', gene_content['gene'].attrs['gene_id'])
     # This can be replaced with: multiprocessing.Pool, but it causes huge

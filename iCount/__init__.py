@@ -28,7 +28,7 @@ from . import genomes
 from ._version import __version__
 
 from . import examples
-from .logger import log_to_stdout, log_to_file, log_inputs
+from .logger import log_to_stdout, log_to_file, log_inputs, _log_progress
 from .metrics import Metrics
 
 # CONFIG

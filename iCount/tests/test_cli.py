@@ -113,7 +113,7 @@ class TestCLI(unittest.TestCase):
                          ]
         command_full = ['iCount', 'segment', self.gtf, self.tmp1, fai,
                         '--cores', '1',
-                        '--show_progress',
+                        '--report_progress',
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
 
