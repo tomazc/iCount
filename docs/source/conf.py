@@ -68,7 +68,7 @@ author = 'Tomaž Curk'
 #
 # The short X.Y version.
 import sys
-sys.path.insert(0, '../..')
+sys.path.insert(0, '../../iCount')
 from _version import __version__
 
 version = __version__

@@ -2,5 +2,5 @@
 License
 *******
 
-.. literalinclude:: ../../../LICENSE
+.. literalinclude:: ../../LICENSE
     :language: text

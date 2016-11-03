@@ -14,7 +14,7 @@ one-line command::
 We recommend instlling the package in `virtualenv`_. If installing the package
 globally, you may need root priviliges (prefix upper command with ``sudo``)
 
-.. _`virtualenv_`:
+.. _`virtualenv`:
     https://virtualenv.pypa.io/en/stable/
 
 

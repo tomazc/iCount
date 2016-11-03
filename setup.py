@@ -12,8 +12,6 @@ with open(os.path.join(here, 'README.md')) as f:
 with open(os.path.join(here, 'CHANGES.md')) as f:
     CHANGES = f.read()
 
-install_requires = [line.strip() for line in open(os.path.join(here, 'requirements.txt'))]
-
 classifiers = [
     'Development Status :: 4 - Beta',
     'Topic :: Scientific/Engineering :: Bio-Informatics',
@@ -67,15 +65,27 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    install_requires=install_requires,
+    install_requires={
+        'numpy',
+        'pandas',
+        'cutadapt==1.10',
+        'pysam',
+        'pybedtools',
+        'numpydoc',
+        'sphinx>=1.4',
+    },
     extras_require={
-        'test': [
+        'docs': [
+            'docutils',
+            'sphinx>=1.4',
+            'sphinxcontrib-fulltoc>=0.1.9',
+        ],
+        'tests': [
             'pylint',
             'pytest-cov',
             'pycodestyle',
             'pydocstyle',
             'coverage',
-            'sphinx',
             'tox',
         ],
     },
