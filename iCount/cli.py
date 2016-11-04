@@ -48,6 +48,25 @@ VALID_TYPES = {
 }
 
 
+def _format_defaults(value):
+    """
+    Format value to CLI syntax.
+
+    Example usage: if default value of a parameter is ['gene'], the description
+    in CLI would be::
+
+        (default: ['gene'])
+
+    After using this function the description is tailored to CLI usage::
+
+        (default: gene)
+    """
+    if isinstance(value, list):
+        return ' '.join(value)
+    else:
+        return value
+
+
 def _extract_parameter_data(function):
     """
     Extract name, type, description, etc. of each parameter in ``function``.
@@ -113,6 +132,10 @@ def _extract_parameter_data(function):
                     param_type, function.__name__))
             data[param]['type'] = VALID_TYPES[param_type]
             data[param]['help'] = match_help.group(1).strip().rstrip('.')
+            if param in optional:
+                # Append default value to parameter description:
+                default_value = ' (default: {})'.format(_format_defaults(optional[param]))
+                data[param]['help'] += default_value
 
             if param_type == 'bool':
                 data[param]['action'] = 'store_true'
