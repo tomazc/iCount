@@ -52,6 +52,9 @@ SHORT_NAMES = {
 }
 
 
+PARAMETERS = {}
+
+
 def _format_defaults(value):
     """
     Format value to CLI syntax.
@@ -255,12 +258,15 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
     # Add each of the function parameter as CLI argument:
     params = _extract_parameter_data(function)
     for values in params.values():
-        name = values.pop('name')
+        param_name = values.pop('name')
         # provide short name for parameter, if it exists:
-        if name in SHORT_NAMES:
-            parser.add_argument(SHORT_NAMES[name], name, **values)
+        if param_name in SHORT_NAMES:
+            parser.add_argument(SHORT_NAMES[param_name], param_name, **values)
         else:
-            parser.add_argument(name, **values)
+            parser.add_argument(param_name, **values)
+
+        # Also write the parameter to comtainer PARAMETERS:
+        PARAMETERS.setdefault(param_name.lstrip('-'), []).append(name)
 
     parser.add_argument('-S', '--stdout_log', default=logging.INFO, type=int, metavar='',
                         help='Threshold value (0-50) for logging to stdout. If 0,'
@@ -354,6 +360,14 @@ def main():
     parser = subparsers.add_parser('man', help='Print help for all commands.')
     parser.add_argument('--mode', type=str, default='txt', metavar='')
     parser.set_defaults(func=verbose_help)
+
+    # all_args command:
+    def all_args():
+        for param_name, commands in sorted(PARAMETERS.items()):
+            print('{}: ({})'.format(param_name, _format_defaults(commands)))
+
+    parser = subparsers.add_parser('args', help='Print arguments form all CLI commands')
+    parser.set_defaults(func=all_args)
 
     #############################
     # Parse and execute commands:
