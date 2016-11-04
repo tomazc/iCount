@@ -47,6 +47,10 @@ VALID_TYPES = {
     'list_str': _list_str,
 }
 
+SHORT_NAMES = {
+    '--report_progress': '-p',
+}
+
 
 def _format_defaults(value):
     """
@@ -252,7 +256,11 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
     params = _extract_parameter_data(function)
     for values in params.values():
         name = values.pop('name')
-        parser.add_argument(name, **values)
+        # provide short name for parameter, if it exists:
+        if name in SHORT_NAMES:
+            parser.add_argument(SHORT_NAMES[name], name, **values)
+        else:
+            parser.add_argument(name, **values)
 
     parser.add_argument('-S', '--stdout_log', default=logging.INFO, type=int, metavar='',
                         help='Threshold value (0-50) for logging to stdout. If 0,'
