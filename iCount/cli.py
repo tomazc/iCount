@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
 """
-Command line interface for iCount Python package.
-#################################################
+Automated CLI creation
+======================
 
-This module offers CL interface to iCount Python package. To separate Python
-package from CLI and to avoid code and docstring duplication, CL commands are
+This module offers CLI to iCount Python package. To separate Python
+package from CLI and to avoid code and docstring duplication, CLI commands are
 semi-automatically created from functions that already exist in the package.
 For this automation to work, some rules need to respected when writing functions
 that are later exposed to CLI.
 
 
-.. autofunction:: iCount.scripts.make_parser_from_function
+.. autofunction:: iCount.cli.make_parser_from_function
 
 """
 

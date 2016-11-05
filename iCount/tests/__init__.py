@@ -5,6 +5,7 @@ There are two types of tests: *unit* and *functional* (regression) tests.
 Continious development testing supported on GitHub is also explained in the
 corresponding section.
 
+
 Unit tests
 ----------
 
@@ -25,6 +26,7 @@ Alternatively, all test files can be called also like python script::
 
     python test_file.py
 
+
 Functional tests
 ----------------
 
@@ -34,7 +36,8 @@ compatible with earlier versions of iCount. The results are typically stored for
 future reference. These test may take significant amount of time to complete
 and are not meant to be run on daily basis.
 
-Continious development testing
+
+Continuous development testing
 ------------------------------
 
 iCount is project in continious development and therefore has central repository

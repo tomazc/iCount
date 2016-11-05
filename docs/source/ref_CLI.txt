@@ -14,35 +14,36 @@ A number of analyses are included in iCount that provide insights into the prope
 protein-RNA interaction.
 
 optional arguments:
-  -h, --help           show this help message and exit
-  -v, --version        show program's version number and exit
+  -h, --help     show this help message and exit
+  -v, --version  show program's version number and exit
 
 Commands:
    
-    get_release_list   Get list of available ENSEMBL releases.
-    get_species_list   Get list of species for given release.
-    download_annotation
-                       Download annotation in GTF file fromat.
-    download_sequence  Downloads genome file in FASTA fromat.
-    segment            Segmentation
-    genes              Extract largest possible gene segments from GTF file.
-    demultiplex        Demultiplexing
-    cutadapt           Cutadapt
-    mapindex           Generate STAR index
-    map                Map using STAR
-    xlsites            Identify and quantify cross-linked sites
-    annotate           Cross-link site annotation
-    clusters           Cluster sites
-    group              Group BED files
-    peaks              Peak finding
-    summary            Cross-link site summary
-    man                Print help for all commands.
+    releases     Get list of available ENSEMBL releases.
+    species      Get list of species for given release.
+    annotation   Download annotation in GTF file fromat.
+    sequence     Downloads genome file in FASTA fromat.
+    segment      Segmentation
+    genes        Extract largest possible gene segments from GTF file.
+    demultiplex  Demultiplexing
+    cutadapt     Cutadapt
+    mapindex     Generate STAR index
+    map          Map using STAR
+    xlsites      Identify and quantify cross-linked sites
+    annotate     Cross-link site annotation
+    clusters     Cluster sites
+    group        Group BED files
+    peaks        Peak finding
+    summary      Cross-link site summary
+    examples     Examples
+    man          Print help for all commands.
+    args         Print arguments form all CLI commands
 
 
-get_release_list
-================
+releases
+========
 
-usage: iCount get_release_list [-h] [-S] [-F] [-P] [-M]
+usage: iCount releases [-h] [-S] [-F] [-P] [-M]
 
 Get list of available ENSEMBL releases.
 
@@ -50,60 +51,57 @@ Only allows ENSEMBL releases from 59 - 84.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
 
-get_species_list
-================
+species
+=======
 
-usage: iCount get_species_list [-h] [-S] [-F] [-P] [-M] release
+usage: iCount species [-h] [--release] [-S] [-F] [-P] [-M]
 
 Get list of species for given release.
 
-positional arguments:
-  release               The release number (can be str or int). Only ENSEMBL releases
-
 optional arguments:
   -h, --help            show this help message and exit
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --release             The release number (can be str or int). Only ENSEMBL releases (default: 84)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
 
-download_annotation
-===================
+annotation
+==========
 
-usage: iCount download_annotation [-h] [--target_dir] [--target_fname] [-S]
-                                  [-F] [-P] [-M]
-                                  release species
+usage: iCount annotation [-h] [--release] [--target_dir] [--target_fname] [-S]
+                         [-F] [-P] [-M]
+                         species
 
 Download annotation in GTF file fromat.
 
 positional arguments:
-  release               Release number. Only ENSEMBL releases from 59 - 84 are available
   species               Species latin name
 
 optional arguments:
   -h, --help            show this help message and exit
-  --target_dir          Download to this directory (if not given, current working directory)
-  --target_fname        Annotation filename (must have .gz file extension). If not given,
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --release             Release number. Only ENSEMBL releases from 59 - 84 are available (default: 84)
+  --target_dir          Download to this directory (if not given, current working directory) (default: None)
+  --target_fname        Annotation filename (must have .gz file extension). If not given, (default: None)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
 
-download_sequence
-=================
+sequence
+========
 
-usage: iCount download_sequence [-h] [--target_dir] [--target_fname]
-                                [--tempdir] [--chromosomes  [...]] [-S] [-F]
-                                [-P] [-M]
-                                release species
+usage: iCount sequence [-h] [--release] [--target_dir] [--target_fname]
+                       [--tempdir] [--chromosomes  [...]] [-S] [-F] [-P] [-M]
+                       species
 
 Downloads genome file in FASTA fromat.
 
@@ -116,18 +114,18 @@ Several steps are performed:
     * download each file and write it to target_fname
 
 positional arguments:
-  release               Release number. Only ENSEMBL releases from 59 - 84 are available
   species               Species latin name
 
 optional arguments:
   -h, --help            show this help message and exit
-  --target_dir          Download to this directory (if not given, current working directory)
-  --target_fname        Annotation filename (must have .gz file extension). If not given,
-  --tempdir             Temporary directory with intermediate results
+  --release             Release number. Only ENSEMBL releases from 59 - 84 are available (default: 84)
+  --target_dir          Download to this directory (if not given, current working directory) (default: None)
+  --target_fname        Annotation filename (must have .gz file extension). If not given, (default: None)
+  --tempdir             Temporary directory with intermediate results (default: None)
   --chromosomes  [ ...]
-                        If given, don't download the whole genome, but juts the given
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+                        If given, don't download the whole genome, but juts the given (default: None)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -135,7 +133,7 @@ optional arguments:
 segment
 =======
 
-usage: iCount segment [-h] [--cores] [--show_progress] [-S] [-F] [-P] [-M]
+usage: iCount segment [-h] [--cores] [-p] [-S] [-F] [-P] [-M]
                       gtf_in gtf_out genome_file
 
 Segmentation
@@ -146,19 +144,19 @@ for mapping and for various analyses:
 
 - regions of genes (all isoforms and other parts merged into one region)
 - regions of individual region types (segment each gene into exonic, intronic, nc, utr, etc..)
-- landmarks (positions of exon-intron, intron-exon, exon-exon, and other types of genomic regions)
 
 positional arguments:
   gtf_in                Path to input GTF file
   gtf_out               Path to output GTF file
-  genome_file           Path to genome_file (*.fai file or similar)
+  genome_file           Path to genome_file (.fai file or similar)
 
 optional arguments:
   -h, --help            show this help message and exit
-  --cores               Number of computer CPUs to use for calculation
-  --show_progress       Switch to show progress
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --cores               Number of computer CPUs to use for calculation (default: 1)
+  -p, --report_progress
+                        Switch to show progress (default: False)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -179,10 +177,10 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --fai_file            No description
-  --name                Name for the 3rd column of output intervals
-  --attribute           Attribute to use as unique identifier for output intervals
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --name                Name for the 3rd column of output intervals (default: gene)
+  --attribute           Attribute to use as unique identifier for output intervals (default: gene_id)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -214,11 +212,11 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --minimum_length      Minimum length of trimmed sequence to keep
-  --prefix              Prefix of generated FASTQ files
-  --outdir              Output folder. Use local folder if none given
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --minimum_length      Minimum length of trimmed sequence to keep (default: 15)
+  --prefix              Prefix of generated FASTQ files (default: demux)
+  --outdir              Output folder. Use local folder if none given (default: .)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -242,11 +240,11 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --qual_base           Assume that quality values in FASTQ are encoded as ascii(quality +
-  --qual_trim           Trim low-quality bases before adapter removal
-  --minimum_length      Discard trimmed reads that are shorter than `minimum_length`
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --qual_base           Assume that quality values in FASTQ are encoded as ascii(quality + (default: 64)
+  --qual_trim           Trim low-quality bases before adapter removal (default: None)
+  --minimum_length      Discard trimmed reads that are shorter than `minimum_length` (default: None)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -255,7 +253,7 @@ mapindex
 ========
 
 usage: iCount mapindex [-h] [--annotation] [--overhang] [--overhang_min]
-                       [--threads] [-S] [-F] [-P] [-M]
+                       [--threads] [--logfile_path] [-S] [-F] [-P] [-M]
                        genome_fname outdir
 
 Generate STAR index
@@ -279,12 +277,13 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --annotation          Annotation that defines splice junctions
-  --overhang            Sequence length around annotated junctions to be used by STAR when
-  --overhang_min        TODO
-  --threads             Number of threads that STAR can use for generating index
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --annotation          Annotation that defines splice junctions (default: )
+  --overhang            Sequence length around annotated junctions to be used by STAR when (default: 100)
+  --overhang_min        TODO (default: 8)
+  --threads             Number of threads that STAR can use for generating index (default: 1)
+  --logfile_path        Location of logfile. Can be absolute or relative path (default: ./)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -322,12 +321,12 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --annotation          TODO
-  --multimax            Number of allowed multiple hits
-  --mismatches          Number of allowed mismatches
-  --threads             Number of threads that STAR can use for generating index
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --annotation          TODO (default: )
+  --multimax            Number of allowed multiple hits (default: 10)
+  --mismatches          Number of allowed mismatches (default: 2)
+  --threads             Number of threads that STAR can use for generating index (default: 1)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -335,8 +334,8 @@ optional arguments:
 xlsites
 =======
 
-usage: iCount xlsites [-h] [--group_by] [--quant] [--randomer_mismatches]
-                      [--mapq_th] [--multimax] [-S] [-F] [-P] [-M]
+usage: iCount xlsites [-h] [--group_by] [--quant] [--mismatches] [--mapq_th]
+                      [--multimax] [-p] [-S] [-F] [-P] [-M]
                       bam_fname unique_fname multi_fname
 
 Identify and quantify cross-linked sites
@@ -364,20 +363,21 @@ otherwise, we should think of a more approapriate quantification of (division
 of randomers among) unique mapped sites that overlap with multimapped reads
 
 positional arguments:
-  bam_fname             Path to bam filename
+  bam_fname             BAM file with mapped reads
   unique_fname          File to store data from uniquely mapped reads
   multi_fname           File to store data from multi-mapped reads
 
 optional arguments:
   -h, --help            show this help message and exit
-  --group_by            Blah blah
-  --quant               Blah blah
-  --randomer_mismatches 
-                        Blah blah
-  --mapq_th             Ignore hits with MAPQ lower than this threshold value
-  --multimax            Blah blah
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --group_by            Group reads together by 'start', 'middle' or 'end' nucleotide (default: start)
+  --quant               Report number of 'cDNA' or number of 'reads' (default: cDNA)
+  --mismatches          Reads on same position with random barcode differing less than (default: 2)
+  --mapq_th             Ignore hits with MAPQ < mapq_th (default: 0)
+  --multimax            Ignore reads, mapped to more than ``multimax`` places (default: 50)
+  -p, --report_progress
+                        Switch to report progress (default: False)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -401,11 +401,11 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --subtype             Subtype
+  --subtype             Subtype (default: biotype)
   --excluded_types  [ ...]
-                        Excluded types
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+                        Excluded types (default: None)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -431,9 +431,9 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --dist                Distance between two cross_links to still merge them
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  --dist                Distance between two cross_links to still merge them (default: 20)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -454,8 +454,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -464,8 +464,7 @@ peaks
 =====
 
 usage: iCount peaks [-h] [--fout_scores] [--hw] [--fdr] [--perms] [--rnd_seed]
-                    [--features  [...]] [--report_progress] [--group_by] [-S]
-                    [-F] [-P] [-M]
+                    [--features  [...]] [-p] [--group_by] [-S] [-F] [-P] [-M]
                     fin_annotation fin_sites fout_peaks
 
 Peak finding
@@ -484,16 +483,17 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --fout_scores         Path to "scores" output file
-  --hw                  Half-window size
-  --fdr                 FDR threshold
-  --perms               Number of permutations
-  --rnd_seed            Seed for random generator
-  --features  [ ...]    Features over which to perform analysis
-  --report_progress     Print analysis progress. TODO refactor to logger
+  --fout_scores         Path to "scores" output file (default: None)
+  --hw                  Half-window size (default: 3)
+  --fdr                 FDR threshold (default: 0.05)
+  --perms               Number of permutations (default: 100)
+  --rnd_seed            Seed for random generator (default: 42)
+  --features  [ ...]    Features over which to perform analysis (default: gene)
+  -p, --report_progress
+                        Print analysis progress (default: False)
   --group_by            No description
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
@@ -519,14 +519,40 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --types_length_file   Path to file with lengths of each type
-  --ndigits             Number of decimal places in results
-  --subtype             Name of attribute to be used as subtype
+  --types_length_file   Path to file with lengths of each type (default: None)
+  --ndigits             Number of decimal places in results (default: 8)
+  --subtype             Name of attribute to be used as subtype (default: biotype)
   --excluded_types  [ ...]
-                        Types in 3rd column to exclude form analysis
-  -S , --stdout_log     Threshold value (0-50) for logging ot stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging ot file. If 0, logging to file if turned OFF.
+                        Types in 3rd column to exclude form analysis (default: None)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
+
+
+examples
+========
+
+usage: iCount examples [-h] [--in_dir] [-S] [-F] [-P] [-M]
+
+Examples
+========
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --in_dir              No description
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
+  -P , --file_logpath   Path to log file.
+  -M , --results_file   File into which to store Metrics.
+
+
+args
+====
+
+usage: iCount args [-h]
+
+optional arguments:
+  -h, --help  show this help message and exit
 
 

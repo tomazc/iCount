@@ -10,7 +10,6 @@ Contents of this documentation:
    installation
    ref
    contributing
-   auto_cli
    versions
    license
    cite

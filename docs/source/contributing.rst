@@ -18,7 +18,7 @@ directory::
 
 Prepare iCount for development::
 
-    pip install -e .[test]
+    pip install -e .[tests]
 
 .. note::
 
@@ -50,7 +50,7 @@ are defined) should be written by the conventions described in the following
 sections.
 
 More about automatic CLI generation (how it works, how to expose function in
-CLI, etc.) can be read in :doc:`CLI interface section <auto_cli>`
+CLI, etc.) can be read in :obj:`Automated CLI creation <iCount.cli>`.
 
 Conventions
 ===========
@@ -70,7 +70,7 @@ check the TODO: link.
 
 Errors
 ------
-Errors shlud be raised in a descriptive manner - for example if iCount calls an
+Errors should be raised in a descriptive manner - for example if iCount calls an
 external tool that return a non-zero exit status, an error should be
 raised.
 
@@ -122,7 +122,7 @@ logging can be easily confiugured with functions defined in
 
 If using the CLI, logging to stdout with INFO level is set by defult. This can be configured for each
 command by using the appropriate command line arguents. Read more about
-it in :doc:`CLI interface section <auto_cli>`.
+it in :obj:`Automated CLI creation <iCount.cli>`.
 
 
 Tests

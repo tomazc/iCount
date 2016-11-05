@@ -1,9 +1,0 @@
-cutadapt==1.10
-numpy
-pysam
-pybedtools
-pandas
-docutils
-numpydoc
-Sphinx>=1.4
-sphinxcontrib-fulltoc

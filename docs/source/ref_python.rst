@@ -1,5 +1,5 @@
-Python reference
-================
+Python package
+==============
 
 .. automodule:: iCount
 
@@ -21,6 +21,7 @@ be stored:
 .. automodule:: iCount.examples
 .. automodule:: iCount.metrics
 
+.. automodule:: iCount.cli
 
 Indices
 -------

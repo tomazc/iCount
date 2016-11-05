@@ -14,13 +14,10 @@ RUN apt-get update && apt-get upgrade -y && \
     libatlas-base-dev \
     wget \
     g++ \
-    zlib1g-dev \
-    libzmq-dev \
     make \
     python3 \
     python3-pip \
     python3-setuptools \
-    python3-matplotlib \
     python-virtualenv \
     python-pip \
     git
@@ -28,18 +25,12 @@ RUN apt-get update && apt-get upgrade -y && \
 RUN apt-get autoclean -y && \
     apt-get autoremove -y
 
-# matplotlib
-RUN apt-get install -y \
-    pkg-config \
-    libfreetype6-dev \
-    libpng12-dev \
-    zlib1g-dev \
-    python3-matplotlib
-
 
 #################
 ### samtools
-RUN apt-get install -y samtools
+RUN apt-get install -y \
+    zlib1g-dev \
+    samtools
 
 
 #################
@@ -73,7 +64,6 @@ USER icuser
 WORKDIR /home/icuser
 ADD requirements.txt /home/icuser
 RUN virtualenv -p python3 /home/icuser/.icountenv
-RUN .icountenv/bin/pip install --upgrade -r requirements.txt
 
 USER root
 ADD . /home/icuser/iCount_src
@@ -81,7 +71,9 @@ RUN chown -R icuser.icuser /home/icuser
 
 USER icuser
 WORKDIR /home/icuser/iCount_src
-RUN ../.icountenv/bin/python setup.py develop
+
+RUN ../.icountenv/bin/pip install -e .
+RUN ../.icountenv/bin/pip install -e .[docs,tests]
 
 USER root
 RUN echo "source /home/icuser/.icountenv/bin/activate" >> /etc/bash.bashrc
