@@ -34,7 +34,7 @@ def _fix_proper_bed6_format(feature):
         [chrom, start, end, name, score, strand])
 
 
-def run(fin_sites, fout_clusters, dist=20):  # , extend=0):
+def run(sites, clusters, dist=20):  # , extend=0):
     """
     Join neighboring cross-linked sites into clusters.
 
@@ -42,27 +42,27 @@ def run(fin_sites, fout_clusters, dist=20):  # , extend=0):
 
     Parameters
     ----------
-    fin_sites : str
-        Path to input file with sites (BED6 format)
-    fout_clusters : str
-        Path to output file with merged sites (BED6)
+    sites : str
+        Path to input BED6 file with sites.
+    clusters : str
+        Path to output BED6 file with merged sites.
     dist : int
         Distance between two cross_links to still merge them.
 
     Returns
     -------
     str
-        BED file with clusters as elements
+        BED file with clusters as elements.
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
     # It is required to pre-sort your data:
-    sites = pybedtools.BedTool(fin_sites).sort().saveas()
+    sites = pybedtools.BedTool(sites).sort().saveas()
 
-    LOGGER.info('Merging cross links form file %s', fin_sites)
+    LOGGER.info('Merging cross links form file %s', sites)
     merged = sites.merge(s=True, d=dist, c=[5, 4], o='sum,distinct').saveas()
-    out = merged.sort().each(_fix_proper_bed6_format).saveas(fout_clusters)
+    out = merged.sort().each(_fix_proper_bed6_format).saveas(clusters)
 
     LOGGER.info('Done. Results saved to: %s', os.path.abspath(out.fn))
     return out.fn

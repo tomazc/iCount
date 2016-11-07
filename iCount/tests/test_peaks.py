@@ -112,7 +112,7 @@ class TestPeaks(unittest.TestCase):
         fout_scores = get_temp_file_name()
 
         peaks.run(fin_annotation, fin_sites, fout_peaks,
-                  fout_scores=fout_scores)
+                  scores=fout_scores)
 
         out_peaks = make_list_from_file(fout_peaks)
         out_scores = make_list_from_file(fout_scores)

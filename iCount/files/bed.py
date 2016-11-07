@@ -61,32 +61,32 @@ def convert_legacy(bedgraph_legacy, bed_converted):
     return sites1
 
 
-def merge_bed(outfile, files):
+def merge_bed(out_file, in_files):
     """
-    Merge BED6 files with cross link data
+    Merge BED6 files with cross link data.
 
     Parameters
     ----------
-    outfile : str
-        Path to output file
-    files : list_str
-        BED6 files(paths) to be merged
+    out_file : str
+        Path to output BED6 file.
+    in_files : list_str
+        BED6 files(paths) to be merged.
 
     Returns
     -------
     str
-        Absolute path to outfile
+        Absolute path to outfile.
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
     LOGGER.info('Merging input files...')
 
-    if len(files) == 0:
+    if len(in_files) == 0:
         raise ValueError(
             "At least one element expected in files list, but none found.")
 
     joined = tempfile.NamedTemporaryFile(mode='at', delete=False)
-    for file_path in files:
+    for file_path in in_files:
         if not os.path.isfile(file_path):
             raise ValueError("File {} not found.".format(file_path))
         with open(file_path) as infile:
@@ -105,7 +105,7 @@ def merge_bed(outfile, files):
     # which corresponds to BED6
 
     result = pybedtools.BedTool(pybedtools.create_interval_from_list(
-        i[:3] + ['.', i[4], i[3]]) for i in merged).saveas(outfile)
+        i[:3] + ['.', i[4], i[3]]) for i in merged).saveas(out_file)
 
     LOGGER.info('Done. Results saved to: %s', os.path.abspath(result.fn))
     return os.path.abspath(result.fn)

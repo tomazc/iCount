@@ -47,8 +47,18 @@ VALID_TYPES = {
     'list_str': _list_str,
 }
 
-SHORT_NAMES = {
-    '--report_progress': '-p',
+SHORT_OPTARG_NAMES = {
+    '--annotation': '-a',
+    '--excluded_types': '-e',
+    '--report_progress': '-prog',
+    '--perms': '-p',
+    '--group_by': '-g',
+    '--out_dir': '-od',
+    '--out_file': '-of',
+    '--release': '-r',
+    '--minimum_length': '-ml',
+    '--mismatches': '-mis',
+    '--rnd_seed': '-rnd',
 }
 
 
@@ -260,13 +270,13 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
     for values in params.values():
         param_name = values.pop('name')
         # provide short name for parameter, if it exists:
-        if param_name in SHORT_NAMES:
-            parser.add_argument(SHORT_NAMES[param_name], param_name, **values)
+        if param_name in SHORT_OPTARG_NAMES:
+            parser.add_argument(SHORT_OPTARG_NAMES[param_name], param_name, **values)
         else:
             parser.add_argument(param_name, **values)
 
         # Also write the parameter to comtainer PARAMETERS:
-        PARAMETERS.setdefault(param_name.lstrip('-'), []).append(name)
+        PARAMETERS.setdefault(param_name, []).append(name)
 
     parser.add_argument('-S', '--stdout_log', default=logging.INFO, type=int, metavar='',
                         help='Threshold value (0-50) for logging to stdout. If 0,'
@@ -313,7 +323,7 @@ def main():
     make_parser_from_function(
         iCount.genomes.ensembl.annotation, subparsers, only_func=True)
     make_parser_from_function(
-        iCount.genomes.ensembl.sequence, subparsers, only_func=True)
+        iCount.genomes.ensembl.genome, subparsers, only_func=True)
     make_parser_from_function(
         iCount.genomes.segment.get_regions, subparsers)
     make_parser_from_function(
@@ -363,8 +373,12 @@ def main():
 
     # all_args command:
     def all_args():
-        for param_name, commands in sorted(PARAMETERS.items()):
-            print('{}: ({})'.format(param_name, _format_defaults(commands)))
+        for param_name, commands in sorted(PARAMETERS.items(), key=lambda x: x[0].lstrip('-')):
+            if param_name in SHORT_OPTARG_NAMES:
+                short_name = ' ({})'.format(SHORT_OPTARG_NAMES[param_name])
+            else:
+                short_name = ''
+            print('{}{}: {}'.format(param_name, short_name, ', '.join(commands)))
 
     parser = subparsers.add_parser('args', help='Print arguments form all CLI commands')
     parser.set_defaults(func=all_args)

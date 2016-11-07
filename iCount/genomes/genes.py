@@ -12,7 +12,7 @@ from iCount.genomes.segment import _filter_col8
 LOGGER = logging.getLogger(__name__)
 
 
-def get_genes(gtf_in, gtf_out, fai_file=None, name='gene', attribute='gene_id'):
+def get_genes(annotation, segmentation, fai=None, feature='gene', attribute='gene_id'):
     """
     Extract largest possible gene segments from input gtf file.
 
@@ -22,11 +22,13 @@ def get_genes(gtf_in, gtf_out, fai_file=None, name='gene', attribute='gene_id'):
 
     Parameters
     ----------
-    gtf_in : str
-        Absolute path to gtf input file.
-    gtf_out : str
-        Absolute path to BED6 output file.
-    name : str
+    annotation : str
+        Path to GTF input file.
+    segmentation : str
+        Path to GTF output file that includes segmentation.
+    fai : str
+        Path to genome_file (.fai or similar).
+    feature : str
         Name for the 3rd column of output intervals.
     attribute : str
         Attribute to use as unique identifier for output intervals.
@@ -41,15 +43,15 @@ def get_genes(gtf_in, gtf_out, fai_file=None, name='gene', attribute='gene_id'):
     # TODO: logstatements
 
     LOGGER.info('Reading fai file...')
-    if fai_file:
-        with open(fai_file) as fai:
+    if fai:
+        with open(fai) as fai:
             chromosomes = [line.strip().split()[0] for line in fai]
 
     data = {}
 
     LOGGER.info('Reading GTF input file...')
-    for interval in pybedtools.BedTool(gtf_in):
-        if fai_file and interval.chrom not in chromosomes:
+    for interval in pybedtools.BedTool(annotation):
+        if fai and interval.chrom not in chromosomes:
             continue
         else:
             uniq = interval.attrs[attribute]  # unique identifier for `name`
@@ -66,9 +68,9 @@ def get_genes(gtf_in, gtf_out, fai_file=None, name='gene', attribute='gene_id'):
 
     LOGGER.info('Writing data to output GTF file...')
     gs = pybedtools.BedTool(pybedtools.create_interval_from_list(
-        [chrom, '.', name, start, stop, '.', strand, '.', col8])
+        [chrom, '.', feature, start, stop, '.', strand, '.', col8])
         for chrom, start, stop, strand, col8 in data.values()).saveas()
 
-    gs1 = gs.sort().saveas(gtf_out)
+    gs1 = gs.sort().saveas(segmentation)
     LOGGER.info('Results saved to {}.'.format(os.path.abspath(gs1.fn)))
     return os.path.abspath(gs1.fn)

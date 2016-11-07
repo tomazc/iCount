@@ -24,7 +24,7 @@ from iCount.externals.cutadapt import run as remove_adapter
 LOGGER = logging.getLogger(__name__)
 
 
-def run(fastq_fn, adapter, mismatches, barcodes, minimum_length=15, prefix='demux', outdir='.'):
+def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux', out_dir='.'):
     """
     Demultiplex FASTQ file.
 
@@ -33,19 +33,19 @@ def run(fastq_fn, adapter, mismatches, barcodes, minimum_length=15, prefix='demu
 
     Parameters
     ----------
-    fastq_fn : str
+    reads : str
         Path to reads from a sequencing library.
     adapter : str
         Adapter sequence to remove from ends of reads.
-    mismatches : int
-        Number of tolerated mismatches when comparing barcodes.
     barcodes : list_str
         List of barcodes used for library.
+    mismatches : int
+        Number of tolerated mismatches when comparing barcodes.
     minimum_length : int
         Minimum length of trimmed sequence to keep.
     prefix : str
         Prefix of generated FASTQ files.
-    outdir : str
+    out_dir : str
         Output folder. Use local folder if none given.
 
     Returns
@@ -56,12 +56,12 @@ def run(fastq_fn, adapter, mismatches, barcodes, minimum_length=15, prefix='demu
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    if not os.path.isdir(outdir):
+    if not os.path.isdir(out_dir):
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
     out_fn_prefix = []
     for bc in ['nomatch'] + barcodes:
         out_fn_prefix.append(
-            os.path.join(outdir, '{:s}_{:s}'.format(prefix, bc))
+            os.path.join(out_dir, '{:s}_{:s}'.format(prefix, bc))
         )
 
     if adapter:
@@ -72,8 +72,8 @@ def run(fastq_fn, adapter, mismatches, barcodes, minimum_length=15, prefix='demu
 
     # demultiplex
     LOGGER.info('Allowing max %d mismatches in barcodes.', mismatches)
-    LOGGER.info('Demultiplexing file: %s', fastq_fn)
-    demultiplex(fastq_fn, out_fns[1:], out_fns[0], barcodes, mismatches,
+    LOGGER.info('Demultiplexing file: %s', reads)
+    demultiplex(reads, out_fns[1:], out_fns[0], barcodes, mismatches,
                 minimum_length)
     LOGGER.info('Saving results to:')
     for fn in out_fns:
@@ -91,7 +91,7 @@ def run(fastq_fn, adapter, mismatches, barcodes, minimum_length=15, prefix='demu
     return out_fns
 
 
-def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
+def demultiplex(reads, out_fastq_fnames, not_matching_fastq_fname,
                 barcodes, mismatches=1, minimum_length=15):
     """Extract reads and save to individual FASTQ files.
 
@@ -99,7 +99,7 @@ def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
 
     Parameters
     ----------
-    in_fastq_fname : str
+    reads : str
         Filename to read,  must be FASTQ in order to avoid duplicate read records.
     out_fastq_fnames : list_str
         List of filenames to store reads as determined by barcodes.
@@ -122,7 +122,7 @@ def demultiplex(in_fastq_fname, out_fastq_fnames, not_matching_fastq_fname,
 
     out_fastq = [iCount.files.fastq.Writer(fn) for fn in
                  out_fastq_fnames + [not_matching_fastq_fname]]
-    reader = iCount.files.fastq.Reader(in_fastq_fname)
+    reader = iCount.files.fastq.Reader(reads)
     for r_id, exp_id, r_randomer, r_seq, r_plus, r_qual in \
             _extract(reader, barcodes, mismatches=mismatches,
                      minimum_length=minimum_length):
@@ -159,6 +159,7 @@ def _extract(seqs, barcodes, mismatches=1, minimum_length=15):
     ------
     int
         TODO
+
     """
     valid_nucs = {'A', 'T', 'C', 'G'}
 

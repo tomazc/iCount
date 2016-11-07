@@ -132,21 +132,21 @@ def get_avg_rnd_distrib(size, total_hits, hw, perms=100):
     return cum_prob_ret
 
 
-def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3, fdr=0.05, perms=100,
+def run(annotation, sites, peaks, scores=None, hw=3, fdr=0.05, perms=100,
         rnd_seed=42, features=['gene'], report_progress=False, group_by='gene_id'):
     """
     Calculate FDR of interaction at each cross-linked site.
 
     Parameters
     ----------
-    fin_annotation : str
-        Path to input annotation file.
-    fin_sites : str
-        Path to input cross-links file.
-    fout_peaks : str
-        Path to "peaks" output file.
-    fout_scores : str
-        Path to "scores" output file.
+    annotation : str
+        Path to input GTF annotation file.
+    sites : str
+        Path to input BED6 file listing all cross-linked sites.
+    peaks : str
+        Path to output BED6 file listing significant sites.
+    scores : str
+        Path to output tab-delimited file with detailed info on significance calculations.
     hw : int
         Half-window size.
     fdr : float
@@ -169,8 +169,8 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3, fdr=0.05,
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
     # load annotation
-    annotation = iCount.files.gtf.load(fin_annotation)
-    sites = iCount.files.bed.load(fin_sites).sort().saveas()
+    annotation = iCount.files.gtf.load(annotation)
+    sites = iCount.files.bed.load(sites).sort().saveas()
 
     # assign cross-linked sites to regions
     LOGGER.info('Calculating intersection between annotation and cross-link file...')
@@ -230,21 +230,21 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3, fdr=0.05,
                 setdefault((p, strand), []).\
                 append((fdr_score, name, group_id, score, val_extended))
 
-    fout_peaks = iCount.files.gz_open(fout_peaks, 'wt')
-    if fout_scores is not None:
-        fout_scores = iCount.files.gz_open(fout_scores, 'wt')
-        fout_scores.write('chrome\tposition\tstrand\tname\tgroup_id\tscore'
+    peaks = iCount.files.gz_open(peaks, 'wt')
+    if scores is not None:
+        scores = iCount.files.gz_open(scores, 'wt')
+        scores.write('chrome\tposition\tstrand\tname\tgroup_id\tscore'
                           '\tscore_extended\tFDR\n')
 
     for chrom, by_pos in sorted(out_recs_scores.items()):
         for (p, strand), annot_list in sorted(by_pos.items()):
             annot_list = sorted(annot_list)
-            if fout_scores:
+            if scores:
                 # all records are recorded in the score file
                 for (fdr_score, name, group_id, score, val_extended) in annot_list:
                     # output in BED6 format:
                     # chrom, start, end, name, score, strand
-                    fout_scores.write(
+                    scores.write(
                         '{:s}\t{:d}\t{:s}\t{:s}\t{:s}\t{:s}\t{:s}\t'
                         '{:.6f}\n'.format(chrom, p, strand, name, group_id,
                                           _f2s(score, dec=6),
@@ -266,14 +266,14 @@ def run(fin_annotation, fin_sites, fout_peaks, fout_scores=None, hw=3, fdr=0.05,
                 o_str = '{:s}\t{:d}\t{:d}\t{:s}\t{:s}\t{:s}\t{:s}'.format(
                     chrom, p, p + 1, name, group_by, _f2s(score), strand
                 )
-                fout_peaks.write('{:s}\n'.format(o_str))
+                peaks.write('{:s}\n'.format(o_str))
 
-    fout_peaks.close()
-    if fout_scores is not None:
-        fout_scores.close()
+    peaks.close()
+    if scores is not None:
+        scores.close()
 
-    LOGGER.info('Bed file with significant peaks saved to %s', fout_peaks)
-    if fout_scores:
-        LOGGER.info('Scores for each cross-linked position saved to %s', fout_scores)
+    LOGGER.info('Bed file with significant peaks saved to %s', peaks)
+    if scores:
+        LOGGER.info('Scores for each cross-linked position saved to %s', scores)
 
     LOGGER.info('Done.')

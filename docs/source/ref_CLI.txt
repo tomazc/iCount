@@ -22,7 +22,7 @@ Commands:
     releases     Get list of available ENSEMBL releases.
     species      Get list of species for given release.
     annotation   Download annotation in GTF file fromat.
-    sequence     Downloads genome file in FASTA fromat.
+    genome       Downloads genome file in FASTA fromat.
     segment      Segmentation
     genes        Extract largest possible gene segments from GTF file.
     demultiplex  Demultiplexing
@@ -60,13 +60,13 @@ optional arguments:
 species
 =======
 
-usage: iCount species [-h] [--release] [-S] [-F] [-P] [-M]
+usage: iCount species [-h] [-r] [-S] [-F] [-P] [-M]
 
 Get list of species for given release.
 
 optional arguments:
   -h, --help            show this help message and exit
-  --release             The release number (can be str or int). Only ENSEMBL releases (default: 84)
+  -r , --release        The release number (can be str or int). Only ENSEMBL releases (default: 84)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -76,9 +76,7 @@ optional arguments:
 annotation
 ==========
 
-usage: iCount annotation [-h] [--release] [--target_dir] [--target_fname] [-S]
-                         [-F] [-P] [-M]
-                         species
+usage: iCount annotation [-h] [-r] [-od] [-a] [-S] [-F] [-P] [-M] species
 
 Download annotation in GTF file fromat.
 
@@ -87,21 +85,21 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --release             Release number. Only ENSEMBL releases from 59 - 84 are available (default: 84)
-  --target_dir          Download to this directory (if not given, current working directory) (default: None)
-  --target_fname        Annotation filename (must have .gz file extension). If not given, (default: None)
+  -r , --release        Release number. Only ENSEMBL releases from 59 - 84 are available (default: 84)
+  -od , --out_dir       Download to this directory (if not given, current working directory) (default: None)
+  -a , --annotation     Annotation filename (must have .gz file extension). If not given, (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
   -M , --results_file   File into which to store Metrics.
 
 
-sequence
-========
+genome
+======
 
-usage: iCount sequence [-h] [--release] [--target_dir] [--target_fname]
-                       [--tempdir] [--chromosomes  [...]] [-S] [-F] [-P] [-M]
-                       species
+usage: iCount genome [-h] [-r] [-od] [--genome] [--temp_dir]
+                     [--chromosomes  [...]] [-S] [-F] [-P] [-M]
+                     species
 
 Downloads genome file in FASTA fromat.
 
@@ -118,10 +116,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --release             Release number. Only ENSEMBL releases from 59 - 84 are available (default: 84)
-  --target_dir          Download to this directory (if not given, current working directory) (default: None)
-  --target_fname        Annotation filename (must have .gz file extension). If not given, (default: None)
-  --tempdir             Temporary directory with intermediate results (default: None)
+  -r , --release        Release number. Only ENSEMBL releases from 59 - 84 are available (default: 84)
+  -od , --out_dir       Download to this directory (if not given, current working directory) (default: None)
+  --genome              Annotation filename (must have .gz file extension). If not given, (default: None)
+  --temp_dir            Temporary directory with intermediate results (default: None)
   --chromosomes  [ ...]
                         If given, don't download the whole genome, but juts the given (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
@@ -133,8 +131,8 @@ optional arguments:
 segment
 =======
 
-usage: iCount segment [-h] [--cores] [-p] [-S] [-F] [-P] [-M]
-                      gtf_in gtf_out genome_file
+usage: iCount segment [-h] [-prog] [-S] [-F] [-P] [-M]
+                      annotation segmentation fai
 
 Segmentation
 ------------
@@ -146,14 +144,13 @@ for mapping and for various analyses:
 - regions of individual region types (segment each gene into exonic, intronic, nc, utr, etc..)
 
 positional arguments:
-  gtf_in                Path to input GTF file
-  gtf_out               Path to output GTF file
-  genome_file           Path to genome_file (.fai file or similar)
+  annotation            Path to input GTF file
+  segmentation          Path to output GTF file
+  fai                   Path to genome_file (.fai or similar)
 
 optional arguments:
   -h, --help            show this help message and exit
-  --cores               Number of computer CPUs to use for calculation (default: 1)
-  -p, --report_progress
+  -prog, --report_progress
                         Switch to show progress (default: False)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
@@ -164,20 +161,19 @@ optional arguments:
 genes
 =====
 
-usage: iCount genes [-h] [--fai_file] [--name] [--attribute] [-S] [-F] [-P]
-                    [-M]
-                    gtf_in gtf_out
+usage: iCount genes [-h] [--fai] [--feature] [--attribute] [-S] [-F] [-P] [-M]
+                    annotation segmentation
 
 Extract largest possible gene segments from GTF file.
 
 positional arguments:
-  gtf_in                Absolute path to gtf input file
-  gtf_out               Absolute path to BED6 output file
+  annotation            Path to GTF input file
+  segmentation          Path to GTF output file that includes segmentation
 
 optional arguments:
   -h, --help            show this help message and exit
-  --fai_file            No description
-  --name                Name for the 3rd column of output intervals (default: gene)
+  --fai                 Path to genome_file (.fai or similar) (default: None)
+  --feature             Name for the 3rd column of output intervals (default: gene)
   --attribute           Attribute to use as unique identifier for output intervals (default: gene_id)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
@@ -188,9 +184,9 @@ optional arguments:
 demultiplex
 ===========
 
-usage: iCount demultiplex [-h] [--minimum_length] [--prefix] [--outdir] [-S]
-                          [-F] [-P] [-M]
-                          fastq_fn adapter mismatches barcodes [barcodes ...]
+usage: iCount demultiplex [-h] [-mis] [-ml] [--prefix] [-od] [-S] [-F] [-P]
+                          [-M]
+                          reads adapter barcodes [barcodes ...]
 
 Demultiplexing
 ==============
@@ -205,16 +201,17 @@ and counting number of cross-link events.
 .. autofunction:: iCount.demultiplex.demultiplex
 
 positional arguments:
-  fastq_fn              Path to reads from a sequencing library
+  reads                 Path to reads from a sequencing library
   adapter               Adapter sequence to remove from ends of reads
-  mismatches            Number of tolerated mismatches when comparing barcodes
   barcodes              List of barcodes used for library
 
 optional arguments:
   -h, --help            show this help message and exit
-  --minimum_length      Minimum length of trimmed sequence to keep (default: 15)
+  -mis , --mismatches   Number of tolerated mismatches when comparing barcodes (default: 1)
+  -ml , --minimum_length 
+                        Minimum length of trimmed sequence to keep (default: 15)
   --prefix              Prefix of generated FASTQ files (default: demux)
-  --outdir              Output folder. Use local folder if none given (default: .)
+  -od , --out_dir       Output folder. Use local folder if none given (default: .)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -224,9 +221,9 @@ optional arguments:
 cutadapt
 ========
 
-usage: iCount cutadapt [-h] [--qual_base] [--qual_trim] [--minimum_length]
-                       [-S] [-F] [-P] [-M]
-                       in_fname out_fname adapter
+usage: iCount cutadapt [-h] [--qual_base] [--qual_trim] [-ml] [-S] [-F] [-P]
+                       [-M]
+                       reads out_file adapter
 
 Cutadapt
 --------
@@ -234,15 +231,16 @@ Cutadapt
 Interface to running cutadapt.
 
 positional arguments:
-  in_fname              Input filename (FASTQ)
-  out_fname             Output filename (FASTQ)
+  reads                 Input FASTQ file
+  out_file              Output FASTQ file containing trimmed reads
   adapter               Sequence of an adapter ligated to the 3' end
 
 optional arguments:
   -h, --help            show this help message and exit
   --qual_base           Assume that quality values in FASTQ are encoded as ascii(quality + (default: 64)
   --qual_trim           Trim low-quality bases before adapter removal (default: None)
-  --minimum_length      Discard trimmed reads that are shorter than `minimum_length` (default: None)
+  -ml , --minimum_length 
+                        Discard trimmed reads that are shorter than `minimum_length` (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -252,9 +250,9 @@ optional arguments:
 mapindex
 ========
 
-usage: iCount mapindex [-h] [--annotation] [--overhang] [--overhang_min]
-                       [--threads] [--logfile_path] [-S] [-F] [-P] [-M]
-                       genome_fname outdir
+usage: iCount mapindex [-h] [-a] [--overhang] [--overhang_min] [--threads]
+                       [-S] [-F] [-P] [-M]
+                       genome genome_index
 
 Generate STAR index
 -------------------
@@ -272,16 +270,15 @@ by passing the following parameters:
 --sjdbOverhang ReadLength-1
 
 positional arguments:
-  genome_fname          Genome sequence to index
-  outdir                Output folder, where to store genome index
+  genome                Genome sequence to index
+  genome_index          Output folder, where to store genome index
 
 optional arguments:
   -h, --help            show this help message and exit
-  --annotation          Annotation that defines splice junctions (default: )
+  -a , --annotation     Annotation that defines splice junctions (default: )
   --overhang            Sequence length around annotated junctions to be used by STAR when (default: 100)
   --overhang_min        TODO (default: 8)
   --threads             Number of threads that STAR can use for generating index (default: 1)
-  --logfile_path        Location of logfile. Can be absolute or relative path (default: ./)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -291,9 +288,9 @@ optional arguments:
 map
 ===
 
-usage: iCount map [-h] [--annotation] [--multimax] [--mismatches] [--threads]
-                  [-S] [-F] [-P] [-M]
-                  sequences_fname genomedir outdir
+usage: iCount map [-h] [-a] [--multimax] [-mis] [--threads] [-S] [-F] [-P]
+                  [-M]
+                  reads genome_index out_dir
 
 Map using STAR
 --------------
@@ -315,15 +312,15 @@ following parameters:
 --outFilterMismatchNmax # default 10
 
 positional arguments:
-  sequences_fname       Sequencing reads to map to genome
-  genomedir             Folder with genome index
-  outdir                Output folder, where to store genome index
+  reads                 Sequencing reads to map to genome
+  genome_index          Folder with genome index
+  out_dir               Output folder, where to store mapping results
 
 optional arguments:
   -h, --help            show this help message and exit
-  --annotation          TODO (default: )
+  -a , --annotation     GTF annotation needed for mapping to splice-junctions (default: )
   --multimax            Number of allowed multiple hits (default: 10)
-  --mismatches          Number of allowed mismatches (default: 2)
+  -mis , --mismatches   Number of allowed mismatches (default: 2)
   --threads             Number of threads that STAR can use for generating index (default: 1)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
@@ -334,9 +331,9 @@ optional arguments:
 xlsites
 =======
 
-usage: iCount xlsites [-h] [--group_by] [--quant] [--mismatches] [--mapq_th]
-                      [--multimax] [-p] [-S] [-F] [-P] [-M]
-                      bam_fname unique_fname multi_fname
+usage: iCount xlsites [-h] [-g] [--quant] [-mis] [--mapq_th] [--multimax]
+                      [-prog] [-S] [-F] [-P] [-M]
+                      bam sites sites_multi
 
 Identify and quantify cross-linked sites
 ----------------------------------------
@@ -363,18 +360,18 @@ otherwise, we should think of a more approapriate quantification of (division
 of randomers among) unique mapped sites that overlap with multimapped reads
 
 positional arguments:
-  bam_fname             BAM file with mapped reads
-  unique_fname          File to store data from uniquely mapped reads
-  multi_fname           File to store data from multi-mapped reads
+  bam                   Input BAM file with mapped reads
+  sites                 Output BED6 file to store data from uniquely mapped reads
+  sites_multi           Output BED6 file to store data from multi-mapped reads
 
 optional arguments:
   -h, --help            show this help message and exit
-  --group_by            Group reads together by 'start', 'middle' or 'end' nucleotide (default: start)
+  -g , --group_by       Group reads together by 'start', 'middle' or 'end' nucleotide (default: start)
   --quant               Report number of 'cDNA' or number of 'reads' (default: cDNA)
-  --mismatches          Reads on same position with random barcode differing less than (default: 2)
+  -mis , --mismatches   Reads on same position with random barcode differing less than (default: 2)
   --mapq_th             Ignore hits with MAPQ < mapq_th (default: 0)
   --multimax            Ignore reads, mapped to more than ``multimax`` places (default: 50)
-  -p, --report_progress
+  -prog, --report_progress
                         Switch to report progress (default: False)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
@@ -385,9 +382,8 @@ optional arguments:
 annotate
 ========
 
-usage: iCount annotate [-h] [--subtype] [--excluded_types  [...]] [-S] [-F]
-                       [-P] [-M]
-                       annotation_file cross_links_file out_file
+usage: iCount annotate [-h] [--subtype] [-e  [...]] [-S] [-F] [-P] [-M]
+                       annotation sites out_file
 
 Cross-link site annotation
 --------------------------
@@ -395,14 +391,14 @@ Cross-link site annotation
 Annotate each cross link site with types of regions that intersect with it.
 
 positional arguments:
-  annotation_file       Path to annotation file (should be GTF and include `subtype` attribute)
-  cross_links_file      Path to cross_links_file (should be BED6)
+  annotation            Path to annotation file (should be GTF and include `subtype` attribute)
+  sites                 Path to cross_links_file (should be BED6)
   out_file              Path to output file
 
 optional arguments:
   -h, --help            show this help message and exit
   --subtype             Subtype (default: biotype)
-  --excluded_types  [ ...]
+  -e  [ ...], --excluded_types  [ ...]
                         Excluded types (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
@@ -413,8 +409,7 @@ optional arguments:
 clusters
 ========
 
-usage: iCount clusters [-h] [--dist] [-S] [-F] [-P] [-M]
-                       fin_sites fout_clusters
+usage: iCount clusters [-h] [--dist] [-S] [-F] [-P] [-M] sites clusters
 
 Cluster sites
 -------------
@@ -426,8 +421,8 @@ are apart at most a specified number of nucleotides. Return BED file with
 clusters' coordinates.
 
 positional arguments:
-  fin_sites             Path to input file with sites (BED6 format)
-  fout_clusters         Path to output file with merged sites (BED6)
+  sites                 Path to input BED6 file with sites
+  clusters              Path to output BED6 file with merged sites
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -441,7 +436,7 @@ optional arguments:
 group
 =====
 
-usage: iCount group [-h] [-S] [-F] [-P] [-M] outfile files [files ...]
+usage: iCount group [-h] [-S] [-F] [-P] [-M] out_file in_files [in_files ...]
 
 Group BED files
 ---------------
@@ -449,8 +444,8 @@ Group BED files
 Group analysis docstring... TODO!
 
 positional arguments:
-  outfile               Path to output file
-  files                 BED6 files(paths) to be merged
+  out_file              Path to output BED6 file
+  in_files              BED6 files(paths) to be merged
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -463,9 +458,9 @@ optional arguments:
 peaks
 =====
 
-usage: iCount peaks [-h] [--fout_scores] [--hw] [--fdr] [--perms] [--rnd_seed]
-                    [--features  [...]] [-p] [--group_by] [-S] [-F] [-P] [-M]
-                    fin_annotation fin_sites fout_peaks
+usage: iCount peaks [-h] [--scores] [--hw] [--fdr] [-p] [-rnd]
+                    [--features  [...]] [-prog] [-g] [-S] [-F] [-P] [-M]
+                    annotation sites peaks
 
 Peak finding
 ------------
@@ -477,21 +472,21 @@ analysis to determine significance (FDR) of individual sites. Return bedGraph of
 significant sites.
 
 positional arguments:
-  fin_annotation        Path to input annotation file
-  fin_sites             Path to input cross-links file
-  fout_peaks            Path to "peaks" output file
+  annotation            Path to input GTF annotation file
+  sites                 Path to input BED6 file listing all cross-linked sites
+  peaks                 Path to output BED6 file listing significant sites
 
 optional arguments:
   -h, --help            show this help message and exit
-  --fout_scores         Path to "scores" output file (default: None)
+  --scores              Path to output tab-delimited file with detailed info on significance calculations (default: None)
   --hw                  Half-window size (default: 3)
   --fdr                 FDR threshold (default: 0.05)
-  --perms               Number of permutations (default: 100)
-  --rnd_seed            Seed for random generator (default: 42)
+  -p , --perms          Number of permutations (default: 100)
+  -rnd , --rnd_seed     Seed for random generator (default: 42)
   --features  [ ...]    Features over which to perform analysis (default: gene)
-  -p, --report_progress
+  -prog, --report_progress
                         Print analysis progress (default: False)
-  --group_by            No description
+  -g , --group_by       No description
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -501,10 +496,9 @@ optional arguments:
 summary
 =======
 
-usage: iCount summary [-h] [--types_length_file] [--ndigits] [--subtype]
-                      [--excluded_types  [...]] [-S] [-F] [-P] [-M]
-                      annotation_file cross_links_file out_file
-                      chrom_length_file
+usage: iCount summary [-h] [--types_length_file] [--digits] [--subtype]
+                      [-e  [...]] [-S] [-F] [-P] [-M]
+                      annotation sites out_file fai
 
 Cross-link site summary
 -----------------------
@@ -512,18 +506,18 @@ Cross-link site summary
 Report proportion of cross-link events/sites on each region type
 
 positional arguments:
-  annotation_file       Path to annotation file (should be GTF and include subtype attribute)
-  cross_links_file      Path to cross_links_file (should be BED6)
-  out_file              Path to output file
-  chrom_length_file     Path to file with chromosome lengths
+  annotation            Path to annotation GTF file (should include subtype attribute)
+  sites                 Path to BED6 file listing cross-linked sites
+  out_file              Path to output tab-delimited file with summary statistics
+  fai                   Path to file with chromosome lengths
 
 optional arguments:
   -h, --help            show this help message and exit
   --types_length_file   Path to file with lengths of each type (default: None)
-  --ndigits             Number of decimal places in results (default: 8)
+  --digits              Number of decimal places in results (default: 8)
   --subtype             Name of attribute to be used as subtype (default: biotype)
-  --excluded_types  [ ...]
-                        Types in 3rd column to exclude form analysis (default: None)
+  -e  [ ...], --excluded_types  [ ...]
+                        Types listed in 3rd column of GTF to be exclude from analysis (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -533,14 +527,14 @@ optional arguments:
 examples
 ========
 
-usage: iCount examples [-h] [--in_dir] [-S] [-F] [-P] [-M]
+usage: iCount examples [-h] [-od] [-S] [-F] [-P] [-M]
 
 Examples
 ========
 
 optional arguments:
   -h, --help            show this help message and exit
-  --in_dir              No description
+  -od , --out_dir       No description
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.

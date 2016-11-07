@@ -60,15 +60,15 @@ def get_version():
         return None
 
 
-def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=8, threads=1, logfile_path='./'):
+def build_index(genome, genome_index, annotation='', overhang=100, overhang_min=8, threads=1):
     """
     Call STAR to generate genome index, which is used for mapping.
 
     Parameters
     ----------
-    genome_fname : str
+    genome : str
         Genome sequence to index.
-    outdir : str
+    genome_index : str
         Output folder, where to store genome index.
     annotation : str
         Annotation that defines splice junctions.
@@ -79,8 +79,6 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
         TODO
     threads : int
         Number of threads that STAR can use for generating index.
-    logfile_path : str
-        Location of logfile. Can be absolute or relative path.
 
     Returns
     -------
@@ -90,20 +88,20 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    if not os.path.isdir(outdir):
+    if not os.path.isdir(genome_index):
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
 
-    LOGGER.info('Building genome index with STAR for genome %s' % genome_fname)
+    LOGGER.info('Building genome index with STAR for genome %s' % genome)
     genome_fname2 = iCount.files.decompress_to_tempfile(
-        genome_fname, 'starindex')
+        genome, 'starindex')
     args = [
         'STAR',
         '--runThreadN', '{:d}'.format(threads),
         '--runMode', 'genomeGenerate',
-        '--genomeDir', '{:s}'.format(outdir),
+        '--genomeDir', '{:s}'.format(genome_index),
         '--genomeFastaFiles', '{:s}'.format(genome_fname2),
         '--alignSJoverhangMin', '{:d}'.format(overhang_min),
-        '--outFileNamePrefix', '{:s}'.format(logfile_path),
+        '--outFileNamePrefix', '{:s}'.format(genome_index),
     ]
     if annotation:
         annotation2 = iCount.files.decompress_to_tempfile(annotation, 'starindex')
@@ -127,7 +125,7 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
                     LOGGER.error(line.strip())
     finally:
         # remove temporary decompressed files
-        if genome_fname != genome_fname2:
+        if genome != genome_fname2:
             os.remove(genome_fname2)
         if annotation != annotation2:
             os.remove(annotation2)
@@ -136,21 +134,20 @@ def build_index(genome_fname, outdir, annotation='', overhang=100, overhang_min=
     return ret_code
 
 
-def map_reads(sequences_fname, genomedir, outdir, annotation='', multimax=10, mismatches=2,
-              threads=1):
+def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatches=2, threads=1):
     """
     Map FASTQ file reads to reference genome. TODO
 
     Parameters
     ----------
-    sequences_fname : str
+    reads : str
         Sequencing reads to map to genome.
-    genomedir : str
+    genome_index : str
         Folder with genome index.
-    outdir : str
-        Output folder, where to store genome index.
+    out_dir : str
+        Output folder, where to store mapping results.
     annotation : str
-        TODO
+        GTF annotation needed for mapping to splice-junctions.
     multimax : int
         Number of allowed multiple hits.
     mismatches : int
@@ -165,27 +162,27 @@ def map_reads(sequences_fname, genomedir, outdir, annotation='', multimax=10, mi
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    if not os.path.isdir(genomedir):
+    if not os.path.isdir(genome_index):
         raise FileNotFoundError('Directory with genome index does not exist. Make sure it does.')
-    if not os.path.isdir(outdir):
+    if not os.path.isdir(out_dir):
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
 
-    LOGGER.info('Mapping reads from %s' % sequences_fname)
+    LOGGER.info('Mapping reads from %s' % reads)
     sequences_fname2 = iCount.files.decompress_to_tempfile(
-        sequences_fname, 'starmap')
+        reads, 'starmap')
 
     args = [
         'STAR',
         '--runMode', 'alignReads',
         '--runThreadN', '{:d}'.format(threads),
-        '--genomeDir', '{:s}'.format(genomedir),
+        '--genomeDir', '{:s}'.format(genome_index),
         '--readFilesIn', '{:s}'.format(sequences_fname2),
     ]
-    if not outdir.endswith('/'):
-        outdir += '/'
+    if not out_dir.endswith('/'):
+        out_dir += '/'
 
     args.extend([
-        '--outFileNamePrefix', '{:s}'.format(outdir),
+        '--outFileNamePrefix', '{:s}'.format(out_dir),
         '--outSAMprimaryFlag', 'AllBestScore',
         '--outFilterMultimapNmax', '{:d}'.format(multimax),
         '--outFilterMismatchNmax', '{:d}'.format(mismatches),
@@ -216,7 +213,7 @@ def map_reads(sequences_fname, genomedir, outdir, annotation='', multimax=10, mi
                     LOGGER.error(line.strip())
     finally:
         # remove temporary decompressed files
-        if sequences_fname != sequences_fname2:
+        if reads != sequences_fname2:
             os.remove(sequences_fname2)
         if annotation != annotation2:
             os.remove(annotation2)

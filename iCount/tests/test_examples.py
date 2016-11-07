@@ -14,7 +14,7 @@ class TestExamplesScriptsInstall(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_examples(self):
-        iCount.examples.run(in_dir=self.tempdir)
+        iCount.examples.run(out_dir=self.tempdir)
         # check if two scripts are present in subfolder examples
         self.assertTrue(
             os.path.isfile(os.path.join(self.examples_dir, 'hnRNPC.sh'))

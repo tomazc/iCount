@@ -18,9 +18,7 @@ from pybedtools import create_interval_from_list
 LOGGER = logging.getLogger(__name__)
 
 
-def annotate_cross_links(annotation_file, cross_links_file, out_file,
-                         subtype='biotype',
-                         excluded_types=None):
+def annotate_cross_links(annotation, sites, out_file, subtype='biotype', excluded_types=None):
     """
     Annotate each cross-link site with all region types that intersect it.
 
@@ -37,9 +35,9 @@ def annotate_cross_links(annotation_file, cross_links_file, out_file,
 
     Parameters
     ----------
-    annotation_file : str
+    annotation : str
         Path to annotation file (should be GTF and include `subtype` attribute).
-    cross_links_file : str
+    sites : str
         Path to cross_links_file (should be BED6).
     out_file : str
         Path to output file.
@@ -57,8 +55,8 @@ def annotate_cross_links(annotation_file, cross_links_file, out_file,
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
     excluded_types = excluded_types or []
-    cross_links = pybedtools.BedTool(cross_links_file).sort().saveas()
-    annotation = pybedtools.BedTool(annotation_file).filter(
+    cross_links = pybedtools.BedTool(sites).sort().saveas()
+    annotation = pybedtools.BedTool(annotation).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
 
     LOGGER.info('Calculating overlaps between cross-link and annotation_file...')
