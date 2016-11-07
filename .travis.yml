@@ -26,8 +26,8 @@ before_install:
     - pip install -U setuptools pip wheel
 
 install:
-    - travis_wait pip install -r requirements.txt
-    - pip install .
+    - travis_wait pip install .
+    - travis_wait pip install .tests
     - pip install coverage
     - pip install tox
     - wget https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2.26.0.tar.gz
@@ -54,4 +54,3 @@ after_success:
 
 notifications:
     email: false
-
