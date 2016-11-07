@@ -17,7 +17,7 @@ from pybedtools import create_interval_from_list
 LOGGER = logging.getLogger(__name__)
 
 
-def make_types_length_file(annotation_file, out_file=None, subtype='biotype',
+def make_types_length_file(annotation, out_file=None, subtype='biotype',
                            excluded_types=None):
     """
     Calculate the number of non-overlapping base pairs of each "type".
@@ -28,31 +28,31 @@ def make_types_length_file(annotation_file, out_file=None, subtype='biotype',
 
     Parameters
     ----------
-    annotation_file : str
-        Path to annotation file (should be GTF and include subtype attribute).
+    annotation : str
+        Path to annotation GTF file (should include subtype attribute).
     out_file : str
-        Path to output file (if None it is determined automatically).
+        Path to output file (if None, name is set automatically).
     subtype : int
         Subtype.
     excluded_types : list_str
-        Excluded types.
+        Types listed in 3rd column of GTF to be exclude from analysis.
 
     Returns
     -------
     str
-        Absolute path to out_file
+        Absolute path to out_file.
 
     """
     excluded_types = excluded_types or []
-    annotation = pybedtools.BedTool(annotation_file).filter(
+    annotation = pybedtools.BedTool(annotation).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
 
     if out_file is None:
-        match = re.match(r'([\w_]+\.\d+.).*', os.path.basename(annotation_file))
+        match = re.match(r'([\w_]+\.\d+.).*', os.path.basename(annotation))
         if match:
             out_file = str(match.group(1)) + 'types_length.txt'
         else:
-            out_file = annotation_file + 'types_length.txt'
+            out_file = annotation + 'types_length.txt'
 
     data = {}
     for interval in annotation:
@@ -79,9 +79,8 @@ def make_types_length_file(annotation_file, out_file=None, subtype='biotype',
     return os.path.abspath(out_file)
 
 
-def make_summary_report(annotation_file, cross_links_file, out_file,
-                        chrom_length_file, types_length_file=None, ndigits='8',
-                        subtype='biotype',
+def make_summary_report(annotation, sites, summary,
+                        fai, types_length_file=None, digits='8', subtype='biotype',
                         excluded_types=None):
     """
     Make summary report from cross-link and annotation data.
@@ -100,41 +99,41 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
 
     Parameters
     ----------
-    annotation_file : str
-        Path to annotation file (should be GTF and include subtype attribute).
-    cross_links_file : str
-        Path to cross_links_file (should be BED6)
-    out_file : str
-        Path to output file
-    chrom_length_file : str
-        Path to file with chromosome lengths
+    annotation : str
+        Path to annotation GTF file (should include subtype attribute).
+    sites : str
+        Path to BED6 file listing cross-linked sites.
+    summary : str
+        Path to output tab-delimited file with summary statistics.
+    fai : str
+        Path to file with chromosome lengths.
     types_length_file : str
-        Path to file with lengths of each type
-    ndigits : int
-        Number of decimal places in results
+        Path to file with lengths of each type.
+    digits : int
+        Number of decimal places in results.
     subtype : str
-        Name of attribute to be used as subtype
+        Name of attribute to be used as subtype.
     excluded_types : list_str
-        Types in 3rd column to exclude form analysis
+        Types listed in 3rd column of GTF to be exclude from analysis.
 
     Returns
     -------
     str
-        Path to summary report file (should be equal to out_file parameter)
+        Path to summary report file (equal to parameter out_file)
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
     excluded_types = excluded_types or []
-    cross_links = pybedtools.BedTool(cross_links_file).sort().saveas()
-    annotation = pybedtools.BedTool(annotation_file).filter(
+    cross_links = pybedtools.BedTool(sites).sort().saveas()
+    annotation = pybedtools.BedTool(annotation).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
 
     # If not given/present, make file with cumulative length for each type:
     if not types_length_file or not os.path.isfile(types_length_file):
         LOGGER.info('types_length_file not given - calculating it')
         types_length_file = make_types_length_file(
-            annotation_file, subtype=subtype, excluded_types=excluded_types)
+            annotation, subtype=subtype, excluded_types=excluded_types)
 
     # read the file to dict, named type_lengths
     type_lengths = {}
@@ -190,8 +189,8 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
 
     # total genome len = sum_of_all_chrom_length * 2 (there are + and - strand):
     total_length = sum([int(line.strip().split()[1]) for line in
-                        open(chrom_length_file)]) * 2
-    with open(out_file, 'wt') as out:
+                        open(fai)]) * 2
+    with open(summary, 'wt') as out:
         out.write('\t'.join(header) + '\n')
         for type_, [sites, events] in sorted(type_counter.items()):
             length_percent = type_lengths[type_] / total_length
@@ -202,8 +201,8 @@ def make_summary_report(annotation_file, cross_links_file, out_file,
             line = [type_, type_lengths[type_], length_percent,
                     sites, site_percent, site_enrichment,
                     events, event_percent, event_enrichment]
-            line = line[:1] + [round(i, int(ndigits)) for i in line[1:]]
+            line = line[:1] + [round(i, int(digits)) for i in line[1:]]
             out.write('\t'.join(map(str, line)) + '\n')
 
-    LOGGER.info('Done. Results written in %s.', os.path.abspath(out_file))
-    return os.path.abspath(out_file)
+    LOGGER.info('Done. Results written in %s.', os.path.abspath(summary))
+    return os.path.abspath(summary)

@@ -58,7 +58,7 @@ def releases():
     """
     Get list of available ENSEMBL releases.
 
-    Only allows ENSEMBL releases from {0} - {1}.
+    Only allows ENSEMBL releases {0}..{1}.
 
     Returns
     -------
@@ -87,8 +87,7 @@ def species(release=MAX_RELEASE_SUPPORTED):
     Parameters
     ----------
     release : str
-        The release number (can be str or int). Only ENSEMBL releases
-        from {0} - {1} are available.
+        The release number (can be str or int). Only ENSEMBL releases {0}..{1} are available.
 
     Returns
     -------
@@ -108,7 +107,7 @@ def species(release=MAX_RELEASE_SUPPORTED):
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
-def annotation(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_fname=None):
+def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=None):
     """
     Download annotation in GTF file fromat.
 
@@ -117,10 +116,10 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_f
     species : str
         Species latin name.
     release : int
-        Release number. Only ENSEMBL releases from {0} - {1} are available.
-    target_dir : str
+        Release number. Only ENSEMBL releases {0}..{1} are available.
+    out_dir : str
         Download to this directory (if not given, current working directory).
-    target_fname : str
+    annotation : str
         Annotation filename (must have .gz file extension). If not given,
         species.release.gtf.gz is used.
 
@@ -134,13 +133,13 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_f
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    if not target_dir:
-        target_dir = os.getcwd()
-    if not os.path.isdir(target_dir):
-        raise ValueError('Directory "{}" does not exist'.format(target_dir))
+    if not out_dir:
+        out_dir = os.getcwd()
+    if not os.path.isdir(out_dir):
+        raise ValueError('Directory "{}" does not exist'.format(out_dir))
     # Process filename
-    if not target_fname:
-        target_fname = '{}.{}.gtf.gz'.format(species, release)
+    if not annotation:
+        annotation = '{}.{}.gtf.gz'.format(species, release)
 
     ftp = get_ftp_instance()
     server_dir = '/pub/release-{}/gtf/{}/'.format(release, species)
@@ -160,7 +159,7 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_f
         return None
 
     # Download to file on disk
-    saveas_fname = os.path.join(target_dir, target_fname)
+    saveas_fname = os.path.join(out_dir, annotation)
     LOGGER.info('Downloading annotation to: %s', saveas_fname)
     with open(saveas_fname, 'wb') as fhandle:
         ftp.retrbinary('RETR ' + annotation_file, fhandle.write)
@@ -180,12 +179,12 @@ def chrom_length(fasta_in):
     Parameters
     ----------
     fasta_in : str
-        Path to genome fasta file (can be a .gz file)
+        Path to genome FASTA file (can be .gz).
 
     Returns
     -------
     str
-        Absoulute path to output file
+        Absolute path to output file.
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
@@ -203,8 +202,8 @@ def chrom_length(fasta_in):
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
-def sequence(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_fname=None,
-             tempdir=None, chromosomes=None):
+def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
+           temp_dir=None, chromosomes=None):
     """
     Downloads genome file in FASTA fromat.
 
@@ -221,13 +220,13 @@ def sequence(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_fna
     species : str
         Species latin name.
     release : int
-        Release number. Only ENSEMBL releases from {0} - {1} are available.
-    target_dir : str
+        Release number. Only ENSEMBL releases {0}..{1} are available.
+    out_dir : str
         Download to this directory (if not given, current working directory).
-    target_fname : str
+    genome : str
         Annotation filename (must have .gz file extension). If not given,
         species.release.gtf.gz is used.
-    tempdir : str
+    temp_dir : str
         Temporary directory with intermediate results.
     chromosomes : list_str
         If given, don't download the whole genome, but juts the given
@@ -243,10 +242,10 @@ def sequence(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_fna
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    if not target_dir:
-        target_dir = os.getcwd()
-    if not os.path.isdir(target_dir):
-        raise ValueError('Directory "{}" does not exist'.format(target_dir))
+    if not out_dir:
+        out_dir = os.getcwd()
+    if not os.path.isdir(out_dir):
+        raise ValueError('Directory "{}" does not exist'.format(out_dir))
 
     ftp = get_ftp_instance()
     server_dir = '/pub/release-{}/fasta/{}/dna'.format(release, species)
@@ -282,20 +281,20 @@ def sequence(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_fna
                 else:
                     pass
         filtered_files = subset_list
-        if not target_fname:
-            target_fname = '{}.{}.chr{}.fa.gz'.format(
+        if not genome:
+            genome = '{}.{}.chr{}.fa.gz'.format(
                 species, release, '_'.join(map(str, chromosomes)))
 
-    if not target_fname:
-        target_fname = '{}.{}.fa.gz'.format(species, release)
-    target_path = os.path.abspath(os.path.join(target_dir, target_fname))
+    if not genome:
+        genome = '{}.{}.fa.gz'.format(species, release)
+    target_path = os.path.abspath(os.path.join(out_dir, genome))
 
     LOGGER.info('Downloading FASTA file into: %s', target_path)
-    tempdir = tempfile.mkdtemp(dir=tempdir)
+    temp_dir = tempfile.mkdtemp(dir=temp_dir)
     for fname in filtered_files:
         LOGGER.debug('Downloading file: %s', fname)
         # Download all files to tempdir:
-        temp_file = os.path.join(tempdir, fname)
+        temp_file = os.path.join(temp_dir, fname)
         with open(temp_file, 'wb') as fhandle:
             ftp.retrbinary('RETR ' + fname, fhandle.write)
 
@@ -305,7 +304,7 @@ def sequence(species, release=MAX_RELEASE_SUPPORTED, target_dir=None, target_fna
 
     # Clean up: delete temporary files:
     ftp.quit()
-    shutil.rmtree(tempdir)
+    shutil.rmtree(temp_dir)
 
     # Compute chromosome lengths:
     chrom_length(target_path)

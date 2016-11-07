@@ -16,17 +16,21 @@ params_opt = []
 params_pos = []
 
 
-def run(in_dir='.'):
-    """Creates an examples subfolder with example scripts.
+def run(out_dir='.'):
+    """
+    Creates an examples subfolder with example scripts.
 
     This will create an examples subfolder in current working directory and
     will copy bash scripts needed to run the iCount pipeline on a few
     examples (for now, only the hnRNP C data from Konig et al.).
 
-    :return: None
-    """
+    Returns
+    -------
+    str
+        Path of folder to where examples scripts were copied.
 
-    examples_folder = os.path.abspath(os.path.join(in_dir, 'examples'))
+    """
+    examples_folder = os.path.abspath(os.path.join(out_dir, 'examples'))
     if os.path.exists(examples_folder):
         print('Examples folder already exists: {:s}'.format(examples_folder))
         print('Scripts will NOT be copied into it.')

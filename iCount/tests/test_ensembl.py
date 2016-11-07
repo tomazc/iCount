@@ -49,13 +49,13 @@ class TestEnsemblDownload(unittest.TestCase):
 
     def test_annotation(self):
         ann_file = ensembl.annotation(
-            'homo_sapiens', release=84, target_dir=self.tempdir, target_fname=self.gtf)
+            'homo_sapiens', release=84, out_dir=self.tempdir, annotation=self.gtf)
 
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, self.gtf)))
 
     def test_sequence(self):
-        fasta_file = ensembl.sequence(
-            'homo_sapiens', release=84, target_dir=self.tempdir, chromosomes=['MT'])
+        fasta_file = ensembl.genome(
+            'homo_sapiens', release=84, out_dir=self.tempdir, chromosomes=['MT'])
 
         self.assertTrue(os.path.isfile(
             os.path.join(self.tempdir, 'homo_sapiens.84.chrMT.fa.gz')))

@@ -114,7 +114,7 @@ def _merge_similar_randomers(by_bc, mismatches):
     Parameters
     ----------
     by_bc : dict
-        Dictionary of barcodes and their hits
+        Dictionary of barcodes and their hits.
     mismatches : int
         Reads on same position with random barcode differing less than
         ``mismatches`` are grouped together.
@@ -122,7 +122,7 @@ def _merge_similar_randomers(by_bc, mismatches):
     Returns
     -------
     None
-        None, since input `by_bc` is modified in-place
+        None, since input `by_bc` is modified in-place.
 
     """
     # assign ambigious randomers to unambigious randomers
@@ -185,7 +185,7 @@ def _separate_by_second_starts(hits):
     Parameters
     ----------
     hits : list
-        List of tuples containing read information (described in upper section)
+        List of tuples containing read information (described in upper section).
 
     Returns
     -------
@@ -463,7 +463,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
     return grouped
 
 
-def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
+def run(bam, sites_unique, sites_multi, group_by='start', quant='cDNA',
         mismatches=2, mapq_th=0, multimax=50, report_progress=False):
     """
     Interpret mapped sites and generate BED file with coordinates and
@@ -477,12 +477,12 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
 
     Parameters
     ----------
-    bam_fname : str
-        BAM file with mapped reads.
-    unique_fname : str
-        File to store data from uniquely mapped reads
-    multi_fname : str
-        File to store data from multi-mapped reads
+    bam : str
+        Input BAM file with mapped reads.
+    sites_unique : str
+        Output BED6 file to store data from uniquely mapped reads.
+    sites_multi : str
+        Output BED6 file to store data from multi-mapped reads.
     group_by : str
         Group reads together by 'start', 'middle' or 'end' nucleotide.
     quant : str
@@ -495,12 +495,13 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     multimax : int
         Ignore reads, mapped to more than ``multimax`` places.
     report_progress : bool
-        Switch to report progress
+        Switch to report progress.
 
     Returns
     -------
     iCount.Metrics
         Metrics object, storing analysis metadata.
+
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
@@ -508,7 +509,7 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     assert group_by in ['start', 'middle', 'end']
 
     metrics = iCount.Metrics()
-    grouped = _processs_bam_file(bam_fname, metrics, mapq_th)
+    grouped = _processs_bam_file(bam, metrics, mapq_th)
 
     # collapse duplicates
     unique = {}
@@ -553,9 +554,9 @@ def run(bam_fname, unique_fname, multi_fname, group_by='start', quant='cDNA',
     for cn, bc in top10:
         LOGGER.info('    %s: %d', bc, cn)
 
-    iCount.files.bed.save_dict(unique, unique_fname, val_index=val_index)
-    LOGGER.info('Saved to BED file (uniquely mapped reads): %s', unique_fname)
-    iCount.files.bed.save_dict(multi, multi_fname, val_index=val_index)
-    LOGGER.info('Saved to BED file (multi-mapped reads): %s', multi_fname)
+    iCount.files.bed.save_dict(unique, sites_unique, val_index=val_index)
+    LOGGER.info('Saved to BED file (uniquely mapped reads): %s', sites_unique)
+    iCount.files.bed.save_dict(multi, sites_multi, val_index=val_index)
+    LOGGER.info('Saved to BED file (multi-mapped reads): %s', sites_multi)
 
     return metrics

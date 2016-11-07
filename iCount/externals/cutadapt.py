@@ -17,16 +17,16 @@ def get_version():
         return None
 
 
-def run(in_fname, out_fname, adapter, qual_base=64, qual_trim=None, minimum_length=None):
+def run(reads, reads_trimmed, adapter, qual_base=64, qual_trim=None, minimum_length=None):
     """
     Remove adapter sequences from high-throughput sequencing reads.
 
     Parameters
     ----------
-    in_fname : str
-        Input filename (FASTQ).
-    out_fname : str
-        Output filename (FASTQ).
+    reads : str
+        Input FASTQ file.
+    reads_trimmed : str
+        Output FASTQ file containing trimmed reads.
     adapter : str
         Sequence of an adapter ligated to the 3' end.
     qual_base : int
@@ -52,6 +52,6 @@ def run(in_fname, out_fname, adapter, qual_base=64, qual_trim=None, minimum_leng
         args.extend(['-q', '{:d}'.format(qual_trim)])
     if minimum_length is not None:
         args.extend(['-m', '{:d}'.format(minimum_length)])
-    args.extend(['-o', out_fname, in_fname])
+    args.extend(['-o', reads_trimmed, reads])
 
     return subprocess.call(args, shell=False)

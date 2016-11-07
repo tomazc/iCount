@@ -18,7 +18,7 @@ mkdir -p ${analysis_dir}
 genome="hs84.fa.gz"
 if [ ! -f "${genome_dir}/${genome}" ];
 then
-iCount sequence homo_sapiens --release 84 --target_dir ${genome_dir} \
+iCount genome homo_sapiens --release 84 --target_dir ${genome_dir} \
     --target_fname ${genome}
 fi
 genome="${genome_dir}/${genome}"
@@ -73,7 +73,7 @@ mm="1"  # number of mismatches allowed in sample barcode
 ext_pref="exp"
 ext_dir="extracted"
 mkdir -p ${ext_dir}
-iCount demultiplex ${fastq} ${adapter} ${mm} ${barcodes} --prefix ${ext_pref} \
+iCount demultiplex ${fastq} ${adapter} ${barcodes} --mismatches ${mm} --prefix ${ext_pref} \
     --outdir ${ext_dir}
 
 

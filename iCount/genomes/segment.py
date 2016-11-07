@@ -485,7 +485,7 @@ def _complement(gs, genome_file, strand):
     return os.path.abspath(gtf.fn)
 
 
-def _get_gene_content(gtf_in, chromosomes, report_progress=False):
+def _get_gene_content(gtf, chromosomes, report_progress=False):
     """
     Generator giving groups of intervals belonging to one gene
 
@@ -500,7 +500,7 @@ def _get_gene_content(gtf_in, chromosomes, report_progress=False):
 
     Parameters
     ----------
-    gtf_in : str
+    gtf : str
         Path to gtf input file.
     chromosomes : list
         List of chromosomes to consider.
@@ -535,9 +535,9 @@ def _get_gene_content(gtf_in, chromosomes, report_progress=False):
                 i1[:2] + ['gene', start + 1, stop] + i1[5:8] + [col8])
         return gene_content
 
-    length = pybedtools.BedTool(gtf_in).count()
+    length = pybedtools.BedTool(gtf).count()
     progress, j = 0, 0
-    for interval in pybedtools.BedTool(gtf_in):
+    for interval in pybedtools.BedTool(gtf):
         j += 1
         if report_progress:
             new_progress = j / length
@@ -584,7 +584,7 @@ def _get_gene_content(gtf_in, chromosomes, report_progress=False):
     yield finalize(gene_content)
 
 
-def get_regions(gtf_in, gtf_out, genome_file, cores=1, report_progress=False):
+def get_regions(annotation, segmentation, fai, report_progress=False):
     """
     Create new gtf file with custom annotation and filtered content.
 
@@ -606,14 +606,12 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, report_progress=False):
 
     Parameters
     ----------
-    gtf_in : str
+    annotation : str
         Path to input GTF file.
-    gtf_out : str
+    segmentation : str
         Path to output GTF file.
-    genome_file : str
-        Path to genome_file (.fai file or similar).
-    cores : int
-        Number of computer CPUs to use for calculation.
+    fai : str
+        Path to genome_file (.fai or similar).
     report_progress : bool
         Switch to show progress.
 
@@ -628,11 +626,11 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, report_progress=False):
     # Container for storing intermediate data
     data = []
 
-    LOGGER.debug('Opening genome file: %s', genome_file)
+    LOGGER.debug('Opening genome file: %s', fai)
 
     # Keep just first two column or _complement will fail...
-    genome_file = _first_two_columns(genome_file)
-    with open(genome_file) as gfile:
+    fai = _first_two_columns(fai)
+    with open(fai) as gfile:
         chromosomes = [line.strip().split()[0] for line in gfile]
 
     def process_gene(gene_content):
@@ -658,22 +656,24 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, report_progress=False):
             data.extend(transcript_group)
         data.append(gene_content['gene'])
 
-    LOGGER.debug('Processing genome annotation from: %s', gtf_in)
-    for gene_content in _get_gene_content(gtf_in, chromosomes, report_progress):
+    LOGGER.debug('Processing genome annotation from: %s', annotation)
+    for gene_content in _get_gene_content(annotation, chromosomes, report_progress):
         process_gene(gene_content)
         LOGGER.debug('Just processed gene: %s', gene_content['gene'].attrs['gene_id'])
     # This can be replaced with: multiprocessing.Pool, but it causes huge
     # memory usage. Possible explanation and solution:
     # http://stackoverflow.com/questions/21485319/high-memory-usage-using-python-multiprocessing
-    # p = multiprocessing.Pool(cores, maxtasksperchild=100)
+    # TODO: check and fix execution in parallel, look example
+    # https://daler.github.io/pybedtools/3-brief-examples.html#example-3-count-reads-in-introns-and-exons-in-parallel
+    # p = multiprocessing.Pool(threads, maxtasksperchild=100)
     # p.map(process_gene, _get_gene_content(gtf_in, chromosomes))
 
     # Produce GTF/GFF file from data:
     gs = pybedtools.BedTool(i.fields for i in data).saveas()
 
     LOGGER.info('Calculating intergenic regions...')
-    intergenic_pos = _complement(gs.fn, genome_file, '+')
-    intergenic_neg = _complement(gs.fn, genome_file, '-')
+    intergenic_pos = _complement(gs.fn, fai, '+')
+    intergenic_neg = _complement(gs.fn, fai, '-')
 
     # Join the gs, intergenic_pos and intergenic_neg in one file:
     f2 = tempfile.NamedTemporaryFile(delete=False)
@@ -681,6 +681,6 @@ def get_regions(gtf_in, gtf_out, genome_file, cores=1, report_progress=False):
             shutil.copyfileobj(open(infile, 'rb'), f2)
     f2.close()
 
-    f3 = pybedtools.BedTool(f2.name).sort().saveas(gtf_out)
+    f3 = pybedtools.BedTool(f2.name).sort().saveas(segmentation)
     LOGGER.info('Segmentation stored in %s', f3.fn)
     return f3.fn

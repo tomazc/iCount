@@ -26,7 +26,7 @@ class TestDemultiplex(unittest.TestCase):
         message = r'Output directory does not exist. Make sure it does.'
         with self.assertRaisesRegex(FileNotFoundError, message):
             filenames = demultiplex.run(
-                self.reads, self.adapter, 1, self.barcodes, outdir='/unexisting/dir')
+                self.reads, self.adapter, self.barcodes, mismatches=1, out_dir='/unexisting/dir')
 
     def test_run_ok(self):
         expected = ['{}/demux_{}.fastq.gz'.format(self.dir, b) for b in self.barcodes]
@@ -34,12 +34,12 @@ class TestDemultiplex(unittest.TestCase):
 
         # Without adapter
         filenames = demultiplex.run(
-            self.reads, None, 1, self.barcodes, outdir=self.dir)
+            self.reads, None, self.barcodes, mismatches=1, out_dir=self.dir)
         self.assertEqual(sorted(filenames), sorted(expected))
 
         # With adapter
         filenames = demultiplex.run(
-            self.reads, self.adapter, 1, self.barcodes, outdir=self.dir)
+            self.reads, self.adapter, self.barcodes, mismatches=1, out_dir=self.dir)
         self.assertEqual(sorted(filenames), sorted(expected))
 
 
