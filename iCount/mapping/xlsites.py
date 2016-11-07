@@ -463,7 +463,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th):
     return grouped
 
 
-def run(bam, sites, sites_multi, group_by='start', quant='cDNA',
+def run(bam, sites_unique, sites_multi, group_by='start', quant='cDNA',
         mismatches=2, mapq_th=0, multimax=50, report_progress=False):
     """
     Interpret mapped sites and generate BED file with coordinates and
@@ -479,7 +479,7 @@ def run(bam, sites, sites_multi, group_by='start', quant='cDNA',
     ----------
     bam : str
         Input BAM file with mapped reads.
-    sites : str
+    sites_unique : str
         Output BED6 file to store data from uniquely mapped reads.
     sites_multi : str
         Output BED6 file to store data from multi-mapped reads.
@@ -554,8 +554,8 @@ def run(bam, sites, sites_multi, group_by='start', quant='cDNA',
     for cn, bc in top10:
         LOGGER.info('    %s: %d', bc, cn)
 
-    iCount.files.bed.save_dict(unique, sites, val_index=val_index)
-    LOGGER.info('Saved to BED file (uniquely mapped reads): %s', sites)
+    iCount.files.bed.save_dict(unique, sites_unique, val_index=val_index)
+    LOGGER.info('Saved to BED file (uniquely mapped reads): %s', sites_unique)
     iCount.files.bed.save_dict(multi, sites_multi, val_index=val_index)
     LOGGER.info('Saved to BED file (multi-mapped reads): %s', sites_multi)
 

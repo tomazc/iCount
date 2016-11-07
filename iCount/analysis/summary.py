@@ -79,7 +79,7 @@ def make_types_length_file(annotation, out_file=None, subtype='biotype',
     return os.path.abspath(out_file)
 
 
-def make_summary_report(annotation, sites, out_file,
+def make_summary_report(annotation, sites, summary,
                         fai, types_length_file=None, digits='8', subtype='biotype',
                         excluded_types=None):
     """
@@ -103,7 +103,7 @@ def make_summary_report(annotation, sites, out_file,
         Path to annotation GTF file (should include subtype attribute).
     sites : str
         Path to BED6 file listing cross-linked sites.
-    out_file : str
+    summary : str
         Path to output tab-delimited file with summary statistics.
     fai : str
         Path to file with chromosome lengths.
@@ -190,7 +190,7 @@ def make_summary_report(annotation, sites, out_file,
     # total genome len = sum_of_all_chrom_length * 2 (there are + and - strand):
     total_length = sum([int(line.strip().split()[1]) for line in
                         open(fai)]) * 2
-    with open(out_file, 'wt') as out:
+    with open(summary, 'wt') as out:
         out.write('\t'.join(header) + '\n')
         for type_, [sites, events] in sorted(type_counter.items()):
             length_percent = type_lengths[type_] / total_length
@@ -204,5 +204,5 @@ def make_summary_report(annotation, sites, out_file,
             line = line[:1] + [round(i, int(digits)) for i in line[1:]]
             out.write('\t'.join(map(str, line)) + '\n')
 
-    LOGGER.info('Done. Results written in %s.', os.path.abspath(out_file))
-    return os.path.abspath(out_file)
+    LOGGER.info('Done. Results written in %s.', os.path.abspath(summary))
+    return os.path.abspath(summary)

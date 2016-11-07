@@ -58,7 +58,7 @@ def releases():
     """
     Get list of available ENSEMBL releases.
 
-    Only allows ENSEMBL releases from {0} - {1}.
+    Only allows ENSEMBL releases {0}..{1}.
 
     Returns
     -------
@@ -87,8 +87,7 @@ def species(release=MAX_RELEASE_SUPPORTED):
     Parameters
     ----------
     release : str
-        The release number (can be str or int). Only ENSEMBL releases
-        from {0} - {1} are available.
+        The release number (can be str or int). Only ENSEMBL releases {0}..{1} are available.
 
     Returns
     -------
@@ -117,7 +116,7 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=
     species : str
         Species latin name.
     release : int
-        Release number. Only ENSEMBL releases from {0} - {1} are available.
+        Release number. Only ENSEMBL releases {0}..{1} are available.
     out_dir : str
         Download to this directory (if not given, current working directory).
     annotation : str
@@ -221,7 +220,7 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     species : str
         Species latin name.
     release : int
-        Release number. Only ENSEMBL releases from {0} - {1} are available.
+        Release number. Only ENSEMBL releases {0}..{1} are available.
     out_dir : str
         Download to this directory (if not given, current working directory).
     genome : str

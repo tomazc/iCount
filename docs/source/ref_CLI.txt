@@ -47,7 +47,7 @@ usage: iCount releases [-h] [-S] [-F] [-P] [-M]
 
 Get list of available ENSEMBL releases.
 
-Only allows ENSEMBL releases from 59 - 84.
+Only allows ENSEMBL releases 59..84.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -66,7 +66,7 @@ Get list of species for given release.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -r , --release        The release number (can be str or int). Only ENSEMBL releases (default: 84)
+  -r , --release        The release number (can be str or int). Only ENSEMBL releases 59..84 are available (default: 84)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -85,7 +85,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -r , --release        Release number. Only ENSEMBL releases from 59 - 84 are available (default: 84)
+  -r , --release        Release number. Only ENSEMBL releases 59..84 are available (default: 84)
   -od , --out_dir       Download to this directory (if not given, current working directory) (default: None)
   -a , --annotation     Annotation filename (must have .gz file extension). If not given, (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
@@ -116,7 +116,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -r , --release        Release number. Only ENSEMBL releases from 59 - 84 are available (default: 84)
+  -r , --release        Release number. Only ENSEMBL releases 59..84 are available (default: 84)
   -od , --out_dir       Download to this directory (if not given, current working directory) (default: None)
   --genome              Annotation filename (must have .gz file extension). If not given, (default: None)
   --temp_dir            Temporary directory with intermediate results (default: None)
@@ -223,7 +223,7 @@ cutadapt
 
 usage: iCount cutadapt [-h] [--qual_base] [--qual_trim] [-ml] [-S] [-F] [-P]
                        [-M]
-                       reads out_file adapter
+                       reads reads_trimmed adapter
 
 Cutadapt
 --------
@@ -232,7 +232,7 @@ Interface to running cutadapt.
 
 positional arguments:
   reads                 Input FASTQ file
-  out_file              Output FASTQ file containing trimmed reads
+  reads_trimmed         Output FASTQ file containing trimmed reads
   adapter               Sequence of an adapter ligated to the 3' end
 
 optional arguments:
@@ -333,7 +333,7 @@ xlsites
 
 usage: iCount xlsites [-h] [-g] [--quant] [-mis] [--mapq_th] [--multimax]
                       [-prog] [-S] [-F] [-P] [-M]
-                      bam sites sites_multi
+                      bam sites_unique sites_multi
 
 Identify and quantify cross-linked sites
 ----------------------------------------
@@ -361,7 +361,7 @@ of randomers among) unique mapped sites that overlap with multimapped reads
 
 positional arguments:
   bam                   Input BAM file with mapped reads
-  sites                 Output BED6 file to store data from uniquely mapped reads
+  sites_unique          Output BED6 file to store data from uniquely mapped reads
   sites_multi           Output BED6 file to store data from multi-mapped reads
 
 optional arguments:
@@ -383,7 +383,7 @@ annotate
 ========
 
 usage: iCount annotate [-h] [--subtype] [-e  [...]] [-S] [-F] [-P] [-M]
-                       annotation sites out_file
+                       annotation sites sites_annotated
 
 Cross-link site annotation
 --------------------------
@@ -392,8 +392,8 @@ Annotate each cross link site with types of regions that intersect with it.
 
 positional arguments:
   annotation            Path to annotation file (should be GTF and include `subtype` attribute)
-  sites                 Path to cross_links_file (should be BED6)
-  out_file              Path to output file
+  sites                 Path to input BED6 file listing all cross-linked sites
+  sites_annotated       Path to output BED6 file listing annotated cross-linked sites
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -436,7 +436,7 @@ optional arguments:
 group
 =====
 
-usage: iCount group [-h] [-S] [-F] [-P] [-M] out_file in_files [in_files ...]
+usage: iCount group [-h] [-S] [-F] [-P] [-M] sites_grouped sites [sites ...]
 
 Group BED files
 ---------------
@@ -444,8 +444,8 @@ Group BED files
 Group analysis docstring... TODO!
 
 positional arguments:
-  out_file              Path to output BED6 file
-  in_files              BED6 files(paths) to be merged
+  sites_grouped         Path to output BED6 file containing merged data from input sites files
+  sites                 List of BED6 files(paths) to be merged
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -498,7 +498,7 @@ summary
 
 usage: iCount summary [-h] [--types_length_file] [--digits] [--subtype]
                       [-e  [...]] [-S] [-F] [-P] [-M]
-                      annotation sites out_file fai
+                      annotation sites summary fai
 
 Cross-link site summary
 -----------------------
@@ -508,7 +508,7 @@ Report proportion of cross-link events/sites on each region type
 positional arguments:
   annotation            Path to annotation GTF file (should include subtype attribute)
   sites                 Path to BED6 file listing cross-linked sites
-  out_file              Path to output tab-delimited file with summary statistics
+  summary               Path to output tab-delimited file with summary statistics
   fai                   Path to file with chromosome lengths
 
 optional arguments:

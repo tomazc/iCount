@@ -18,7 +18,7 @@ from pybedtools import create_interval_from_list
 LOGGER = logging.getLogger(__name__)
 
 
-def annotate_cross_links(annotation, sites, out_file, subtype='biotype', excluded_types=None):
+def annotate_cross_links(annotation, sites, sites_annotated, subtype='biotype', excluded_types=None):
     """
     Annotate each cross-link site with all region types that intersect it.
 
@@ -38,9 +38,9 @@ def annotate_cross_links(annotation, sites, out_file, subtype='biotype', exclude
     annotation : str
         Path to annotation file (should be GTF and include `subtype` attribute).
     sites : str
-        Path to cross_links_file (should be BED6).
-    out_file : str
-        Path to output file.
+        Path to input BED6 file listing all cross-linked sites.
+    sites_annotated : str
+        Path to output BED6 file listing annotated cross-linked sites.
     subtype : str
         Subtype.
     excluded_types : list_str
@@ -93,6 +93,6 @@ def annotate_cross_links(annotation, sites, out_file, subtype='biotype', exclude
 
     # Produce annotated cross-link file:
     LOGGER.info('Writing results to file...')
-    pybedtools.BedTool(line for line in data).saveas(out_file)
-    LOGGER.info('Done. Output saved to: %s', os.path.abspath(out_file))
-    return os.path.abspath(out_file)
+    pybedtools.BedTool(line for line in data).saveas(sites_annotated)
+    LOGGER.info('Done. Output saved to: %s', os.path.abspath(sites_annotated))
+    return os.path.abspath(sites_annotated)
