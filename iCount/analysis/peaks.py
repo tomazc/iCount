@@ -168,9 +168,15 @@ def run(annotation, sites, peaks, scores=None, hw=3, fdr=0.05, perms=100,
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    # load annotation
-    annotation = iCount.files.gtf.load(annotation)
-    sites = iCount.files.bed.load(sites).sort().saveas()
+    assert peaks.endswith(('.bed', '.bed.gz'))
+    if scores:
+        assert scores.endswith(('.tsv', '.tsv.gz', '.csv', '.csv.gz', 'txt', 'txt.gz'))
+    numpy.random.seed(rnd_seed)
+
+    LOGGER.info('Loading annotation file...')
+    annotation = pybedtools.BedTool(annotation)
+    LOGGER.info('Loading cross-links file...')
+    sites = pybedtools.BedTool(sites).sort().saveas()
 
     # assign cross-linked sites to regions
     LOGGER.info('Calculating intersection between annotation and cross-link file...')

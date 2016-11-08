@@ -17,8 +17,7 @@ from pybedtools import create_interval_from_list
 LOGGER = logging.getLogger(__name__)
 
 
-def make_types_length_file(annotation, out_file=None, subtype='biotype',
-                           excluded_types=None):
+def make_types_length_file(annotation, out_file=None, subtype='biotype', excluded_types=None):
     """
     Calculate the number of non-overlapping base pairs of each "type".
 
@@ -44,7 +43,7 @@ def make_types_length_file(annotation, out_file=None, subtype='biotype',
 
     """
     excluded_types = excluded_types or []
-    annotation = pybedtools.BedTool(annotation).filter(
+    annotation_filtered = pybedtools.BedTool(annotation).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
 
     if out_file is None:
@@ -55,7 +54,7 @@ def make_types_length_file(annotation, out_file=None, subtype='biotype',
             out_file = annotation + 'types_length.txt'
 
     data = {}
-    for interval in annotation:
+    for interval in annotation_filtered:
         if subtype:
             type_ = '{} {}'.format(interval[2], interval.attrs.get(subtype, '.'))
         else:
@@ -79,9 +78,8 @@ def make_types_length_file(annotation, out_file=None, subtype='biotype',
     return os.path.abspath(out_file)
 
 
-def make_summary_report(annotation, sites, summary,
-                        fai, types_length_file=None, digits='8', subtype='biotype',
-                        excluded_types=None):
+def make_summary_report(annotation, sites, summary, fai, types_length_file=None, digits='8',
+                        subtype='biotype', excluded_types=None):
     """
     Make summary report from cross-link and annotation data.
 
@@ -126,7 +124,7 @@ def make_summary_report(annotation, sites, summary,
 
     excluded_types = excluded_types or []
     cross_links = pybedtools.BedTool(sites).sort().saveas()
-    annotation = pybedtools.BedTool(annotation).filter(
+    annotation_filtered = pybedtools.BedTool(annotation).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
 
     # If not given/present, make file with cumulative length for each type:
@@ -145,8 +143,8 @@ def make_summary_report(annotation, sites, summary,
     # sorted=True - invokes memory efficient algorithm for large files
     # s=True - only report hits in B that overlap A on the same strand
     # wb=True - Write the original entry in B for each overlap
-    LOGGER.info('Calculating intersection between cross-link and annotation_file...')
-    overlaps = cross_links.intersect(annotation, sorted=True, s=True, wb=True).saveas()
+    LOGGER.info('Calculating intersection between cross-link and annotation file...')
+    overlaps = cross_links.intersect(annotation_filtered, sorted=True, s=True, wb=True).saveas()
     try:
         # this will raise TypeError if overlaps is empty:
         overlaps[0]

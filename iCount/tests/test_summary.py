@@ -152,6 +152,7 @@ class TestMakeTypesLengthFile(unittest.TestCase):
 class TestMakeSummaryReport(unittest.TestCase):
 
     def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
         self.chrom_lengths = [['1', '100']]
         self.header = ['type', 'length', 'length %',
                        'sites #', 'sites %', 'sites enrichment',
