@@ -111,9 +111,14 @@ def merge_bed(sites_grouped, sites):
     return os.path.abspath(result.fn)
 
 
-def _f2s(f, dec=4):
-    """Return string representation of float without trailing decimal zeros"""
-    return '{{:.{:d}f}}'.format(dec).format(f).rstrip('0').rstrip('.')
+def _f2s(number, dec=4):
+    """
+    Return string representation of ``number`` without trailing decimal
+    zeros and with maximum ``dec`` decimal places.
+    """
+    if not isinstance(number, (int, float)):
+        return number
+    return '{{:.{:d}f}}'.format(dec).format(number).rstrip('0').rstrip('.')
 
 
 def _iter_bedgraph_dict(bedgraph, val_index=None):

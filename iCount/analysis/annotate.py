@@ -18,7 +18,8 @@ from pybedtools import create_interval_from_list
 LOGGER = logging.getLogger(__name__)
 
 
-def annotate_cross_links(annotation, sites, sites_annotated, subtype='biotype', excluded_types=None):
+def annotate_cross_links(annotation, sites, sites_annotated, subtype='biotype',
+                         excluded_types=None):
     """
     Annotate each cross-link site with all region types that intersect it.
 

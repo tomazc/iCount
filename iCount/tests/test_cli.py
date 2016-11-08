@@ -63,20 +63,20 @@ class TestCLI(unittest.TestCase):
         # Execute only full command (with --target_dir), to avoid downloading to cwd.
         command_full = ['iCount', 'annotation', 'homo_sapiens',
                         '--release', '84',
-                        '--target_dir', self.dir,
-                        '--target_fname', self.tmp1,
+                        '--out_dir', self.dir,
+                        '--annotation', self.tmp1,
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
 
         self.assertEqual(subprocess.call(command_full), 0)
 
-    def test_sequence(self):
+    def test_genome(self):
         # Download just MT and Y chromosome, or test can last too long...
-        command_full = ['iCount', 'sequence', 'homo_sapiens',
+        command_full = ['iCount', 'genome', 'homo_sapiens',
                         '--release', '84',
-                        '--target_dir', self.dir,
-                        '--target_fname', self.tmp1 + '.gz',
-                        '--tempdir', self.dir,
+                        '--out_dir', self.dir,
+                        '--genome', self.tmp1 + '.gz',
+                        '--temp_dir', self.dir,
                         '--chromosomes', 'MT', 'Y',
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
@@ -93,8 +93,8 @@ class TestCLI(unittest.TestCase):
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         command_full = ['iCount', 'genes', self.gtf, self.tmp1,
-                        '--fai_file', fai,
-                        '--name', 'gene',
+                        '--fai', fai,
+                        '--feature', 'gene',
                         '--attribute', 'gene_id',
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
@@ -112,7 +112,6 @@ class TestCLI(unittest.TestCase):
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         command_full = ['iCount', 'segment', self.gtf, self.tmp1, fai,
-                        '--cores', '1',
                         '--report_progress',
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
@@ -136,19 +135,19 @@ class TestCLI(unittest.TestCase):
         command_basic = ['iCount', 'demultiplex',
                          fastq,
                          adapter,
-                         '2',  # mismatches
                          b1, b2, b3,
-                         '--outdir', self.dir,  # put files in tmpdir, to not pollute cwd.
+                         '--mismatches', '2',
+                         '--out_dir', self.dir,  # put files in tmpdir, to not pollute cwd.
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         command_full = ['iCount', 'demultiplex',
                         fastq,
                         adapter,
-                        '2',  # mismatches
                         b1, b2, b3,
+                        '--mismatches', '2',
                         '--minimum_length', '15',
                         '--prefix', 'demux',
-                        '--outdir', self.dir,
+                        '--out_dir', self.dir,
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
 
@@ -183,7 +182,6 @@ class TestCLI(unittest.TestCase):
         fastq = make_fastq_file(genome=genome)
 
         command_basic = ['iCount', 'mapindex', genome, self.dir,
-                         '--logfile_path', get_temp_file_name(),
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         self.assertEqual(subprocess.call(command_basic), 0)
@@ -204,8 +202,8 @@ class TestCLI(unittest.TestCase):
         command_full = ['iCount', 'mapindex', genome, self.dir,
                         '--annotation', self.gtf,
                         '--overhang', '100',
+                        '--overhang_min', '8',
                         '--threads', '1',
-                        '--logfile_path', get_temp_file_name(),
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
         self.assertEqual(subprocess.call(command_full), 0)
@@ -295,13 +293,13 @@ class TestCLI(unittest.TestCase):
 
     def test_peaks(self):
         command_basic = ['iCount', 'peaks', self.annotation,
-                         self.cross_links, self.tmp1,
+                         self.cross_links, get_temp_file_name(extension='.bed.gz'),
                          '-S', '40',  # Supress lower than ERROR messages.
                          ]
         command_full = [
             'iCount', 'peaks', self.annotation,
-            self.cross_links, self.tmp1,
-            '--fout_scores', self.tmp2,
+            self.cross_links, get_temp_file_name(extension='.bed.gz'),
+            '--scores', get_temp_file_name(extension='.tsv.gz'),
             '--hw', '3',
             '--fdr', '0.05',
             '--perms', '10',
@@ -326,7 +324,7 @@ class TestCLI(unittest.TestCase):
                          ]
         command_full = ['iCount', 'summary', self.annotation,
                         self.cross_links, self.tmp1, chrom_len,
-                        '--ndigits', '8',
+                        '--digits', '8',
                         '--subtype', 'biotype',
                         '--excluded_types', 'ncRNA,', 'intron',
                         '-S', '40',  # Supress lower than ERROR messages.
