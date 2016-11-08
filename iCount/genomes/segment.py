@@ -432,7 +432,7 @@ def _process_transcript_group(intervals):
     return regions
 
 
-def _complement(gs, genome_file, strand):
+def _complement(gs, genome_file, strand, type_name='intergenic'):
     """
     Get the complement of intervals in gs that have strand == `strand`
 
@@ -462,7 +462,7 @@ def _complement(gs, genome_file, strand):
 
     # Filter the content file by strand
     gs_strand_only = pybedtools.BedTool(gs).filter(
-        lambda r: r.strand == strand).saveas()
+        lambda r: r[6] == strand).saveas()
 
     # Sorted input is required for complement calculation:
     gs_sorted = gs_strand_only.sort(faidx=genome_file).saveas()
@@ -479,7 +479,7 @@ def _complement(gs, genome_file, strand):
     # gtf_stop = bed_stop
     col8 = 'gene_id "."; transcript_id ".";'
     gtf = pybedtools.BedTool(create_interval_from_list(
-        [i[0], '.', 'intergenic', str(int(i[1]) + 1), i[2], '.', strand, '.', col8])
+        [i[0], '.', type_name, str(int(i[1]) + 1), i[2], '.', strand, '.', col8])
         for i in intergenic_bed).saveas()
 
     return os.path.abspath(gtf.fn)

@@ -14,6 +14,8 @@ import iCount
 
 from pybedtools import create_interval_from_list
 
+from iCount.genomes.segment import _complement
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -56,7 +58,8 @@ def make_types_length_file(annotation, out_file=None, subtype='biotype', exclude
     data = {}
     for interval in annotation_filtered:
         if subtype:
-            type_ = '{} {}'.format(interval[2], interval.attrs.get(subtype, '.'))
+            sbtyp = interval.attrs.get(subtype, None)
+            type_ = ' '.join([interval[2], sbtyp] if sbtyp else [interval[2]])
         else:
             type_ = interval[2]
         if type_ not in data:
@@ -124,14 +127,19 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
 
     excluded_types = excluded_types or []
     cross_links = pybedtools.BedTool(sites).sort().saveas()
-    annotation_filtered = pybedtools.BedTool(annotation).filter(
+    ann_filtered = pybedtools.BedTool(annotation).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
+
+    # Merge all annotation and take what is left = unannotated regions:
+    unann_pos = _complement(ann_filtered.fn, fai, '+', type_name='unannotated')
+    unann_neg = _complement(ann_filtered.fn, fai, '-', type_name='unannotated')
+    ann_joined = ann_filtered.cat(unann_pos, unann_neg, postmerge=False).sort().saveas()
 
     # If not given/present, make file with cumulative length for each type:
     if not types_length_file or not os.path.isfile(types_length_file):
         LOGGER.info('types_length_file not given - calculating it')
         types_length_file = make_types_length_file(
-            annotation, subtype=subtype, excluded_types=excluded_types)
+            ann_joined.fn, subtype=subtype, excluded_types=excluded_types)
 
     # read the file to dict, named type_lengths
     type_lengths = {}
@@ -143,8 +151,8 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
     # sorted=True - invokes memory efficient algorithm for large files
     # s=True - only report hits in B that overlap A on the same strand
     # wb=True - Write the original entry in B for each overlap
-    LOGGER.info('Calculating intersection between cross-link and annotation file...')
-    overlaps = cross_links.intersect(annotation_filtered, sorted=True, s=True, wb=True).saveas()
+    LOGGER.info('Calculating intersection between cross-link and annotation...')
+    overlaps = cross_links.intersect(ann_joined, sorted=True, s=True, wb=True).saveas()
     try:
         # this will raise TypeError if overlaps is empty:
         overlaps[0]
@@ -173,7 +181,8 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
         if subtype:
             # Extract subtype attribute:
             stype = re.match(r'.*{} "(.*)";'.format(subtype), segment[-1])
-            site_types.append('{} {}'.format(segment[8], stype.group(1) if stype else '.'))
+            stype = stype.group(1) if stype else None
+            site_types.append(' '.join([segment[8], stype] if stype else [segment[8]]))
         else:
             site_types.append(segment[8])
         previous_segment = segment

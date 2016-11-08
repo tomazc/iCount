@@ -182,7 +182,9 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['1', '.', 'CDS', '1', '10', '.', '-', '.', 'biotype "A";']]
         expected = [
             self.header,
-            ['CDS A', '20', '0.1', '2', '1.0', '10.0', '5', '1.0', '10.0']]
+            ['CDS A', '20', '0.1', '2', '1.0', '10.0', '5', '1.0', '10.0'],
+            ['unannotated', '180', '0.9', '0', '0.0', '0.0', '0', '0.0', '0.0'],
+        ]
 
         out = _make_summary_report(annotation, cross_links, self.chrom_lengths)
         self.assertEqual(out, expected)
@@ -200,7 +202,9 @@ class TestMakeSummaryReport(unittest.TestCase):
         expected = [
             self.header,
             ['CDS A', '10', '0.05', '1', '0.5', '10.0', '3', '0.75', '15.0'],
-            ['CDS B', '10', '0.05', '1', '0.5', '10.0', '1', '0.25', '5.0']]
+            ['CDS B', '10', '0.05', '1', '0.5', '10.0', '1', '0.25', '5.0'],
+            ['unannotated', '180', '0.9', '0', '0.0', '0.0', '0', '0.0', '0.0'],
+        ]
 
         out = _make_summary_report(annotation, cross_links, self.chrom_lengths)
         self.assertEqual(out, expected)
@@ -221,7 +225,9 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['CDS A', '10', '0.05', '1', '0.25', '5.0', '1', '0.25', '5.0'],
             ['CDS B', '20', '0.1', '1', '0.25', '2.5', '1', '0.25', '2.5'],
             ['ncRNA A', '10', '0.05', '1', '0.25', '5.0', '1', '0.25', '5.0'],
-            ['ncRNA C', '20', '0.1', '1', '0.25', '2.5', '1', '0.25', '2.5']]
+            ['ncRNA C', '20', '0.1', '1', '0.25', '2.5', '1', '0.25', '2.5'],
+            ['unannotated', '180', '0.9', '0', '0.0', '0.0', '0', '0.0', '0.0'],
+        ]
 
         out = _make_summary_report(annotation, cross_links, self.chrom_lengths)
         self.assertEqual(out, expected)
@@ -239,7 +245,9 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['1', '.', 'CDS', '1', '10', '.', '-', '.', 'biotype "A";']]
         expected = [
             self.header,
-            ['CDS A', '25', '0.125', '2', '1.0', '8.0', '3', '1.0', '8.0']]
+            ['CDS A', '25', '0.125', '2', '1.0', '8.0', '3', '1.0', '8.0'],
+            ['unannotated', '175', '0.875', '0', '0.0', '0.0', '0', '0.0', '0.0'],
+        ]
 
         out = _make_summary_report(annotation, cross_links, self.chrom_lengths)
         self.assertEqual(out, expected)
@@ -255,7 +263,9 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['1', '.', 'CDS', '2', '10', '.', '+', '.', 'biotype "B";']]
         expected = [
             self.header,
-            ['CDS', '10', '0.05', '1', '1.0', '20.0', '1', '1.0', '20.0']]
+            ['CDS', '10', '0.05', '1', '1.0', '20.0', '1', '1.0', '20.0'],
+            ['unannotated', '190', '0.95', '0', '0.0', '0.0', '0', '0.0', '0.0'],
+        ]
 
         out = _make_summary_report(annotation, cross_links,
                                    self.chrom_lengths, subtype=None)
@@ -275,7 +285,9 @@ class TestMakeSummaryReport(unittest.TestCase):
             self.header,
             ['CDS A', '10', '0.05', '1', '0.5', '10.0', '1', '0.5', '10.0'],
             ['CDS B', '10', '0.05', '1', '0.5', '10.0', '1', '0.5', '10.0'],
-            ['intron B', '4', '0.02', '0', '0.0', '0.0', '0', '0.0', '0.0']]
+            ['intron B', '4', '0.02', '0', '0.0', '0.0', '0', '0.0', '0.0'],
+            ['unannotated', '190', '0.95', '0', '0.0', '0.0', '0', '0.0', '0.0'],
+        ]
 
         out = _make_summary_report(annotation, cross_links,
                                    self.chrom_lengths, subtype='attr42')
@@ -292,7 +304,9 @@ class TestMakeSummaryReport(unittest.TestCase):
             ['1', '.', 'ncRNA', '1', '20', '.', '+', '.', 'biotype "C";']]
         expected = [
             self.header,
-            ['ncRNA C', '20', '0.1', '1', '1.0', '10.0', '1', '1.0', '10.0']]
+            ['ncRNA C', '20', '0.1', '1', '1.0', '10.0', '1', '1.0', '10.0'],
+            ['unannotated', '180', '0.9', '0', '0.0', '0.0', '0', '0.0', '0.0'],
+        ]
 
         out = _make_summary_report(annotation, cross_links,
                                    self.chrom_lengths, excluded_types=['intron'])

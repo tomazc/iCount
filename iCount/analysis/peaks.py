@@ -432,8 +432,8 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    if fetaures is None:
-        fetaures = ['gene']
+    if features is None:
+        features = ['gene']
     assert peaks.endswith(('.bed', '.bed.gz'))
     if scores:
         assert scores.endswith(('.tsv', '.tsv.gz', '.csv', '.csv.gz', 'txt', 'txt.gz'))
@@ -451,7 +451,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     groups = {}
     group_sizes = {}
     metrics = iCount.Metrics()
-    metrics.skipped_features = 0  # conuter for skipped fetaures
+    metrics.skipped_features = 0  # conuter for skipped features
     multi_mode = len(features) > 1 and not merge_features
     LOGGER.info('Processing intersections...')
     for feature in overlaps:
