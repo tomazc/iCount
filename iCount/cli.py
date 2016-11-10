@@ -326,8 +326,6 @@ def main():
         iCount.genomes.ensembl.genome, subparsers, only_func=True)
     make_parser_from_function(
         iCount.genomes.segment.get_regions, subparsers)
-    make_parser_from_function(
-        iCount.genomes.genes.get_genes, subparsers)
 
     # Demultiplex and mapping:
     make_parser_from_function(iCount.demultiplex.run, subparsers)

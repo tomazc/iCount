@@ -18,4 +18,3 @@ and into segments of same type (exon, intron, UTR, ...) is supported.
 
 from . import ensembl
 from . import segment
-from . import genes

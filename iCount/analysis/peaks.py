@@ -33,12 +33,12 @@ There are two genes (partially intersecting) and five positions with cross-links
 (noted with a, b, c, d and e). Crosslink position "a" has 60 cross-link events,
 "b" has 100 cross-link events and so on. Also, gene1 has gene_id 001, etc.
 
-The algorithm first finds all intersections between annotation and cross-links.
-In this case cross-link position "a" intersects only with gene1, while position
-"b" intersects also with gene2... Annotation can include various other types of
-segments (transcripts, intergenic, ncRNA, etc.), but only segments of type
-``gene`` are considered for intersection. This behaviour is controlled by
-parameter ``features``.
+The algorithm first finds all intersections between annotation and
+cross-links. In this case cross-link position "a" intersects only with gene1,
+while position "b" intersects also with gene2... Annotation can include
+various other types of segments (transcripts, intergenic, ncRNA, etc.), but only
+segments of type ``gene`` are considered for intersection. This behaviour is
+controlled by parameter ``features``.
 
 Next step is to make groups of cross-links. They are grouped by ``group_by``
 parameter (in this case, it equals to ``gene_id``). There will be 2 groups.
@@ -378,12 +378,6 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     """
     Find positions with high density of cross-linked sites.
 
-    Algorithm does:
-
-        * read the annotation file
-        * read the BED file with cross-links
-
-
 
     When detrmining feature.name, value of the first existing attribute in the
     following tuple is taken::
@@ -396,7 +390,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     Parameters
     ----------
     annotation : str
-        Annotation file in GTF format
+        Annotation file in GTF format, obtained from "iCount segment" command.
     sites : str
         File with cross-links in BED6 format.
     peaks : str
@@ -431,6 +425,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
+    metrics = iCount.Metrics()
 
     if features is None:
         features = ['gene']
@@ -440,7 +435,14 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     numpy.random.seed(rnd_seed)
 
     LOGGER.info('Loading annotation file...')
-    annotation = pybedtools.BedTool(annotation)
+    annotation = pybedtools.BedTool(annotation).saveas()
+    metrics.annotation_all = len(annotation)
+    annotation = annotation.filter(lambda x: x[2] in features).sort().saveas()
+    metrics.annotation_used = len(annotation)
+    metrics.annotation_skipped = metrics.annotation_all - metrics.annotation_used
+    LOGGER.info('{} out of {} annotation records will be used ({} skipped).'.format(
+        metrics.annotation_used, metrics.annotation_all, metrics.annotation_skipped))
+
     LOGGER.info('Loading cross-links file...')
     sites = pybedtools.BedTool(sites).sort().saveas()
 
@@ -450,15 +452,9 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
 
     groups = {}
     group_sizes = {}
-    metrics = iCount.Metrics()
-    metrics.skipped_features = 0  # conuter for skipped features
     multi_mode = len(features) > 1 and not merge_features
     LOGGER.info('Processing intersections...')
     for feature in overlaps:
-        if feature[2] not in features:  # check if of correct feature type
-            metrics.skipped_features += 1
-            continue
-
         chrom = feature.chrom
         start = feature.start
         end = feature.stop
@@ -507,7 +503,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
             results.setdefault((chrom, pos, strand), []).\
                 append((fdr_score, name, group_id, val, val_extended))
 
-    LOGGER.info('Peaks caclulation finished. Writing results to files...')
+    LOGGER.info('Peaks caculation finished. Writing results to files...')
 
     # Make peaks: a BED6 file, with only the most significant cross-links:
     metrics.significant_positions = 0
