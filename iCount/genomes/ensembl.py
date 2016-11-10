@@ -121,25 +121,33 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=
         Download to this directory (if not given, current working directory).
     annotation : str
         Annotation filename (must have .gz file extension). If not given,
-        species.release.gtf.gz is used.
+        species.release.gtf.gz is used. If annotation is provided as absolute
+        path, out_dir is ignored and file is saved to given path.
 
     Returns
     -------
     str
         Downloaded annotation filename.
 
-    TODO: target_dir & target_fname into one parameter? But the default name is
-    a quite useful feature...
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
+    if annotation:
+        assert annotation.endswith(('.gtf', '.gtf.gz'))
+    else:
+        annotation = '{}.{}.gtf.gz'.format(species, release)
+
+    # If absolute path is given, ignore out_dir:
+    if os.path.isabs(annotation):
+        if out_dir:
+            LOGGER.info('out_dir parameter has been changed, since absolute '
+                        'path is provided by annotation parameter.')
+        out_dir = os.path.dirname(annotation)
+        annotation = os.path.basename(annotation)
     if not out_dir:
         out_dir = os.getcwd()
     if not os.path.isdir(out_dir):
         raise ValueError('Directory "{}" does not exist'.format(out_dir))
-    # Process filename
-    if not annotation:
-        annotation = '{}.{}.gtf.gz'.format(species, release)
 
     ftp = get_ftp_instance()
     server_dir = '/pub/release-{}/gtf/{}/'.format(release, species)
@@ -203,7 +211,7 @@ def chrom_length(fasta_in):
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
 def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
-           temp_dir=None, chromosomes=None):
+           chromosomes=None):
     """
     Downloads genome file in FASTA fromat.
 
@@ -224,10 +232,10 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     out_dir : str
         Download to this directory (if not given, current working directory).
     genome : str
-        Annotation filename (must have .gz file extension). If not given,
-        species.release.gtf.gz is used.
-    temp_dir : str
-        Temporary directory with intermediate results.
+        Genome filename (must have .gz file extension). If not given,
+        species.release.fa.gz is used. If just filename is given, out_dir
+        parameter is used. However, if full path is provided, out_dir is ignored
+        and file is saved to given path.
     chromosomes : list_str
         If given, don't download the whole genome, but juts the given
         cromosomes. Chromosomes can be given as strings aor integers
@@ -242,6 +250,16 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
+    if genome:
+        assert genome.endswith(('.fa', '.fasta', '.fa.gz', '.fasta.gz'))
+
+    # If absolute path is given, ignore out_dir:
+    if genome and os.path.isabs(genome):
+        if out_dir:
+            LOGGER.info('out_dir parameter has been changed, since absolute '
+                        'path is provided by genome parameter.')
+        out_dir = os.path.dirname(genome)
+        genome = os.path.basename(genome)
     if not out_dir:
         out_dir = os.getcwd()
     if not os.path.isdir(out_dir):
@@ -290,7 +308,9 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     target_path = os.path.abspath(os.path.join(out_dir, genome))
 
     LOGGER.info('Downloading FASTA file into: %s', target_path)
-    temp_dir = tempfile.mkdtemp(dir=temp_dir)
+    temp_dir = os.path.join(iCount.tmp_root, 'ensembl')
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
     for fname in filtered_files:
         LOGGER.debug('Downloading file: %s', fname)
         # Download all files to tempdir:

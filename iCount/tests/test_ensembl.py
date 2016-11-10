@@ -53,7 +53,7 @@ class TestEnsemblDownload(unittest.TestCase):
 
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, self.gtf)))
 
-    def test_sequence(self):
+    def test_genome(self):
         fasta_file = ensembl.genome(
             'homo_sapiens', release=84, out_dir=self.tempdir, chromosomes=['MT'])
 
