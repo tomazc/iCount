@@ -6,7 +6,7 @@ import warnings
 import pybedtools
 
 from iCount.analysis import summary
-from iCount.tests.utils import make_file_from_list, make_list_from_file
+from iCount.tests.utils import make_file_from_list, make_list_from_file, get_temp_file_name
 
 
 def _make_types_length(annotation, subtype='biotype', excluded_types=None):
@@ -14,10 +14,15 @@ def _make_types_length(annotation, subtype='biotype', excluded_types=None):
     Run function `make_types_length_file` with data from `annotation`.
     """
     annotation_file = make_file_from_list(annotation)
-    out_file = tempfile.NamedTemporaryFile(delete=False).name
-    return make_list_from_file(summary.make_types_length_file(
-        annotation_file, out_file, subtype=subtype,
-        excluded_types=excluded_types), fields_separator='\t')
+    out_file = get_temp_file_name()
+    fai = make_file_from_list(bedtool=False, data=[
+        ['1', '100'],
+        ['6', '100'],
+        ['20', '100'],
+    ])
+    result, _ = summary.make_types_length_file(
+        annotation_file, fai, out_file, subtype=subtype, excluded_types=excluded_types)
+    return make_list_from_file(result, fields_separator='\t')
 
 
 def _make_summary_report(annotation, cross_links, chrom_lengths,
@@ -55,7 +60,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['1', '.', 'CDS', '15', '25', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'CDS', '20', '29', '.', '+', '.', 'biotype "A";']]
         expected = [
-            ['CDS A', '20']]
+            ['CDS A', '20'],
+            ['unannotated', '580'],
+        ]
 
         self.assertEqual(expected, _make_types_length(annotation))
 
@@ -69,7 +76,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['1', '.', 'CDS', '10', '19', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'CDS', '10', '19', '.', '-', '.', 'biotype "A";']]
         expected = [
-            ['CDS A', '20']]
+            ['CDS A', '20'],
+            ['unannotated', '580'],
+        ]
 
         self.assertEqual(expected, _make_types_length(annotation))
 
@@ -78,16 +87,18 @@ class TestMakeTypesLengthFile(unittest.TestCase):
         Defect different types in same position correctly.
         """
         annotation = [
-            ['1', '.', 'intron', '10', '20', '.', '+', '.', 'biotype "A";'],
-            ['1', '.', 'intron', '20', '30', '.', '+', '.', 'biotype "A";'],
-            ['1', '.', 'intron', '10', '20', '.', '+', '.', 'biotype "B";'],
-            ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "A";'],
-            ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "C";']]
+            ['1', '.', 'intron', '10', '19', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'intron', '10', '19', '.', '+', '.', 'biotype "B";'],
+            ['1', '.', 'ncRNA', '10', '19', '.', '+', '.', 'biotype "A";'],
+            ['1', '.', 'ncRNA', '10', '19', '.', '+', '.', 'biotype "C";']]
         expected = [
-            ['intron A', '21'],
-            ['intron B', '11'],
-            ['ncRNA A', '11'],
-            ['ncRNA C', '11']]
+            ['intron A', '20'],
+            ['intron B', '10'],
+            ['ncRNA A', '10'],
+            ['ncRNA C', '10'],
+            ['unannotated', '580'],
+        ]
 
         self.assertEqual(expected, _make_types_length(annotation))
 
@@ -103,7 +114,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
         expected = [
             ['intron A', '20'],
             ['intron B', '10'],
-            ['ncRNA C', '10']]
+            ['ncRNA C', '10'],
+            ['unannotated', '560'],
+        ]
 
         self.assertEqual(expected, _make_types_length(annotation))
 
@@ -116,7 +129,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'biotype "C";']]
         expected = [
             ['intron', '10'],
-            ['ncRNA', '10']]
+            ['ncRNA', '10'],
+            ['unannotated', '580']
+        ]
 
         self.assertEqual(expected, _make_types_length(
             annotation, subtype=None))
@@ -130,7 +145,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'attr42 "C";']]
         expected = [
             ['intron A', '10'],
-            ['ncRNA C', '10']]
+            ['ncRNA C', '10'],
+            ['unannotated', '580'],
+        ]
 
         self.assertEqual(expected, _make_types_length(
             annotation, subtype='attr42'))
@@ -143,7 +160,9 @@ class TestMakeTypesLengthFile(unittest.TestCase):
             ['20', '.', 'intron', '20', '29', '.', '+', '.', 'biotype "A";'],
             ['6', '.', 'ncRNA', '10', '19', '.', '+', '.', 'biotype "C";']]
         expected = [
-            ['ncRNA C', '10']]
+            ['ncRNA C', '10'],
+            ['unannotated', '590'],
+        ]
 
         self.assertEqual(expected, _make_types_length(
             annotation, excluded_types=['intron']))

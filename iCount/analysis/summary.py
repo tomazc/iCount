@@ -19,7 +19,7 @@ from iCount.genomes.segment import _complement
 LOGGER = logging.getLogger(__name__)
 
 
-def make_types_length_file(annotation, out_file=None, subtype='biotype', excluded_types=None):
+def make_types_length_file(annotation, fai, out_file=None, subtype='biotype', excluded_types=None):
     """
     Calculate the number of non-overlapping base pairs of each "type".
 
@@ -45,7 +45,7 @@ def make_types_length_file(annotation, out_file=None, subtype='biotype', exclude
 
     """
     excluded_types = excluded_types or []
-    annotation_filtered = pybedtools.BedTool(annotation).filter(
+    ann_filtered = pybedtools.BedTool(annotation).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
 
     if out_file is None:
@@ -55,8 +55,15 @@ def make_types_length_file(annotation, out_file=None, subtype='biotype', exclude
         else:
             out_file = annotation + 'types_length.txt'
 
+    # Merge all annotation and take what is left = unannotated regions:
+    unann_pos = _complement(ann_filtered.fn, fai, '+', type_name='unannotated')
+    unann_neg = _complement(ann_filtered.fn, fai, '-', type_name='unannotated')
+    ann_modified_file = out_file + 'modified'
+    ann_joined = ann_filtered.cat(unann_pos, unann_neg, postmerge=False). \
+        sort().saveas(ann_modified_file)
+
     data = {}
-    for interval in annotation_filtered:
+    for interval in ann_joined:
         if subtype:
             sbtyp = interval.attrs.get(subtype, None)
             type_ = ' '.join([interval[2], sbtyp] if sbtyp else [interval[2]])
@@ -78,7 +85,7 @@ def make_types_length_file(annotation, out_file=None, subtype='biotype', exclude
         for type_, length in sorted(type_lengths.items()):
             outfile.write('{}\t{}\n'.format(type_, length))
 
-    return os.path.abspath(out_file)
+    return os.path.abspath(out_file), os.path.abspath(ann_modified_file)
 
 
 def make_summary_report(annotation, sites, summary, fai, types_length_file=None, digits='8',
@@ -125,22 +132,11 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    excluded_types = excluded_types or []
-    cross_links = pybedtools.BedTool(sites).sort().saveas()
-    ann_filtered = pybedtools.BedTool(annotation).filter(
-        lambda x: x[2] not in excluded_types).sort().saveas()
-
-    # Merge all annotation and take what is left = unannotated regions:
-    unann_pos = _complement(ann_filtered.fn, fai, '+', type_name='unannotated')
-    unann_neg = _complement(ann_filtered.fn, fai, '-', type_name='unannotated')
-    ann_joined = ann_filtered.cat(unann_pos, unann_neg, postmerge=False).sort().saveas()
-
     # If not given/present, make file with cumulative length for each type:
     if not types_length_file or not os.path.isfile(types_length_file):
         LOGGER.info('types_length_file not given - calculating it')
-        types_length_file = make_types_length_file(
-            ann_joined.fn, subtype=subtype, excluded_types=excluded_types)
-
+        types_length_file, annotation = make_types_length_file(
+            annotation, fai, subtype=subtype, excluded_types=excluded_types)
     # read the file to dict, named type_lengths
     type_lengths = {}
     with open(types_length_file) as tfile:
@@ -151,8 +147,10 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
     # sorted=True - invokes memory efficient algorithm for large files
     # s=True - only report hits in B that overlap A on the same strand
     # wb=True - Write the original entry in B for each overlap
+    cross_links = pybedtools.BedTool(sites).sort().saveas()
+    annotation = pybedtools.BedTool(annotation).sort().saveas()
     LOGGER.info('Calculating intersection between cross-link and annotation...')
-    overlaps = cross_links.intersect(ann_joined, sorted=True, s=True, wb=True).saveas()
+    overlaps = cross_links.intersect(annotation, sorted=True, s=True, wb=True).saveas()
     try:
         # this will raise TypeError if overlaps is empty:
         overlaps[0]
