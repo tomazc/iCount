@@ -64,7 +64,7 @@ class TestCLI(unittest.TestCase):
         command_full = ['iCount', 'annotation', 'homo_sapiens',
                         '--release', '84',
                         '--out_dir', self.dir,
-                        '--annotation', self.tmp1,
+                        '--annotation', get_temp_file_name(extension='gtf.gz'),
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
 
@@ -75,8 +75,7 @@ class TestCLI(unittest.TestCase):
         command_full = ['iCount', 'genome', 'homo_sapiens',
                         '--release', '84',
                         '--out_dir', self.dir,
-                        '--genome', self.tmp1 + '.gz',
-                        '--temp_dir', self.dir,
+                        '--genome', get_temp_file_name(extension='fa.gz'),
                         '--chromosomes', 'MT', 'Y',
                         '-S', '40',  # Supress lower than ERROR messages.
                         ]
