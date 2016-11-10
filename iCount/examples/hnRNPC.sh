@@ -34,10 +34,10 @@ then
 fi
 annotation="${genome_dir}/${annotation}"
 
-genes_annotation="${genome_dir}/hs84.genes.gtf.gz"
-if [ ! -f "${genes_annotation}" ];
+segmentation="${genome_dir}/hs84.genes.gtf.gz"
+if [ ! -f "${segmentation}" ];
 then
-    iCount genes ${annotation} ${genes_annotation}
+    iCount genes ${annotation} ${segmentation}
 fi
 
 
@@ -121,7 +121,7 @@ for barcode in ${barcodes//,/ }; do
     # step 8: perform peaks analysis
     peaks="${peaks_dir}/peaks_${barcode}_${groupby}_${quant}_unique.bed"
     scores="${peaks_dir}/peaks_${barcode}_${groupby}_${quant}_unique.tab"
-    iCount peaks "../${genes_annotation}" ${bed} ${peaks}
+    iCount peaks "../${segmentation}" ${bed} ${peaks}
         --fout_scores ${scores}
 done
 
