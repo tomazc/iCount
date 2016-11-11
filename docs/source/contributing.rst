@@ -157,3 +157,67 @@ The elements appearing in it are files and analysis:
 
 .. _`This`:
     http://stackoverflow.com/questions/12962772/how-to-stop-python-unittest-from-printing-test-docstring
+
+
+Preparing a release
+===================
+
+Pull the latest master to be released::
+
+    git checkout master
+    git pull
+
+Use the utility script ``docs/changelog.sh`` to list all commits that were made from last tagged
+release::
+
+    docs/changelog.sh > to_edit.rst
+
+Edit ``to_edit.rst`` and incorporate a description of most important changes into ``docs/source/revisions.rst``.
+
+Modify ``setup.py`` and set::
+
+    ISRELEASED = True
+
+Commit changes::
+
+    git add docs/source/revisions.rst setup.py
+    git commit -m "Release <VERSION>"
+
+Use current value of VERSION in ``setup.py`` to tag the commit::
+
+    git tag <VERSION>
+
+Decide how to bump version (to some new value NEWVERSION) and modify ``setup.py``::
+
+    VERSION=<NEWVERSION>
+    ISRELEASED = False
+
+Commit changes::
+
+    git add setup.py
+    git commit -m "Bump version to <NEWVERSION>"
+
+Push changes to master::
+
+    git push origin --tags
+
+
+Pushing to pypi
+===============
+
+Pull a tagged version::
+
+    git checkout <VERSION>
+
+
+Create source distribution::
+
+    python setup.py sdist
+
+Upload to pypi using `twine`_::
+
+    twine upload dist/iCount-<VERSION>*
+
+
+.. _`twine`:
+    https://pypi.python.org/pypi/twine
