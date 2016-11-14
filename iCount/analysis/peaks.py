@@ -7,12 +7,13 @@ Find positions with high density of cross-linked sites.
 
 There are two typical variants of this analysis, depending on the parameters:
 
-    * Gene-wise analysis, where:
-        * features = gene
-        * group_by = gene_id
-    * Transcript-wise analysis where:
-        * features = CDS, intron, UTR3, UTR5, ncRNA, intergenic
-        * group_by = transcript_id
+* Gene-wise analysis, where:
+    * features = gene
+    * group_by = gene_id
+
+* Transcript-wise analysis where:
+    * features = CDS, intron, UTR3, UTR5, ncRNA, intergenic
+    * group_by = transcript_id
 
 
 Let's look at the Gene-wise analysis in more detail first. Imagine the following
@@ -116,6 +117,7 @@ peaks parameter. If scores parameter is also given, all positions are
 reported in it, no matter the FDR value.
 
 """
+import os
 import math
 import bisect
 import logging
@@ -191,7 +193,7 @@ def cumulative_prob(vals, max_val):
     Max_val is the largest possible value that can be expected in `vals`.
     """
     # Make histogram from vals, with max_val + 2 bins. O bin for zero scores and
-    # one for one more than max_val. The last one bin shoud alwayxs be zero, right?
+    # one for one more than max_val. The last one bin should always be zero, right?
 
     # + 1 for the probability of observing 0 or more
     # + 1 beacouse range() excludes last element
@@ -250,7 +252,7 @@ def get_avg_rnd_distrib(size, total_hits, half_window, perms=10000):
     total_hits : int
         Number of cross-link events in region.
     half_window : int
-        Half-window size. The actal window size is: 2 * half_window + 1.
+        Half-window size. The actual window size is: 2 * half_window + 1.
     perms : int
         Number of permutations to make.
 
@@ -361,6 +363,7 @@ def _process_group(pos_scores, group_size, half_window, perms):
     # Calculate the observed cumulative_prob:
     pos_scores_sww = _sum_within_window(pos_scores, half_window=half_window)
     positions, scores_sww = zip(*pos_scores_sww)
+    max_val = math.ceil(max(scores_sww))
     observed = cumulative_prob(scores_sww, sum_scores)
 
     # Calculate random cumulative_prob for given group_size and sum_scores:
@@ -368,7 +371,7 @@ def _process_group(pos_scores, group_size, half_window, perms):
 
     # This step follows the article [1] to produce FDR values. First, produce
     # mapping from sww_scores to FDR value:
-    sww2fdr = [min(rnd / true, 1.0) for rnd, true in zip(random_, observed)]
+    sww2fdr = [min(1.0, rnd / true_) for rnd, true_ in zip(random_, observed[:max_val+1])]
     # Compute FDR scores por each position based on it's sww_score:
     fdr_scores = [sww2fdr[round(sww_score)] for _, sww_score in pos_scores_sww]
 
@@ -382,7 +385,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     """
     Find positions with high density of cross-linked sites.
 
-    When detrmining feature.name, value of the first existing attribute in the
+    When determining feature.name, value of the first existing attribute in the
     following tuple is taken::
 
         ("ID", "gene_name", "transcript_id", "gene_id", "Parent")
@@ -438,6 +441,12 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     numpy.random.seed(rnd_seed)  # pylint: disable=no-member
 
     LOGGER.info('Loading annotation file...')
+    annotation2 = iCount.files.decompress_to_tempfile(annotation)
+    if annotation2 != annotation:
+        to_delete_temp = annotation2
+        annotation = annotation2
+    else:
+        to_delete_temp = None
     annotation = pybedtools.BedTool(annotation).saveas()
     metrics.annotation_all = len(annotation)
     annotation = annotation.filter(lambda x: x[2] in features).sort().saveas()
@@ -485,7 +494,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
                         name, elements in group_sizes.items()])
 
     # calculate and assign FDRs to each cross-linked site. FDR values are
-    # calcualated together for each group.
+    # calculated together for each group.
     results = {}
     metrics.all_groups = len(groups)
     progress, j = 0, 0
@@ -507,7 +516,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
             results.setdefault((chrom, pos, strand), []).\
                 append((fdr_score, name, group_id, val, val_extended))
 
-    LOGGER.info('Peaks caculation finished. Writing results to files...')
+    LOGGER.info('Peaks calculation finished. Writing results to files...')
 
     # Make peaks: a BED6 file, with only the most significant cross-links:
     metrics.significant_positions = 0
@@ -526,7 +535,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
                 name = ','.join(names) + ' - ' + ','.join(group_ids)
                 line = [chrom, pos, pos + 1, name, group_scores[0], strand]
                 peaks.write('\t'.join([_f2s(i, dec=4)for i in line]) + '\n')
-    LOGGER.info('BED6 file with significant peaks saved to %s', peaks)
+    LOGGER.info('BED6 file with significant peaks saved to: %s', peaks.name)
 
     # Make scores: a tab-separated file, with ALL cross-links, (no significance threshold)
     header = ['chrom', 'position', 'strand', 'name', 'group_id', 'score', 'score_extended', 'FDR']
@@ -537,7 +546,10 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
                 for (fdr_score, name, group_id, score, val_extended) in sorted(annot_list):
                     line = [chrom, pos, strand, name, group_id, score, val_extended, fdr_score]
                     scores.write('\t'.join([_f2s(i, dec=6) for i in line]) + '\n')
-        LOGGER.info('Scores for each cross-linked position saved to %s', scores)
+        LOGGER.info('Scores for each cross-linked position saved to: %s', scores.name)
+
+    if to_delete_temp:
+        os.remove(to_delete_temp)
 
     LOGGER.info('Done.')
     return metrics

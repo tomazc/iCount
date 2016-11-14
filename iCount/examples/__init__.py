@@ -3,13 +3,17 @@
 Examples
 ========
 
+This module provides a set of example bash scripts that can be run by the user.
+The included script ``tutorial.sh`` replicates all the steps described in the tutorial.
+
+.. autofunction:: iCount.examples.run
+
+
 """
 
 import os
 import shutil
 import logging
-
-import iCount
 
 
 LOGGER = logging.getLogger(__name__)

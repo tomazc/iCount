@@ -612,7 +612,7 @@ def get_regions(annotation, segmentation, fai, report_progress=False):
     segmentation : str
         Path to output GTF file.
     fai : str
-        Path to genome_file (.fai or similar).
+        Path to input genome_file (.fai or similar).
     report_progress : bool
         Switch to show progress.
 

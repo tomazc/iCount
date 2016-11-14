@@ -22,16 +22,16 @@ cross-link-to-landmark distances. Such distibution is called an RNA map.
 Of course, situation gets complicated. Real-world-situation more likely looks
 like this::
 
-|--------transcript1-------|
-|-ncRNA-||-intron-||-ncRNA-|
-        |------------------transcript2-----------------|
-        |--CDS--||-intron-||--CDS--||-intron-||--UTR3--|
-                                |---------------transcript3--------------|
-                                |-UTR5-||-intron-||-CDS-||-intron-||-CDS-|
+    |--------transcript1-------|
+    |-ncRNA-||-intron-||-ncRNA-|
+            |------------------transcript2-----------------|
+            |--CDS--||-intron-||--CDS--||-intron-||--UTR3--|
+                                    |---------------transcript3--------------|
+                                    |-UTR5-||-intron-||-CDS-||-intron-||-CDS-|
 
-         x|-----R1-----|
-         x|R2.1->          <--R2.2-|
-                            x|-R3-|
+             x|-----R1-----|
+             x|R2.1->          <--R2.2-|
+                                x|-R3-|
 
 
 All sort of situations can arise:
@@ -122,12 +122,14 @@ Wishes and ideas(Jernej, Tomaz):
 
     * Intoduce three categories (colors in visualisation?) in every RNAmap type.
       Let's take exon-intron as example:
+
         * whole read in left part - color #1 (negative coord, implicit)
         * whole read in right part - color #2 (positive coord, implicit)
         * read crossing junction - color #3 (explicit)
 
     * How to handle situation when one region in individual's sequence clearly
       differs from reference sequence but it is just some variation?
+
         * Change the reference sequence? This can be complex... Make a helper
           tool for this?
         * Provide additional data in function - which exceptions /abnormalities
@@ -428,7 +430,7 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
 
     LOGGER.info('Parsing BAM file to internal structure...')
     grouped = iCount.mapping.xlsites._processs_bam_file(  # pylint: disable=protected-access
-        bam, metrics, mapq_th, strange, annotation=segmentation, holesize_th=holesize_th)
+        bam, metrics, mapq_th, strange, annotation=segmentation, gap_th=holesize_th)
 
     LOGGER.info('Parsing segmentation to internal structure...')
     # pylint: disable=protected-access

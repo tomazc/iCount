@@ -181,7 +181,7 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=
 
     # Download to file on disk
     saveas_fname = os.path.join(out_dir, annotation)
-    LOGGER.info('Downloading annotation to: %s', saveas_fname)
+    LOGGER.info('Downloading GTF to: %s', saveas_fname)
     with open(saveas_fname, 'wb') as fhandle:
         ftp.retrbinary('RETR ' + annotation_file, fhandle.write)
     ftp.quit()
@@ -218,7 +218,7 @@ def chrom_length(fasta_in):
     fai_file_temp = temp + '.fai'
     fai_file = fasta_in + '.fai'
     subprocess.check_call(['mv', fai_file_temp, fai_file])
-    LOGGER.info('Fai file just saved to : %s', os.path.abspath(fai_file))
+    LOGGER.info('Fai file saved to : %s', os.path.abspath(fai_file))
     return os.path.abspath(fai_file)
 
 
@@ -247,12 +247,12 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
         Download to this directory (if not given, current working directory).
     genome : str
         Genome filename (must have .gz file extension). If not given,
-        species.release.fa.gz is used. If just filename is given, out_dir
+        species.release.fa.gz is used. If only filename is given, out_dir
         parameter is used. However, if full path is provided, out_dir is ignored
         and file is saved to given path.
     chromosomes : list_str
-        If given, don't download the whole genome, but juts the given
-        cromosomes. Chromosomes can be given as strings aor integers
+        If given, do not download the whole genome, but listed
+        chromosomes only. Chromosomes can be given as strings or integers.
 
     Returns
     -------
