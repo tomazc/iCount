@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Cutadapt
 --------
 
@@ -9,11 +10,12 @@ import subprocess
 
 
 def get_version():
+    """Get cutadapt version."""
     args = ['cutadapt', '--version']
     try:
         ver = subprocess.check_output(args, shell=False, universal_newlines=True)
         return str(ver).rstrip('\n\r')
-    except:
+    except:  # pylint: disable=bare-except
         return None
 
 

@@ -1,3 +1,5 @@
+# pylint: disable=missing-docstring, protected-access
+
 import unittest
 import tempfile
 import warnings

@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Mapping
 =======
 
@@ -16,7 +17,7 @@ Mapping
 
 """
 
-from . import filter
-from . import map
-from . import mapindex
+from . import filters
+from . import mapstar
+from . import indexstar
 from . import xlsites

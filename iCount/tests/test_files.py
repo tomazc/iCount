@@ -1,3 +1,5 @@
+# pylint: disable=missing-docstring, protected-access
+
 import os
 import gzip
 import unittest
@@ -17,26 +19,26 @@ class TestFilesTemp(unittest.TestCase):
         fn_in = os.path.join(self.tempdir, 'uncompressed.txt')
         # create file
         test_text = 'empty file'
-        with open(fn_in, 'wt') as f:
-            f.write(test_text)
+        with open(fn_in, 'wt') as file_:
+            file_.write(test_text)
         fn_out = iCount.files.decompress_to_tempfile(fn_in)
         self.assertEqual(fn_in, fn_out)
         # content should be same
-        with open(fn_out, 'rt') as f:
-            read_text = f.read()
+        with open(fn_out, 'rt') as file_:
+            read_text = file_.read()
         self.assertEqual(read_text, test_text)
 
     def test_compressed(self):
         fn_in = os.path.join(self.tempdir, 'compressed.txt.gz')
         # create file
         test_text = 'empty file'
-        with gzip.open(fn_in, 'wt') as f:
-            f.write(test_text)
+        with gzip.open(fn_in, 'wt') as file_:
+            file_.write(test_text)
         fn_out = iCount.files.decompress_to_tempfile(fn_in)
         self.assertNotEqual(fn_in, fn_out)
         # content should be same
-        with open(fn_out, 'rt') as f:
-            read_text = f.read()
+        with open(fn_out, 'rt') as file_:
+            read_text = file_.read()
         self.assertEqual(read_text, test_text)
 
     def tearDown(self):

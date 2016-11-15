@@ -1,4 +1,6 @@
-"""
+# pylint: skip-file
+""".. Line to protect from pydocstyle D205, D400.
+
 RNA maps
 --------
 
@@ -9,6 +11,7 @@ Count frequency of cross-links relative to annotation features.
 Draw histograms and save tables with distributions.
 
 """
+
 import logging
 
 import iCount
@@ -63,8 +66,6 @@ params_pos = [
     ),
 ]
 
-
-
 # import matplotlib
 #
 # matplotlib.use("Agg")
@@ -91,11 +92,13 @@ params_pos = [
 
 # max_flank = 5000
 # # region goes from -5000..+5000
-# # position zero (0) is at the beginning of the second type (for given first-second region type map)
+# # position zero (0) is at the beginning of the second type (for given first-second region type ma
+# p)
 #
 # # needed to generate RNAmaps and also to generate definition of RNAmaps
 # maps_to_gen = [
-#     # map_name, left_side_types, right_side_types, inside gene, inside gene, within same gene, minU, minD
+#     # map_name, left_side_types, right_side_types, inside gene, inside gene, within same gene, mi
+# nU, minD
 #     # inside gene = indicates whether part of junction inside gene or intergenic
 #     # within same gene
 #     ('exon-intron', ['ORF', '3UTR', '5UTR'], ['intron'], True, True, True, -30,
@@ -147,11 +150,14 @@ params_pos = [
 #         self.descU = ''  # description of upstream region
 #         self.descD = ''  # description of downstream region
 #         self.junctions = {}  # key: (chrome, strand), item: [ordered list of junction records]
-#         self.distrib = {}  # key: position relative to junction, item: number of junctions spanning position
-#         self.jun_pos2gene_order = {}  # key: (chrome, strand): item: {key:pos: item: (order from start, order from end)}
+#         self.distrib = {}  # key: position relative to junction, item: number of junctions spanni
+# ng position
+#         self.jun_pos2gene_order = {}  # key: (chrome, strand): item: {key:pos: item: (order from
+# start, order from end)}
 #
 #         # temporary structures needed to speed-up search
-#         self._bisect_juncs_sta = {}  # key: (chrome, strand), item: [ordered list of junction starts] needed for bisection
+#         self._bisect_juncs_sta = {}  # key: (chrome, strand), item: [ordered list of junction sta
+# rts] needed for bisection
 #         self._cur_strand = None
 #         self._cur_strand_fact = 0
 #         self._cur_juncs_same = None
@@ -198,7 +204,8 @@ params_pos = [
 #         _tmpd_cache = {}
 #         _tmp_jp2go = {}  # make a list of junction positions within each gene
 #         for cn in range(junctions_cn):
-#             chrome, strand, jun_pos, spanU, spanD, associated_gene_name, associated_gene_ID = f.readline().rstrip(
+#             chrome, strand, jun_pos, spanU, spanD, associated_gene_name, associated_gene_ID = f.r
+# eadline().rstrip(
 #                 '\n\r').split('\t')
 #             chrome = _tmpd_cache.setdefault(chrome, chrome)
 #             strand = _tmpd_cache.setdefault(strand, strand)
@@ -322,12 +329,14 @@ params_pos = [
 #                   analysis_id=None):
 #     junc_to_load = [_fname_RNAmap(mapped_to, annot_ver, mname) for
 #                     mname, _, _, _, _, _, _, _ in maps_to_gen]
-#     #    land_to_load = glob.glob(os.path.join(iCount.storage_root, "genomes/annotation/RNAmap_landmarks/%s_%s_RNAmap_*.tab" % (mapped_to, annot_ver)))
+#     #    land_to_load = glob.glob(os.path.join(iCount.storage_root, "genomes/annotation/RNAmap_la
+# ndmarks/%s_%s_RNAmap_*.tab" % (mapped_to, annot_ver)))
 #     land_to_load = []
 #     land_to_load.sort()
 #     maps_to_load = junc_to_load + land_to_load
 #     # RNAmap object,
-#     # map_xlink_same, map_xlink_anti, map_value_same, map_value_anti, map_junctions_same, map_junctions_anti,
+#     # map_xlink_same, map_xlink_anti, map_value_same, map_value_anti, map_junctions_same, map_jun
+# ctions_anti,
 #     # junction_xlinks_same, junction_xlinks_anti, junction_value_same, junction_value_anti,
 #     # list_of_xlinks_and_distances_to_junction
 #     rna_maps = [
@@ -373,7 +382,8 @@ params_pos = [
 #                     continue
 #
 #                 # redefine junction_id to be used subsequently
-#                 jun_start, jun_stop, jun_chrome, jun_strand, jun_pos, spanU, spanD, associated_gene_name, associated_gene_ID = junction_id
+#                 jun_start, jun_stop, jun_chrome, jun_strand, jun_pos, spanU, spanD, associated_ge
+# ne_name, associated_gene_ID = junction_id
 #                 junction_id = (jun_chrome, jun_strand, jun_pos, spanU, spanD,
 #                                associated_gene_name, associated_gene_ID)
 #
@@ -414,7 +424,8 @@ params_pos = [
 #                 db.analysis.set_status(analysis_id, 'processing %s%%' % prog)
 #                 prev_prog = prog
 #
-#     return rna_maps, xlinks_total, xlinks_used, xlinks_used_in_any, count_total, count_used, count_used_in_any
+#     return rna_maps, xlinks_total, xlinks_used, xlinks_used_in_any, count_total, count_used, coun
+# t_used_in_any
 #
 #
 # def smooth(data, hws, maxU=None, maxD=None):
@@ -576,14 +587,17 @@ params_pos = [
 #     fout_html.write('<table border=1>')
 #     fout_html.write('<tr><th>map</th><th>span<br/>(upstream; downstream)</th>')
 #     fout_html.write(
-#         '<th>[x-link sites]<br/>used in map</th><th>[x-link sites]<br/>% of total</th><th>[x-link sites]<br/>% of used in any map</th>')
+#         '<th>[x-link sites]<br/>used in map</th><th>[x-link sites]<br/>% of total</th><th>[x-link
+#  sites]<br/>% of used in any map</th>')
 #     fout_html.write(
-#         '<th>[%s]<br/>used in map</th><th>[%s]<br/>%% of total</th><th>[%s]<br/>%% of used in any map</th></tr>\n' % (
+#         '<th>[%s]<br/>used in map</th><th>[%s]<br/>%% of total</th><th>[%s]<br/>%% of used in any
+#  map</th></tr>\n' % (
 #         bed_res_type, bed_res_type, bed_res_type))
 #
 #     fout_stats.write('map\tupstream\tdownstream\t')
 #     fout_stats.write(
-#         '[x-link sites] used in map\t[x-link sites] % of total\t[x-link sites] % of used in any map\t')
+#         '[x-link sites] used in map\t[x-link sites] % of total\t[x-link sites] % of used in any m
+# ap\t')
 #     fout_stats.write(
 #         '[%s] used in map\t[%s] %% of total\t[%s] %% of used in any map\n' % (
 #         bed_res_type, bed_res_type, bed_res_type))
@@ -611,7 +625,8 @@ params_pos = [
 #         cn_count_used, cn_count_per_total, cn_count_per_used_in_any))
 #     fout_html.write('</table>\n')
 #     fout_html.write(
-#         '<a href="%s">Download statistics in tab-delimited format.</a><br/>\n' % os.path.basename(
+#         '<a href="%s">Download statistics in tab-delimited format.</a><br/>\n' % os.path.basename
+# (
 #             out_fname_stats))
 #     fout_html.write(
 #         '<a href="%s">Download graphs in tab-delimited format.</a><br/>\n' % os.path.basename(
@@ -662,7 +677,8 @@ params_pos = [
 #                                                 map_xlink_anti,
 #                                                 norm_complexity_xlinks_total)
 #         draw_map(plt, complex_norm_map_xlink_same, complex_norm_map_xlink_anti,
-#                  '10^9 * [x-link sites] / total [x-link sites]\nnormalized by all %ss spanning position' % (
+#                  '10^9 * [x-link sites] / total [x-link sites]\nnormalized by all %ss spanning po
+# sition' % (
 #                  rna_map.kind), rna_map.maxU, rna_map.maxD, color_same,
 #                  color_anti)
 #
@@ -734,7 +750,8 @@ params_pos = [
 #
 #         # junctions (landmarks) of only junctions that were used
 #         used_junctions_distrib = {}
-#         for jun_chrome, jun_strand, jun_pos, jun_up, jun_down, jun_associated_gene_name, jun_associated_gene_ID in jun_all_both:
+#         for jun_chrome, jun_strand, jun_pos, jun_up, jun_down, jun_associated_gene_name, jun_asso
+# ciated_gene_ID in jun_all_both:
 #             for p in range(jun_up, jun_down + 1):
 #                 used_junctions_distrib[p] = used_junctions_distrib.get(p,
 #                                                                        0) + 1
@@ -774,7 +791,8 @@ params_pos = [
 #             # smooth function
 #             plt.subplot(plt_num_rows, num_columns,
 #                         1 + num_columns * 2 + 1)  # (2,1)
-#             #            sm_fun = smooth(dict([(p, 1.0) for p in range(-smoothing_factor*3, smoothing_factor*3+1)]), smoothing_factor)
+#             #            sm_fun = smooth(dict([(p, 1.0) for p in range(-smoothing_factor*3, smoot
+# hing_factor*3+1)]), smoothing_factor)
 #             sm_fun = {}
 #             for p in range(-smoothing_factor * 3, smoothing_factor * 3 + 1):
 #                 sm_fun[p] = 0.0
@@ -805,7 +823,8 @@ params_pos = [
 #                                                            norm_complexity_xlinks_total)
 #             draw_map(plt, complex_norm_smooth_map_xlink_same,
 #                      complex_norm_smooth_map_xlink_anti,
-#                      'smoothed 10^9 * [x-link sites] / total [x-link sites]\nnormalized by all %ss spanning position' % (
+#                      'smoothed 10^9 * [x-link sites] / total [x-link sites]\nnormalized by all %s
+# s spanning position' % (
 #                      rna_map.kind), rna_map.maxU, rna_map.maxD, color_same,
 #                      color_anti)
 #
@@ -828,7 +847,8 @@ params_pos = [
 #                                                            norm_complexity_count_total)
 #             draw_map(plt, complex_norm_smooth_map_value_same,
 #                      complex_norm_smooth_map_value_anti,
-#                      "smoothed 10^9 * [%s] / total [%s]\nnormalized by all %ss spanning position" % (
+#                      "smoothed 10^9 * [%s] / total [%s]\nnormalized by all %ss spanning position"
+#  % (
 #                      bed_res_type, bed_res_type, rna_map.kind), rna_map.maxU,
 #                      rna_map.maxD, color_same, color_anti)
 #             if smoothing_factor > 0:
@@ -852,14 +872,16 @@ params_pos = [
 #         fout_maps.write("used junction distribution\t%s\n" % "\t".join(vals))
 #
 #         vals = ["%g" % (norm_complexity_xlinks_total / rna_map.distrib.get(p,
-#                                                                            0.0) if p in rna_map.distrib else 0.0)
+#                                                                            0.0) if p in rna_map.d
+# istrib else 0.0)
 #                 for p in all_poss]
 #         fout_maps.write(
 #             "[x-link sites] complexity normalization factor\t%s\n" % "\t".join(
 #                 vals))
 #
 #         vals = ["%g" % (norm_complexity_count_total / rna_map.distrib.get(p,
-#                                                                           0.0) if p in rna_map.distrib else 0.0)
+#                                                                           0.0) if p in rna_map.di
+# strib else 0.0)
 #                 for p in all_poss]
 #         fout_maps.write("[%s] complexity normalization factor\t%s\n" % (
 #         bed_res_type, "\t".join(vals)))
@@ -966,14 +988,17 @@ params_pos = [
 #         # x-links
 #         fout_html.write('<tr><th>strand</th>\n')
 #         fout_html.write(
-#             '<th>[x-link sites]<br/>used in map</th><th>[x-link sites]<br/>% of total</th><th>[x-link sites]<br/>% of used in any map</th><th>[x-link sites]<br/>% of used in map</th>')
+#             '<th>[x-link sites]<br/>used in map</th><th>[x-link sites]<br/>% of total</th><th>[x-
+# link sites]<br/>% of used in any map</th><th>[x-link sites]<br/>% of used in map</th>')
 #         fout_html.write(
-#             '<th>unique [%ss]<br/>in map</th><th>[x-link sites]<br/>per unique [%s]</th></tr>\n' % (
+#             '<th>unique [%ss]<br/>in map</th><th>[x-link sites]<br/>per unique [%s]</th></tr>\n'
+# % (
 #             rna_map.kind, rna_map.kind))
 #         fout_stats.write('\nRNAmap\t%s\n' % rna_map.name)
 #         fout_stats.write('strand\t')
 #         fout_stats.write(
-#             '[x-link sites] used in map\t[x-link sites] % of total\t[x-link sites] % of used in any map\t[x-link sites] % of used in map\t')
+#             '[x-link sites] used in map\t[x-link sites] % of total\t[x-link sites] % of used in a
+# ny map\t[x-link sites] % of used in map\t')
 #         fout_stats.write(
 #             'unique [%ss] in map\t[x-link sites] per unique [%s]\n' % (
 #             rna_map.kind, rna_map.kind))
@@ -1016,7 +1041,8 @@ params_pos = [
 #         # counts
 #         fout_html.write('<tr><th>strand</th>\n')
 #         fout_html.write(
-#             '<th>[%s]<br/>used in map</th><th>[%s]<br/>%% of total</th><th>[%s]<br/>%% of used in any map</th><th>[%s]<br/>%% of used in map</th>' % (
+#             '<th>[%s]<br/>used in map</th><th>[%s]<br/>%% of total</th><th>[%s]<br/>%% of used in
+#  any map</th><th>[%s]<br/>%% of used in map</th>' % (
 #             bed_res_type, bed_res_type, bed_res_type, bed_res_type))
 #         fout_html.write(
 #             '<th>unique [%ss]<br/>in map</th><th>[%s]<br/>per unique [%s]</th></tr>\n' % (
@@ -1024,7 +1050,8 @@ params_pos = [
 #
 #         fout_stats.write('\nstrand\t')
 #         fout_stats.write(
-#             '[%s] used in map\t[%s] %% of total\t[%s] %% of used in any map\t[%s] %% of used in map\t' % (
+#             '[%s] used in map\t[%s] %% of total\t[%s] %% of used in any map\t[%s] %% of used in m
+# ap\t' % (
 #             bed_res_type, bed_res_type, bed_res_type, bed_res_type))
 #         fout_stats.write('unique [%ss] in map\t[%s] per unique [%s]\n' % (
 #         rna_map.kind, bed_res_type, rna_map.kind))
@@ -1096,7 +1123,8 @@ params_pos = [
 #             fout.write("%s\n" % ostr)
 #
 #             for js, jun_id in jun_list:
-#                 jun_chrome, jun_strand, jun_pos, jun_up, jun_down, jun_associated_gene_name, jun_associated_gene_ID = jun_id
+#                 jun_chrome, jun_strand, jun_pos, jun_up, jun_down, jun_associated_gene_name, jun_
+# associated_gene_ID = jun_id
 #
 #                 xl_same = sum(
 #                     [0.0] + junction_xlinks_same.get(jun_id, {}).values())
@@ -1134,7 +1162,8 @@ params_pos = [
 #         ks = set(junction_xlinks_same.keys()) | set(
 #             junction_xlinks_anti.keys())
 #         top_list = [(sum([0.0] + junction_xlinks_same.get(jun_id,
-#                                                           {}).values() + junction_xlinks_anti.get(
+#                                                           {}).values() + junction_xlinks_anti.get
+# (
 #             jun_id, {}).values()), jun_id) for jun_id in ks]
 #         top_list.sort(reverse=True)
 #         top_list = top_list[:take_top]
@@ -1151,7 +1180,8 @@ params_pos = [
 #             jun_id, {}).values()), jun_id) for jun_id in ks]
 #         top_list.sort(reverse=True)
 #         render_junction_sum_table(fout_html, top_list[
-#                                              :take_top])  # need complete list to store it to file
+#                                              :take_top])  # need complete list to store it to fil
+# e
 #         fout_html.write("</td></tr>\n")
 #         fout_html.write("</table>\n")
 #
@@ -1165,7 +1195,8 @@ params_pos = [
 #         fout_junct_list.close()
 #
 #         fout_html.write(
-#             '<a href="%s">Download full junction summary list in tab-delimited format.</a><br/>\n' % os.path.basename(
+#             '<a href="%s">Download full junction summary list in tab-delimited format.</a><br/>\n
+# ' % os.path.basename(
 #                 out_fname_junct_list))
 #
 #         ### subset of x-links used for RNA-map, in two formats:
@@ -1195,7 +1226,8 @@ params_pos = [
 #              d) in used_junction_xlinks_list:
 #             strand_value = "%s%s" % (strand, value)
 #             value = "%g" % (value)
-#             jun_chrome, jun_strand, jun_pos, jun_up, jun_down, jun_associated_gene_name, jun_associated_gene_ID = junction_id
+#             jun_chrome, jun_strand, jun_pos, jun_up, jun_down, jun_associated_gene_name, jun_asso
+# ciated_gene_ID = junction_id
 #             junction_id = "%s:%s@%s" % (jun_chrome, jun_pos, jun_strand)
 #             olst = [chrome, str(p_start), strand, value, junction_id,
 #                     jun_associated_gene_name, jun_associated_gene_ID, orient,
@@ -1214,7 +1246,8 @@ params_pos = [
 #         fout_junct_xlinks_list_bed.close()
 #
 #         fout_html.write(
-#             '<a href="%s">Download full list of x-links used for RNAmap in tab-delimited format.</a><br/>\n' % os.path.basename(
+#             '<a href="%s">Download full list of x-links used for RNAmap in tab-delimited format.<
+# /a><br/>\n' % os.path.basename(
 #                 out_fname_junct_xlinks_list_tab))
 #
 #         if analysis_id is not None:
@@ -1322,7 +1355,8 @@ params_pos = [
 #         db.analysis.set_status(analysis_id, 'processing 5%')
 #         prev_prog = 5
 #
-#     rna_maps, xlinks_total, xlinks_used, xlinks_used_in_any, count_total, count_used, count_used_in_any = generate_maps(
+#     rna_maps, xlinks_total, xlinks_used, xlinks_used_in_any, count_total, count_used, count_used_
+# in_any = generate_maps(
 #         bed_d, mapped_to, annot_ver, maxU_within, maxD_within, maxU_flanking,
 #         maxD_flanking, selected_chromes, analysis_id=analysis_id)
 #
@@ -1448,8 +1482,10 @@ params_pos = [
 #                         associated_gene_ID.add(down_gene_ID)
 #                     associated_gene_ID = ", ".join(sorted(associated_gene_ID))
 #
-#                     for mname, up_types, down_types, up_in_gene, down_in_gene, within_same_gene, minU, minD in maps_to_gen:
-#                         if up_seg_type not in up_types or down_seg_type not in down_types: continue
+#                     for mname, up_types, down_types, up_in_gene, down_in_gene, within_same_gene,
+# minU, minD in maps_to_gen:
+#                         if up_seg_type not in up_types or down_seg_type not in down_types: contin
+# ue
 #                         if within_same_gene and up_gene_ID <> down_gene_ID: continue
 #                         if not (
 #                         within_same_gene) and up_gene_ID == down_gene_ID: continue
@@ -1477,7 +1513,8 @@ params_pos = [
 #             print
 #             "saving data on %s maps" % len(junctions_list.keys())
 #             sys.stdout.flush()
-#             for mname, up_types, down_types, up_in_gene, down_in_gene, within_same_gene, minU, minD in maps_to_gen:
+#             for mname, up_types, down_types, up_in_gene, down_in_gene, within_same_gene, minU, mi
+# nD in maps_to_gen:
 #                 jlist = junctions_list.get(mname, [])
 #                 jlist.sort()
 #                 all_junctions_cn = len(jlist)
@@ -1573,7 +1610,8 @@ params_pos = [
 #     print
 #     "introns with positive scores:", len(BP_by_intron)
 #     print
-#     # take best BP(s) from each intron, group by BP position. More than one BP can be choosen if equally well scored
+#     # take best BP(s) from each intron, group by BP position. More than one BP can be choosen if
+# equally well scored
 #     print
 #     "select top scored BP(s) in each intron"
 #     by_pos = {}
@@ -1623,7 +1661,8 @@ params_pos = [
 #             tmpl_s, tmpl_e = zip(*tmpl)
 #             intron_start_pos = min(tmpl_s)
 #             intron_end_pos = max(tmpl_e)
-#             #            tmpl = [(abs(intron_start_pos-intron_end_pos), intron_start_pos, intron_end_pos) for intron_start_pos, intron_end_pos in tmpl]
+#             #            tmpl = [(abs(intron_start_pos-intron_end_pos), intron_start_pos, intron_
+# end_pos) for intron_start_pos, intron_end_pos in tmpl]
 #             #            tmpl.sort(reverse=True)
 #             #            intron_start_pos, intron_end_pos = tmpl[0][1:]
 #             print
@@ -1659,7 +1698,8 @@ params_pos = [
 #         if hit_int_same:
 #             associated_gene_name_same = hit_int_same.segment.gene_name
 #             if (
-#                     associated_gene_name_same == 'inter' or associated_gene_name_same == 'telo') and associated_gene_name_anti <> '?':
+#                     associated_gene_name_same == 'inter' or associated_gene_name_same == 'telo')
+# and associated_gene_name_anti <> '?':
 #                 associated_gene_name = associated_gene_name_anti
 #             else:
 #                 associated_gene_name = associated_gene_name_same
@@ -1703,7 +1743,8 @@ params_pos = [
 # descU = 'usptream of branch point'
 # descD = 'downstream of branch point'
 # fname_out = "%s_%s_RNAmap_BP_best_one_in_intron_v0.tab" % (assembly, annot_ver)
-# read_store(fname_in, assembly, annot_ver, map_name, junction_name, descU, descD, fname_out, 1, 2, 3, 4, 6, 13)
+# read_store(fname_in, assembly, annot_ver, map_name, junction_name, descU, descD, fname_out, 1, 2,
+#  3, 4, 6, 13)
 #
 # ### *********************
 # ### hg18 branch points
@@ -1715,6 +1756,7 @@ params_pos = [
 # descU = 'usptream of branch point'
 # descD = 'downstream of branch point'
 # fname_out = "%s_%s_RNAmap_BP_best_one_in_intron_v0.tab" % (assembly, annot_ver)
-# read_store(fname_in, assembly, annot_ver, map_name, junction_name, descU, descD, fname_out, 2, 3, 4, 5, 8, 16)
+# read_store(fname_in, assembly, annot_ver, map_name, junction_name, descU, descD, fname_out, 2, 3,
+#  4, 5, 8, 16)
 #
 # """

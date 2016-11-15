@@ -1,9 +1,8 @@
-import os
+# pylint: disable=missing-docstring, protected-access
+
 import unittest
 import tempfile
 import warnings
-
-import pybedtools
 
 from iCount.analysis import summary
 from iCount.tests.utils import make_file_from_list, make_list_from_file, get_temp_file_name

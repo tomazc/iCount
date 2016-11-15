@@ -1,10 +1,10 @@
-import os
-import shutil
+# pylint: disable=missing-docstring, protected-access
+
 import unittest
 import warnings
 
 from iCount import demultiplex
-from iCount.tests.utils import make_fastq_file, make_list_from_file, get_temp_dir
+from iCount.tests.utils import make_fastq_file, get_temp_dir
 
 
 class TestDemultiplex(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestDemultiplex(unittest.TestCase):
     def test_run_fail(self):
         message = r'Output directory does not exist. Make sure it does.'
         with self.assertRaisesRegex(FileNotFoundError, message):
-            filenames = demultiplex.run(
+            demultiplex.run(
                 self.reads, self.adapter, self.barcodes, mismatches=1, out_dir='/unexisting/dir')
 
     def test_run_ok(self):

@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Ensembl API
 -----------
 
@@ -15,7 +16,6 @@ import ftplib
 import gzip
 import shutil
 import logging
-import tempfile
 import subprocess
 
 import iCount
@@ -29,10 +29,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _docstring_parameter(*sub):
-    """
-    To be used as decorator for passing arguments for docstring formatting.
-    """
-    def dec(obj):
+    """Decorator for passing arguments to function docstrings."""
+    def dec(obj):  # pylint: disable=missing-docstring
         obj.__doc__ = obj.__doc__.format(*sub)
         return obj
     return dec
@@ -41,7 +39,7 @@ def _docstring_parameter(*sub):
 @_docstring_parameter(BASE_URL)
 def get_ftp_instance():
     """
-    Get ftplib.FTP object that is connected to {0}
+    Get ftplib.FTP object that is connected to {0}.
 
     Returns
     -------
@@ -52,7 +50,7 @@ def get_ftp_instance():
         ftp = ftplib.FTP(BASE_URL)
         ftp.login()
         return ftp
-    except Exception as exception:
+    except Exception:
         raise ConnectionError('Problems connecting to ENSEMBL FTP server.')
 
 
@@ -114,6 +112,7 @@ def species(release=MAX_RELEASE_SUPPORTED):
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
+# pylint: disable=redefined-outer-name
 def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=None):
     """
     Download annotation in GTF file fromat.
@@ -224,10 +223,11 @@ def chrom_length(fasta_in):
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
+# pylint: disable=redefined-outer-name
 def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
            chromosomes=None):
     """
-    Downloads genome file in FASTA fromat.
+    Download genome file in FASTA fromat.
 
     Several steps are performed:
 
@@ -301,7 +301,7 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
             filtered_files.append(fasta_file)
 
     def sorting_func(name):
-        """Helper function for sorting files named by chromosome"""
+        """Helper function for sorting files named by chromosome."""
         key = name.split('.')[-3]
         if key == 'MT':
             return 'ZZ'  # this makes mitohondrial "chromosome" the last one
@@ -331,7 +331,7 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     target_path = os.path.abspath(os.path.join(out_dir, genome))
 
     LOGGER.info('Downloading FASTA file into: %s', target_path)
-    temp_dir = os.path.join(iCount.tmp_root, 'ensembl')
+    temp_dir = os.path.join(iCount.TMP_ROOT, 'ensembl')
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
     for fname in filtered_files:

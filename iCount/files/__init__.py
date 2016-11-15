@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Files
 =====
 
@@ -47,7 +48,6 @@ import iCount
 from . import bed
 from . import fasta
 from . import fastq
-from . import gtf
 
 
 def gz_open(fname, omode):
@@ -74,8 +74,9 @@ def gz_open(fname, omode):
 
 def decompress_to_tempfile(fname, context='misc'):
     """
-    Decompress files ending with .gz to a temporary file and return filename,
-    otherwise return fname.
+    Decompress files ending with .gz to a temporary file and return filename.
+
+    If file does nto end with .gz, juts return fname.
 
     Parameters
     ----------
@@ -91,7 +92,7 @@ def decompress_to_tempfile(fname, context='misc'):
 
     """
     if fname.endswith('.gz'):
-        tmp_dir = os.path.join(iCount.tmp_root, context)
+        tmp_dir = os.path.join(iCount.TMP_ROOT, context)
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
 
@@ -104,3 +105,17 @@ def decompress_to_tempfile(fname, context='misc'):
         return fout.name
 
     return fname
+
+
+def _f2s(number, dec=4):
+    """
+    Return string representation of ``number``.
+
+    Returned string is:
+
+        * without trailing decimal zeros,
+        * with at most ``dec`` decimal places.
+    """
+    if not isinstance(number, (int, float)):
+        return number
+    return '{{:.{:d}f}}'.format(dec).format(number).rstrip('0').rstrip('.')

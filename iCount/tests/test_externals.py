@@ -1,8 +1,8 @@
+# pylint: disable=missing-docstring, protected-access
+
 import warnings
 import unittest
 from unittest import mock
-
-import iCount
 
 import iCount.externals.cutadapt as cutadapt
 import iCount.externals.star as star

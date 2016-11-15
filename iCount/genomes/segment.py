@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Segmentation
 ------------
 
@@ -22,17 +23,15 @@ from collections import Counter
 
 import pybedtools
 
-import iCount
-
 from pybedtools import create_interval_from_list
+
+import iCount
 
 LOGGER = logging.getLogger(__name__)
 
 
 def _first_two_columns(input_file):
-    """
-    Keep just first two columns of file.
-    """
+    """Keep just first two columns of file."""
     ofile = tempfile.NamedTemporaryFile(mode='wt', delete=False)
     with open(input_file) as ifile:
         for line in ifile:
@@ -42,7 +41,7 @@ def _first_two_columns(input_file):
     return os.path.abspath(ofile.name)
 
 
-def _a_in_b(a, b):
+def _a_in_b(first, second):
     """
     Check if interval a is inside interval b.
 
@@ -58,12 +57,12 @@ def _a_in_b(a, b):
     bool
         True if a is inside b, false otherwise.
     """
-    return a.start >= b.start and a.stop <= b.stop
+    return first.start >= second.start and first.stop <= second.stop
 
 
 def _add_biotype_attribute(gene_content):
     """
-    Add `biotype` attribute to all intervals in gene_content
+    Add `biotype` attribute to all intervals in gene_content.
 
     biotype attribute is equal to transcript_biotype value if present,
     else gene_biotype if present else value in column 2 (index 1). The
@@ -179,7 +178,7 @@ def _check_consistency(intervals):
 
 def _get_non_cds_exons(cdses, exons, intervals):
     """
-    Identify (parts of) exons that are not CDS and classify them
+    Identify (parts of) exons that are not CDS and classify them.
 
     The intervals in the output list of this function should have
     "UTR3" or "UTR5" in their third field.
@@ -289,8 +288,7 @@ def _get_non_cds_exons(cdses, exons, intervals):
 
 def _filter_col8(interval, keys=None):
     """
-    Filter the content of last column in interval
-
+    Filter the content of last column in interval.
 
     Parameters
     ----------
@@ -308,7 +306,7 @@ def _filter_col8(interval, keys=None):
     if keys is None:
         keys = ['gene_id', 'gene_name', 'transcript_id', 'transcript_name']
     return ' '.join(['{} "{}";'.format(key, value) for key, value in
-                    sorted(interval.attrs.items()) if key in keys])
+                     sorted(interval.attrs.items()) if key in keys])
 
 
 def _get_introns(exons):
@@ -350,7 +348,7 @@ def _get_introns(exons):
 
 def _process_transcript_group(intervals):
     """
-    Process a list of intervals in the transcript group
+    Process a list of intervals in the transcript group.
 
     Processed intervals should not overlap and should completely span the
     transcript. Their third column should be one of the following:
@@ -381,13 +379,13 @@ def _process_transcript_group(intervals):
         regions.append(intervals.pop(index))
     else:
         # Manually create "transcript interval":
-        i1 = intervals[0]
-        col8 = _filter_col8(i1)
+        int1 = intervals[0]
+        col8 = _filter_col8(int1)
 
         start = min([i.start for i in intervals])
         stop = max([i.stop for i in intervals])
         regions.append(create_interval_from_list(
-            i1[:2] + ['transcript', start + 1, stop] + i1[5:8] + [col8]))
+            int1[:2] + ['transcript', start + 1, stop] + int1[5:8] + [col8]))
 
     exons = [i for i in intervals if i[2] == 'exon']
     assert len(exons) != 0
@@ -420,21 +418,21 @@ def _process_transcript_group(intervals):
     # check the consistency of regions and make a report if check fails:
     try:
         _check_consistency(regions)
-    except AssertionError as e:
+    except AssertionError as error:
         print('X' * 80)
         for i in sorted(intervals, key=lambda x: x.start):
             print(i)
         print('*' * 80)
         for i in sorted(regions, key=lambda x: x.start):
             print(i)
-        raise e
+        raise error
 
     return regions
 
 
-def _complement(gs, genome_file, strand, type_name='intergenic'):
+def _complement(gtf, genome_file, strand, type_name='intergenic'):
     """
-    Get the complement of intervals in gs that have strand == `strand`
+    Get the complement of intervals in gtf that have strand == `strand`.
 
     Required structure of genome_file: first column has to be chromosome
     name and the second column has to be chromosome length. Files produced
@@ -445,7 +443,7 @@ def _complement(gs, genome_file, strand, type_name='intergenic'):
 
     Parameters
     ----------
-    gs : str
+    gtf : str
         Path to GTF file with content.
     genome_file : str
         Path to genome_file (*.fai or similar).
@@ -461,15 +459,16 @@ def _complement(gs, genome_file, strand, type_name='intergenic'):
     assert(strand in ['+', '-', '.'])
 
     # Filter the content file by strand
-    gs_strand_only = pybedtools.BedTool(gs).filter(
+    gtf_strand_only = pybedtools.BedTool(gtf).filter(
         lambda r: r[6] == strand).saveas()
 
+    # pylint: disable=unexpected-keyword-arg
     # Sorted input is required for complement calculation:
-    gs_sorted = gs_strand_only.sort(faidx=genome_file).saveas()
+    gtf_sorted = gtf_strand_only.sort(faidx=genome_file).saveas()
 
-    # This step will fail if gs_sorted has different set of chromosomes
+    # This step will fail if gtf_sorted has different set of chromosomes
     # as they are defined in genome_file:
-    intergenic_bed = gs_sorted.complement(g=genome_file).saveas()
+    intergenic_bed = gtf_sorted.complement(g=genome_file).saveas()
 
     # intergenic_bed is BED3 file. We need to make it GTF:
     # Note the differences in BED and  GTF:
@@ -478,16 +477,19 @@ def _complement(gs, genome_file, strand, type_name='intergenic'):
     # gtf_start = bed_start + 1
     # gtf_stop = bed_stop
     col8 = 'gene_id "."; transcript_id ".";'
-    gtf = pybedtools.BedTool(create_interval_from_list(
-        [i[0], '.', type_name, str(int(i[1]) + 1), i[2], '.', strand, '.', col8])
-        for i in intergenic_bed).saveas()
+    gtf = pybedtools.BedTool(
+        create_interval_from_list(
+            [i[0], '.', type_name, str(int(i[1]) + 1), i[2], '.', strand, '.', col8]
+        )
+        for i in intergenic_bed
+    ).saveas()
 
     return os.path.abspath(gtf.fn)
 
 
 def _get_gene_content(gtf, chromosomes, report_progress=False):
     """
-    Generator giving groups of intervals belonging to one gene
+    Generator giving groups of intervals belonging to one gene.
 
     The yielded structure in each iteration is a dictionary that has
     key-value pairs:
@@ -522,17 +524,15 @@ def _get_gene_content(gtf, chromosomes, report_progress=False):
     gene_content = {}
 
     def finalize(gene_content):
-        """
-        Procedure before returning group of intervals belonging to one gene
-        """
+        """Procedure before returning group of intervals belonging to one gene."""
         if 'gene' not in gene_content:
             # Manually create "gene interval":
-            i1 = next(iter(gene_content.values()))[0]
-            col8 = _filter_col8(i1)
+            int1 = next(iter(gene_content.values()))[0]
+            col8 = _filter_col8(int1)
             start = min([i.start for j in gene_content.values() for i in j])
             stop = max([i.stop for j in gene_content.values() for i in j])
             gene_content['gene'] = create_interval_from_list(
-                i1[:2] + ['gene', start + 1, stop] + i1[5:8] + [col8])
+                int1[:2] + ['gene', start + 1, stop] + int1[5:8] + [col8])
         return gene_content
 
     length = pybedtools.BedTool(gtf).count()
@@ -541,6 +541,7 @@ def _get_gene_content(gtf, chromosomes, report_progress=False):
         j += 1
         if report_progress:
             new_progress = j / length
+            # pylint: disable=protected-access
             progress = iCount._log_progress(new_progress, progress, LOGGER)
 
         if interval.chrom in chromosomes:
@@ -635,7 +636,7 @@ def get_regions(annotation, segmentation, fai, report_progress=False):
 
     def process_gene(gene_content):
         """
-        Process each group of intervals belonging to gene
+        Process each group of intervals belonging to gene.
 
         Process each transcript_group in gene_content, add 'biotype'
         attribute to all intervals and include them in `data`.
@@ -669,21 +670,21 @@ def get_regions(annotation, segmentation, fai, report_progress=False):
     # p.map(process_gene, _get_gene_content(gtf_in, chromosomes))
 
     # Produce GTF/GFF file from data:
-    gs = pybedtools.BedTool(i.fields for i in data).saveas()
+    gtf = pybedtools.BedTool(i.fields for i in data).saveas()
 
     LOGGER.info('Calculating intergenic regions...')
-    intergenic_pos = _complement(gs.fn, fai, '+')
-    intergenic_neg = _complement(gs.fn, fai, '-')
+    intergenic_pos = _complement(gtf.fn, fai, '+')
+    intergenic_neg = _complement(gtf.fn, fai, '-')
 
-    # Join the gs, intergenic_pos and intergenic_neg in one file:
-    f2 = tempfile.NamedTemporaryFile(delete=False)
-    for infile in [gs.fn, intergenic_pos, intergenic_neg]:
-            shutil.copyfileobj(open(infile, 'rb'), f2)
-    f2.close()
+    # Join the gtf, intergenic_pos and intergenic_neg in one file:
+    file2 = tempfile.NamedTemporaryFile(delete=False)
+    for infile in [gtf.fn, intergenic_pos, intergenic_neg]:
+        shutil.copyfileobj(open(infile, 'rb'), file2)
+    file2.close()
 
-    f3 = pybedtools.BedTool(f2.name).sort().saveas(segmentation)
-    LOGGER.info('Segmentation stored in %s', f3.fn)
-    return f3.fn
+    file3 = pybedtools.BedTool(file2.name).sort().saveas(segmentation)
+    LOGGER.info('Segmentation stored in %s', file3.fn)
+    return file3.fn
 
 
 def _prepare_annotation(ann_file):

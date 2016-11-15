@@ -1,4 +1,6 @@
-"""
+# pylint: skip-file
+""".. Line to protect from pydocstyle D205, D400.
+
 k-mer enrichment
 ----------------
 
@@ -9,6 +11,7 @@ frequencies.
 Return ranked list of k-mer enrichment.
 
 """
+
 import logging
 
 import iCount
@@ -81,7 +84,8 @@ params_pos = [
 #             ret_mers.append( m+n)
 #     return ret_mers
 #
-# def score_kmers(bed_d, segmentation, random_perms, k, intervals, (report_for_region_start, report_for_region_stop), valid_region_types, selected_chromes, analysis_id=None):
+# def score_kmers(bed_d, segmentation, random_perms, k, intervals, (report_for_region_start, report
+# _for_region_stop), valid_region_types, selected_chromes, analysis_id=None):
 #     """ to preserve memory, bed_d will be destroyed in the process """
 #     random.seed(42)
 #
@@ -120,7 +124,8 @@ params_pos = [
 #         report_for_region_stop_with_margin = report_for_region_stop + kmer_center_pos
 #
 #     tot_len_rep = report_for_region_stop - report_for_region_start + 1
-#     tot_len_rep_with_margin = report_for_region_stop_with_margin - report_for_region_start_with_margin + 1
+#     tot_len_rep_with_margin = report_for_region_stop_with_margin - report_for_region_start_with_m
+# argin + 1
 #     interval_span_rep = tot_len_rep_with_margin - (k-1)
 #
 #     strands = ['-', '+']
@@ -168,7 +173,9 @@ params_pos = [
 #             prev_chrome = chrome
 #
 #         for (p_start, p_end), value in tmpd.iteritems():
-#             # (ii) iCLIP reads antisense to the transcriptional direction of the associated gene, and reads that mapped to non-annotated genomic regions, were removed before proceeding to further analysis.
+#             # (ii) iCLIP reads antisense to the transcriptional direction of the associated gene,
+#  and reads that mapped to non-annotated genomic regions, were removed before proceeding to furthe
+# r analysis.
 #             hit_int, orient, _, _ = segmentation.get_annotation(chrome, strand, p_start)
 #             if not hit_int:
 #                 xlinks_total['undefined'] = xlinks_total.get('undefined', 0) + 1
@@ -216,7 +223,8 @@ params_pos = [
 #                 sto_pos = p_start - report_for_region_start_with_margin
 #             genome_seq = chrome_seq[sta_pos:sto_pos+1]
 #             if len(genome_seq) != tot_len_rep_with_margin:
-#                 print "problem with filling kmer positional occurence matrix:", chrome, p_start, value, sta_pos, sto_pos
+#                 print "problem with filling kmer positional occurence matrix:", chrome, p_start,
+# value, sta_pos, sto_pos
 #                 print "it is %s, should be %s" % (len(genome_seq), tot_len_rep_with_margin)
 #                 print genome_seq
 #                 print ""
@@ -234,7 +242,8 @@ params_pos = [
 #                 tmpd_bygene = bygene_bypos_bykmer.setdefault(gene_name, {})
 #                 tmpd_bypos = tmpd_bygene.setdefault((chrome, strand, p_start, value, seg), {})
 #             else:
-#                 tmpd_bypos = {} # these x-links will be ignored because they do not belong to a gene
+#                 tmpd_bypos = {} # these x-links will be ignored because they do not belong to a g
+# ene
 #
 #             # count kmers for significance testing
 #             for interval, tot_len, interval_span in zip(intervals, tot_lens, interval_spans):
@@ -316,8 +325,10 @@ params_pos = [
 #             count_z = (count_v - count_m) / count_st
 #         except:
 #             count_z = undef_z_score
-#         count_v_pval_ge = float(sum([int(cn >= count_v) for cn in count_cns]))/max(1.0, len(count_cns))
-#         count_v_pval_le = float(sum([int(cn <= count_v) for cn in count_cns]))/max(1.0, len(count_cns))
+#         count_v_pval_ge = float(sum([int(cn >= count_v) for cn in count_cns]))/max(1.0, len(count
+# _cns))
+#         count_v_pval_le = float(sum([int(cn <= count_v) for cn in count_cns]))/max(1.0, len(count
+# _cns))
 #         count_v_pval = min(count_v_pval_ge, count_v_pval_le)
 #
 #         # x-links (count occurences)
@@ -330,8 +341,10 @@ params_pos = [
 #             xlinks_z = (xlinks_v - xlinks_m) / xlinks_st
 #         except:
 #             xlinks_z = undef_z_score
-#         xlinks_v_pval_ge = float(sum([int(cn >= xlinks_v) for cn in xlinks_cns]))/max(1.0, len(xlinks_cns))
-#         xlinks_v_pval_le = float(sum([int(cn <= xlinks_v) for cn in xlinks_cns]))/max(1.0, len(xlinks_cns))
+#         xlinks_v_pval_ge = float(sum([int(cn >= xlinks_v) for cn in xlinks_cns]))/max(1.0, len(xl
+# inks_cns))
+#         xlinks_v_pval_le = float(sum([int(cn <= xlinks_v) for cn in xlinks_cns]))/max(1.0, len(xl
+# inks_cns))
 #         xlinks_v_pval = min(xlinks_v_pval_ge, xlinks_v_pval_le)
 #
 #         # count (single count for each kmer occurrence)
@@ -344,8 +357,10 @@ params_pos = [
 #             occur_count_z = (occur_count_v - occur_count_m) / occur_count_st
 #         except:
 #             occur_count_z = undef_z_score
-#         occur_count_v_pval_ge = float(sum([int(cn >= occur_count_v) for cn in occur_count_cns]))/max(1.0, len(occur_count_cns))
-#         occur_count_v_pval_le = float(sum([int(cn <= occur_count_v) for cn in occur_count_cns]))/max(1.0, len(occur_count_cns))
+#         occur_count_v_pval_ge = float(sum([int(cn >= occur_count_v) for cn in occur_count_cns]))/
+# max(1.0, len(occur_count_cns))
+#         occur_count_v_pval_le = float(sum([int(cn <= occur_count_v) for cn in occur_count_cns]))/
+# max(1.0, len(occur_count_cns))
 #         occur_count_v_pval = min(occur_count_v_pval_ge, occur_count_v_pval_le)
 #
 #         # x-links (single count for each kmer occurence)
@@ -358,8 +373,10 @@ params_pos = [
 #             occur_xlinks_z = (occur_xlinks_v - occur_xlinks_m) / occur_xlinks_st
 #         except:
 #             occur_xlinks_z = undef_z_score
-#         occur_xlinks_v_pval_ge = float(sum([int(cn >= occur_xlinks_v) for cn in occur_xlinks_cns]))/max(1.0, len(occur_xlinks_cns))
-#         occur_xlinks_v_pval_le = float(sum([int(cn <= occur_xlinks_v) for cn in occur_xlinks_cns]))/max(1.0, len(occur_xlinks_cns))
+#         occur_xlinks_v_pval_ge = float(sum([int(cn >= occur_xlinks_v) for cn in occur_xlinks_cns]
+# ))/max(1.0, len(occur_xlinks_cns))
+#         occur_xlinks_v_pval_le = float(sum([int(cn <= occur_xlinks_v) for cn in occur_xlinks_cns]
+# ))/max(1.0, len(occur_xlinks_cns))
 #         occur_xlinks_v_pval = min(occur_xlinks_v_pval_ge, occur_xlinks_v_pval_le)
 #
 #         # normalize _by_pos statistics
@@ -382,8 +399,10 @@ params_pos = [
 #         res[kmer] = (
 #             count_z, count_v, count_v_pval, count_m, count_st, count_cns,
 #             xlinks_z, xlinks_v, xlinks_v_pval, xlinks_m, xlinks_st, xlinks_cns,
-#             occur_count_z, occur_count_v, occur_count_v_pval, occur_count_m, occur_count_st, occur_count_cns,
-#             occur_xlinks_z, occur_xlinks_v, occur_xlinks_v_pval, occur_xlinks_m, occur_xlinks_st, occur_xlinks_cns,
+#             occur_count_z, occur_count_v, occur_count_v_pval, occur_count_m, occur_count_st, occu
+# r_count_cns,
+#             occur_xlinks_z, occur_xlinks_v, occur_xlinks_v_pval, occur_xlinks_m, occur_xlinks_st,
+#  occur_xlinks_cns,
 #             norm_count_kmer_counts_by_pos, norm_xlinks_kmer_counts_by_pos
 #         )
 #
@@ -392,10 +411,12 @@ params_pos = [
 #             if prog > prev_prog:
 #                 db.analysis_set_status(analysis_id, 'processing %s%%' % prog)
 #                 prev_prog = prog
-#     return (res, kmer_center_pos), xlinks_total, xlinks_filtered_out, count_total, count_filtered_out, bygene_bypos_bykmer
+#     return (res, kmer_center_pos), xlinks_total, xlinks_filtered_out, count_total, count_filtered
+# _out, bygene_bypos_bykmer
 #
 # class KmerScores:
-#     def __init__(self, kmer, xlinks_z, xlinks_v, xlinks_pval, xlinks_rnd_mean, xlinks_rnd_stdev, xlinks_rnd_vs, count_z, count_v, count_pval, count_rnd_mean, count_rnd_stdev, count_rnd_vs):
+#     def __init__(self, kmer, xlinks_z, xlinks_v, xlinks_pval, xlinks_rnd_mean, xlinks_rnd_stdev,
+# xlinks_rnd_vs, count_z, count_v, count_pval, count_rnd_mean, count_rnd_stdev, count_rnd_vs):
 #         self.kmer = kmer
 #
 #         self.xlinks_z = xlinks_z
@@ -422,7 +443,8 @@ params_pos = [
 #     r = f.readline()
 #     while r:
 #         r = r.rstrip('\n\r').split('\t')
-#         kmer, xlinks_z, count_z, xlinks_v, xlinks_pval, count_v, count_pval, xlinks_rnd_mean, count_rnd_mean, xlinks_rnd_stdev, count_rnd_stdev, xlinks_rnd_vs, count_rnd_vs = r
+#         kmer, xlinks_z, count_z, xlinks_v, xlinks_pval, count_v, count_pval, xlinks_rnd_mean, cou
+# nt_rnd_mean, xlinks_rnd_stdev, count_rnd_stdev, xlinks_rnd_vs, count_rnd_vs = r
 #         xlinks_z = float(xlinks_z)
 #         count_z = float(count_z)
 #         xlinks_v = float(xlinks_v)
@@ -436,14 +458,17 @@ params_pos = [
 #         xlinks_rnd_vs = [float(x) for x in xlinks_rnd_vs.split(',')]
 #         count_rnd_vs = [float(x) for x in count_rnd_vs.split(',')]
 #
-#         res[kmer] = KmerScores(kmer, xlinks_z, xlinks_v, xlinks_pval, xlinks_rnd_mean, xlinks_rnd_stdev, xlinks_rnd_vs, count_z, count_v, count_pval, count_rnd_mean, count_rnd_stdev, count_rnd_vs)
+#         res[kmer] = KmerScores(kmer, xlinks_z, xlinks_v, xlinks_pval, xlinks_rnd_mean, xlinks_rnd
+# _stdev, xlinks_rnd_vs, count_z, count_v, count_pval, count_rnd_mean, count_rnd_stdev, count_rnd_v
+# s)
 #
 #         r = f.readline()
 #     return res
 #
 # #######
 # # determine filename from parameters
-# def process_file(in_fname, mapped_to, annot_ver, out_fname_pref, random_perms, k, intervals, report_for_region, valid_region_types, selected_chromes, segmentation=None, analysis_id=None):
+# def process_file(in_fname, mapped_to, annot_ver, out_fname_pref, random_perms, k, intervals, repo
+# rt_for_region, valid_region_types, selected_chromes, segmentation=None, analysis_id=None):
 #     print "*********************************"
 #     print time.ctime()
 #     print "scoring kmers in file:", in_fname
@@ -474,8 +499,10 @@ params_pos = [
 #     print "input res_type: %s" % bed_res_type
 #     sys.stdout.flush()
 #
-#     if segmentation is None or segmentation.assembly <> mapped_to or segmentation.annotation_version <> annot_ver:
-#         segmentation = iCount.genomes.annotation.Segmentation(assembly=mapped_to, annotation_version=annot_ver)
+#     if segmentation is None or segmentation.assembly <> mapped_to or segmentation.annotation_vers
+# ion <> annot_ver:
+#         segmentation = iCount.genomes.annotation.Segmentation(assembly=mapped_to, annotation_vers
+# ion=annot_ver)
 #         print "segmentation loaded"
 #         sys.stdout.flush()
 #
@@ -483,18 +510,24 @@ params_pos = [
 #         db.analysis_set_status(analysis_id, 'processing 5%')
 #         prev_prog = 5
 #
-#     (stats, kmer_center_pos), xlinks_total, xlinks_filtered_out, count_total, count_filtered_out, bygene_bypos_bykmer = score_kmers(bed_d, segmentation, random_perms, k, intervals, report_for_region, valid_region_types, selected_chromes, analysis_id)
+#     (stats, kmer_center_pos), xlinks_total, xlinks_filtered_out, count_total, count_filtered_out,
+#  bygene_bypos_bykmer = score_kmers(bed_d, segmentation, random_perms, k, intervals, report_for_re
+# gion, valid_region_types, selected_chromes, analysis_id)
 #     print "kmer statistics calculated"
 #     sys.stdout.flush()
 #
-#     # write stats - count all occurrences of a motif within the defined interval(s) relative to each x-link
+#     # write stats - count all occurrences of a motif within the defined interval(s) relative to e
+# ach x-link
 #     fout = iCount.nc_open(out_fname_pref+"_countAll.tab.gz", "wt")
 #     o_stats = []
 #     for (kmer, (count_z,  count_v,  count_v_pval,  count_m,  count_st,  count_cns,
 #                 xlinks_z, xlinks_v, xlinks_v_pval, xlinks_m, xlinks_st, xlinks_cns,
-#                 occur_count_z,  occur_count_v,  occur_count_v_pval,  occur_count_m,  occur_count_st,  occur_count_cns,
-#                 occur_xlinks_z, occur_xlinks_v, occur_xlinks_v_pval, occur_xlinks_m, occur_xlinks_st, occur_xlinks_cns,
-#                 norm_count_kmer_counts_by_pos, norm_xlinks_kmer_counts_by_pos)) in stats.iteritems():
+#                 occur_count_z,  occur_count_v,  occur_count_v_pval,  occur_count_m,  occur_count_
+# st,  occur_count_cns,
+#                 occur_xlinks_z, occur_xlinks_v, occur_xlinks_v_pval, occur_xlinks_m, occur_xlinks
+# _st, occur_xlinks_cns,
+#                 norm_count_kmer_counts_by_pos, norm_xlinks_kmer_counts_by_pos)) in stats.iteritem
+# s():
 #         o_stats.append((xlinks_z + count_z,
 #                        xlinks_z, count_z, occur_xlinks_z, occur_count_z,
 #                        xlinks_v, xlinks_v_pval,
@@ -507,11 +540,17 @@ params_pos = [
 #                        norm_count_kmer_counts_by_pos, norm_xlinks_kmer_counts_by_pos,
 #                        kmer))
 #     o_stats.sort(reverse=True)
-#     fout.write("# All occurrences of a kmer in interval(s) (%s) relative to each x-link are counted.\n" % intervals)
+#     fout.write("# All occurrences of a kmer in interval(s) (%s) relative to each x-link are count
+# ed.\n" % intervals)
 #     fout.write("# x-link sites - each occurrence is weighted by 1.0\n")
-#     fout.write("# %s - each occurrence is weighted by this score at the x-link.\n" % bed_res_type)
-#     fout.write("# Random reference data was generated %s times by random shuffling of iCLIP x-link positions within corresponding genome segments (within same genes).\n" % random_perms)
-#     fout.write("kmer\tz-score [x-link sites]\tz-score [%s]\ttrue score [x-link sites]\ttrue score p.val [x-link sites]\ttrue score [%s]\ttrue score p.val [%s]\tmean random score [x-link sites]\tmean random score [%s]\tstdev random score [x-link sites]\tstdev random score [%s]\trandom scores [x-link sites]\trandom scores [%s]\n" % ((bed_res_type,)*6))
+#     fout.write("# %s - each occurrence is weighted by this score at the x-link.\n" % bed_res_type
+# )
+#     fout.write("# Random reference data was generated %s times by random shuffling of iCLIP x-lin
+# k positions within corresponding genome segments (within same genes).\n" % random_perms)
+#     fout.write("kmer\tz-score [x-link sites]\tz-score [%s]\ttrue score [x-link sites]\ttrue score
+#  p.val [x-link sites]\ttrue score [%s]\ttrue score p.val [%s]\tmean random score [x-link sites]\t
+# mean random score [%s]\tstdev random score [x-link sites]\tstdev random score [%s]\trandom scores
+#  [x-link sites]\trandom scores [%s]\n" % ((bed_res_type,)*6))
 #     for (zs, xlinks_z, count_z, occur_xlinks_z, occur_count_z,
 #                        xlinks_v, xlinks_v_pval,
 #                        count_v, count_v_pval,
@@ -523,13 +562,18 @@ params_pos = [
 #                        norm_count_kmer_counts_by_pos, norm_xlinks_kmer_counts_by_pos,
 #                        kmer) in o_stats:
 # #        xlinks_cns = count_cns = ['intentionally blank']
-#         fout.write("%s\t%0.3f\t%0.3f\t%0.1f\t%0.3g\t%0.1f\t%0.3g\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%s\t%s\n" % (kmer, xlinks_z, count_z, xlinks_v, xlinks_v_pval, count_v, count_v_pval, xlinks_m, count_m, xlinks_st, count_st, ",".join([str(x) for x in xlinks_cns]), ",".join([str(x) for x in count_cns])))
+#         fout.write("%s\t%0.3f\t%0.3f\t%0.1f\t%0.3g\t%0.1f\t%0.3g\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%s\
+# t%s\n" % (kmer, xlinks_z, count_z, xlinks_v, xlinks_v_pval, count_v, count_v_pval, xlinks_m, coun
+# t_m, xlinks_st, count_st, ",".join([str(x) for x in xlinks_cns]), ",".join([str(x) for x in count
+# _cns])))
 #     fout.write("\n")
 #
 #     # positional distribution
 #     report_for_region_start, report_for_region_stop = report_for_region
-#     fout.write("Positional distribution of k-mers in region %s..%s relative to x-link, normalized by mean random [x-link sites] score.\n" % (report_for_region_start, report_for_region_stop))
-#     fout.write("Normalized frequencies of kmer centered at reported position(s) (i.e., position %s in kmer, zero-based indexing).\n" % (kmer_center_pos))
+#     fout.write("Positional distribution of k-mers in region %s..%s relative to x-link, normalized
+#  by mean random [x-link sites] score.\n" % (report_for_region_start, report_for_region_stop))
+#     fout.write("Normalized frequencies of kmer centered at reported position(s) (i.e., position %
+# s in kmer, zero-based indexing).\n" % (kmer_center_pos))
 #     fout.write("kmer\tz-score [x-link sites]\tmean random score [x-link sites]")
 #     for p in range(report_for_region_start, report_for_region_stop+1):
 #         fout.write("\t%s" % p)
@@ -549,8 +593,10 @@ params_pos = [
 #         fout.write("%s\t%0.3f\t%0.3f\t%s\n" % (kmer, xlinks_z, xlinks_m, ostr))
 #     fout.write("\n")
 #
-#     fout.write("Positional distribution of k-mers in region %s..%s relative to x-link, normalized by mean random [%s] score.\n" % (report_for_region_start, report_for_region_stop, bed_res_type))
-#     fout.write("Normalized frequencies of kmer centered at reported position(s) (i.e., position %s in kmer, zero-based indexing).\n" % (kmer_center_pos))
+#     fout.write("Positional distribution of k-mers in region %s..%s relative to x-link, normalized
+#  by mean random [%s] score.\n" % (report_for_region_start, report_for_region_stop, bed_res_type))
+#     fout.write("Normalized frequencies of kmer centered at reported position(s) (i.e., position %
+# s in kmer, zero-based indexing).\n" % (kmer_center_pos))
 #     fout.write("kmer\tz-score [%s]\tmean random score [%s]" % (bed_res_type, bed_res_type))
 #     for p in range(report_for_region_start, report_for_region_stop+1):
 #         fout.write("\t%s" % p)
@@ -573,14 +619,18 @@ params_pos = [
 #     print "stats for all occurrences stored to:", out_fname_pref+"_countAll.tab.gz"
 #     sys.stdout.flush()
 #
-#     # write stats - count only one (first) occurrence of a motif within the defined interval(s) relative to each x-link
+#     # write stats - count only one (first) occurrence of a motif within the defined interval(s) r
+# elative to each x-link
 #     fout = iCount.nc_open(out_fname_pref+"_countOne.tab.gz", "wt")
 #     o_stats = []
 #     for (kmer, (count_z,  count_v,  count_v_pval,  count_m,  count_st,  count_cns,
 #                 xlinks_z, xlinks_v, xlinks_v_pval, xlinks_m, xlinks_st, xlinks_cns,
-#                 occur_count_z,  occur_count_v,  occur_count_v_pval,  occur_count_m,  occur_count_st,  occur_count_cns,
-#                 occur_xlinks_z, occur_xlinks_v, occur_xlinks_v_pval, occur_xlinks_m, occur_xlinks_st, occur_xlinks_cns,
-#                 norm_count_kmer_counts_by_pos, norm_xlinks_kmer_counts_by_pos)) in stats.iteritems():
+#                 occur_count_z,  occur_count_v,  occur_count_v_pval,  occur_count_m,  occur_count_
+# st,  occur_count_cns,
+#                 occur_xlinks_z, occur_xlinks_v, occur_xlinks_v_pval, occur_xlinks_m, occur_xlinks
+# _st, occur_xlinks_cns,
+#                 norm_count_kmer_counts_by_pos, norm_xlinks_kmer_counts_by_pos)) in stats.iteritem
+# s():
 #         o_stats.append((occur_count_z + occur_xlinks_z,
 #                        xlinks_z, count_z, occur_xlinks_z, occur_count_z,
 #                        xlinks_v, xlinks_v_pval,
@@ -592,11 +642,17 @@ params_pos = [
 #                        xlinks_cns, count_cns, occur_xlinks_cns, occur_count_cns,
 #                        kmer))
 #     o_stats.sort(reverse=True)
-#     fout.write("# Only one occurrence of a kmer in interval(s) (%s) relative to each x-link is counted.\n" % intervals)
+#     fout.write("# Only one occurrence of a kmer in interval(s) (%s) relative to each x-link is co
+# unted.\n" % intervals)
 #     fout.write("# x-link sites - each occurrence is weighted by 1.0\n")
-#     fout.write("# %s - each occurrence is weighted by this score at the x-link.\n" % bed_res_type)
-#     fout.write("# Random reference data was generated %s times by random shuffling of iCLIP x-link positions within corresponding genome segments (within same genes).\n" % random_perms)
-#     fout.write("kmer\tz-score [x-link sites]\tz-score [%s]\ttrue score [x-link sites]\ttrue score p.val [x-link sites]\ttrue score [%s]\ttrue score p.val [%s]\tmean random score [x-link sites]\tmean random score [%s]\tstdev random score [x-link sites]\tstdev random score [%s]\trandom scores [x-link sites]\trandom scores [%s]\n" % ((bed_res_type,)*6))
+#     fout.write("# %s - each occurrence is weighted by this score at the x-link.\n" % bed_res_type
+# )
+#     fout.write("# Random reference data was generated %s times by random shuffling of iCLIP x-lin
+# k positions within corresponding genome segments (within same genes).\n" % random_perms)
+#     fout.write("kmer\tz-score [x-link sites]\tz-score [%s]\ttrue score [x-link sites]\ttrue score
+#  p.val [x-link sites]\ttrue score [%s]\ttrue score p.val [%s]\tmean random score [x-link sites]\t
+# mean random score [%s]\tstdev random score [x-link sites]\tstdev random score [%s]\trandom scores
+#  [x-link sites]\trandom scores [%s]\n" % ((bed_res_type,)*6))
 #     all_Kmers_ordered = []
 #     for (zs, xlinks_z, count_z, occur_xlinks_z, occur_count_z,
 #                        xlinks_v, xlinks_v_pval,
@@ -609,7 +665,10 @@ params_pos = [
 #                        kmer) in o_stats:
 # #        xlinks_cns = count_cns = ['intentionally blank']
 #         all_Kmers_ordered.append(kmer)
-#         fout.write("%s\t%0.3f\t%0.3f\t%0.1f\t%0.3g\t%0.1f\t%0.3g\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%s\t%s\n" % (kmer, occur_xlinks_z, occur_count_z, occur_xlinks_v, occur_xlinks_v_pval, occur_count_v, occur_count_v_pval, occur_xlinks_m, occur_count_m, occur_xlinks_st, occur_count_st, ",".join([str(x) for x in xlinks_cns]), ",".join([str(x) for x in count_cns])))
+#         fout.write("%s\t%0.3f\t%0.3f\t%0.1f\t%0.3g\t%0.1f\t%0.3g\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%s\
+# t%s\n" % (kmer, occur_xlinks_z, occur_count_z, occur_xlinks_v, occur_xlinks_v_pval, occur_count_v
+# , occur_count_v_pval, occur_xlinks_m, occur_count_m, occur_xlinks_st, occur_count_st, ",".join([s
+# tr(x) for x in xlinks_cns]), ",".join([str(x) for x in count_cns])))
 #     fout.close()
 #     print "stats for one (first) occurrences stored to:", out_fname_pref+"_countOne.tab.gz"
 #     sys.stdout.flush()
@@ -636,7 +695,9 @@ params_pos = [
 #     kept = total - sum(xlinks_filtered_out.values())
 #     total_filtered = sum(xlinks_filtered_out.values())
 #     fout.write("used:\t%s\t%0.1f%%\n" % (kept, kept*100.0/total))
-#     fout.write("filtered out:\t%s\t%0.1f%%\t(hit not on same strand as associated gene, not in region(s) selected by user, or no annotation for genomic position)\n" % (total_filtered, total_filtered*100.0/total))
+#     fout.write("filtered out:\t%s\t%0.1f%%\t(hit not on same strand as associated gene, not in re
+# gion(s) selected by user, or no annotation for genomic position)\n" % (total_filtered, total_filt
+# ered*100.0/total))
 #     fout.write('\n')
 #
 #     fout.write("region\ttotal\t%\tfiltered\t%\tused\t%\n")
@@ -644,7 +705,8 @@ params_pos = [
 #         reg_total = xlinks_total.get(rtype, 0)
 #         reg_filtered = xlinks_filtered_out.get(rtype, 0)
 #         reg_kept = reg_total - reg_filtered
-#         fout.write("%s\t%s\t%0.1f%%\t%s\t%0.1f%%\t%s\t%0.1f%%\n" % (rtype, reg_total, reg_total*100.0/total, reg_filtered, reg_filtered*100.0/total, reg_kept, reg_kept*100.0/total))
+#         fout.write("%s\t%s\t%0.1f%%\t%s\t%0.1f%%\t%s\t%0.1f%%\n" % (rtype, reg_total, reg_total*1
+# 00.0/total, reg_filtered, reg_filtered*100.0/total, reg_kept, reg_kept*100.0/total))
 #     fout.write('\n')
 #
 #     fout.write("STATS for [%s]\n" % bed_res_type)
@@ -654,7 +716,9 @@ params_pos = [
 #     kept = total - sum(count_filtered_out.values())
 #     total_filtered = sum(count_filtered_out.values())
 #     fout.write("used:\t%s\t%0.1f%%\n" % (kept, kept*100.0/total))
-#     fout.write("filtered out:\t%s\t%0.1f%%\t(hit not on same strand as associated gene, not in region(s) selected by users, or no annotation for genomic position)\n" % (total_filtered, total_filtered*100/total))
+#     fout.write("filtered out:\t%s\t%0.1f%%\t(hit not on same strand as associated gene, not in re
+# gion(s) selected by users, or no annotation for genomic position)\n" % (total_filtered, total_fil
+# tered*100/total))
 #     fout.write('\n')
 #
 #     fout.write("region\ttotal\t%\tfiltered\t%\tused\t%\n")
@@ -662,7 +726,8 @@ params_pos = [
 #         reg_total = count_total.get(rtype, 0)
 #         reg_filtered = count_filtered_out.get(rtype, 0)
 #         reg_kept = reg_total - reg_filtered
-#         fout.write("%s\t%s\t%0.1f%%\t%s\t%0.1f%%\t%s\t%0.1f%%\n" % (rtype, reg_total, reg_total*100.0/total, reg_filtered, reg_filtered*100.0/total, reg_kept, reg_kept*100.0/total))
+#         fout.write("%s\t%s\t%0.1f%%\t%s\t%0.1f%%\t%s\t%0.1f%%\n" % (rtype, reg_total, reg_total*1
+# 00.0/total, reg_filtered, reg_filtered*100.0/total, reg_kept, reg_kept*100.0/total))
 #     fout.write('\n')
 #     fout.close()
 #     print "overview stats stored to:", out_fname_pref+"_stats.tab.gz"
@@ -670,7 +735,8 @@ params_pos = [
 #
 #     # distribution of x-linked kmers by gene and by position
 #     fout = iCount.nc_open(out_fname_pref+"_by_gene_and_pos.tab.gz", "wt")
-#     olst = ["chrome", "s_strand", "start_position", "end_position", "gene_name", "seg_types", "seg_biotypes"]
+#     olst = ["chrome", "s_strand", "start_position", "end_position", "gene_name", "seg_types", "se
+# g_biotypes"]
 #     olst.extend(["strand", "xlink_position", bed_res_type] + all_Kmers_ordered)
 #     ostr = "\t".join([str(x) for x in olst])
 #     fout.write("%s\n" % ostr)
@@ -700,15 +766,19 @@ params_pos = [
 #             assert(chrome == s_chrome)
 #             for kmer, cn in tmpd_bykmer.iteritems():
 #                 sum_by_gene[gene_name][kmer] = sum_by_gene[gene_name].get(kmer, 0) + cn
-#             olst = [chrome, s_strand, str(start_position), str(end_position), gene_name, seg_types, seg_biotypes]
-#             olst.extend([strand, p_start, value] + [str(tmpd_bykmer.get(kmer, '')) for kmer in all_Kmers_ordered])
+#             olst = [chrome, s_strand, str(start_position), str(end_position), gene_name, seg_type
+# s, seg_biotypes]
+#             olst.extend([strand, p_start, value] + [str(tmpd_bykmer.get(kmer, '')) for kmer in al
+# l_Kmers_ordered])
 #             ostr = "\t".join([str(x) for x in olst])
 #             fout.write("%s\n" % ostr)
 #     fout.close()
 #
 #     # summary by gene
 #     fout = iCount.nc_open(out_fname_pref+"_by_gene_summary.tab.gz", "wt")
-#     olst = ["chrome", "s_strand", "start_position", "end_position", "gene_length", "gene_name", "seg_types", "seg_biotypes", "xlinks", "xlinks density", "%s sum" % bed_res_type, "%s sum density" % bed_res_type]
+#     olst = ["chrome", "s_strand", "start_position", "end_position", "gene_length", "gene_name", "
+# seg_types", "seg_biotypes", "xlinks", "xlinks density", "%s sum" % bed_res_type, "%s sum density"
+#  % bed_res_type]
 #     for kmer in all_Kmers_ordered:
 #         olst.append("%s freq." % kmer)
 #         olst.append("%s density" % kmer)
@@ -729,9 +799,12 @@ params_pos = [
 #         seg_biotypes = ",".join(seg_biotypes) if seg_biotypes else "undefined"
 #
 #         tmpd_bykmer = sum_by_gene.get(gene_name, {})
-#         olst = [s_chrome, s_strand, str(start_position), str(end_position), str(gene_len), gene_name, seg_types, seg_biotypes]
-#         olst.extend([str(xlinks_by_gene.get(gene_name, 0)), "%0.5f" % (xlinks_by_gene.get(gene_name, 0)/gene_len)])
-#         olst.extend([str(value_by_gene.get(gene_name, 0)), "%0.5f" % (value_by_gene.get(gene_name, 0)/gene_len)])
+#         olst = [s_chrome, s_strand, str(start_position), str(end_position), str(gene_len), gene_n
+# ame, seg_types, seg_biotypes]
+#         olst.extend([str(xlinks_by_gene.get(gene_name, 0)), "%0.5f" % (xlinks_by_gene.get(gene_na
+# me, 0)/gene_len)])
+#         olst.extend([str(value_by_gene.get(gene_name, 0)), "%0.5f" % (value_by_gene.get(gene_name
+# , 0)/gene_len)])
 #         for kmer in all_Kmers_ordered:
 #             if kmer in tmpd_bykmer:
 #                 olst.append(tmpd_bykmer[kmer])

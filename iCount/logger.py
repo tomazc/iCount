@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Logging
 =======
 
@@ -134,7 +135,7 @@ def log_to_file(is_on=False, level=logging.WARNING, path=None):
     None
     """
     if not path:
-        path = os.path.join(iCount.output_root, 'iCount.log')
+        path = os.path.join(iCount.OUTPUT_ROOT, 'iCount.log')
     file_handler = logging.FileHandler(path)
     formatter = logging.Formatter(
         fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -160,18 +161,19 @@ def log_inputs(logger, level=logging.INFO):
     -------
     None
     """
-    previous_frame = inspect.getouterframes(inspect.currentframe())[1]
+    # Get frame of calling function and function object
+    function_frame = inspect.currentframe().f_back
+    function_object = function_frame.f_globals[function_frame.f_code.co_name]
 
-    # Get the arguments from the function-to-log call.
-    argvalues = inspect.getargvalues(previous_frame[0])
-    args = [(a, argvalues.locals[a]) for a in argvalues.args]
+    args = [(arg, function_frame.f_locals[arg]) for arg in
+            inspect.signature(function_object).parameters]
 
     logger.log(level, "Input parameters for function '{}' in {}".format(
-        previous_frame[3],  # function name is 4-th element
-        previous_frame[1],  # file name is 2-nd element
+        function_object.__name__,  # function name
+        function_object.__module__,  # file/module name
     ))
-    for arg in args:
-        logger.log(level, "    {}: {}".format(arg[0], arg[1]))
+    for arg_name, arg_value in args:
+        logger.log(level, "    {}: {}".format(arg_name, arg_value))
 
 
 def _log_progress(new_ratio, old_ratio, logger, decimals=2):

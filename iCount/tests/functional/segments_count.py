@@ -1,4 +1,6 @@
 """
+Test iCount.genomes.segments.get_regions consistency.
+
 This script tests if results of iCount.genomes.segments.get_regions function
 are consistent with the reference results. If reference results are not
 present, they are created.
@@ -10,17 +12,17 @@ significantly extend the execution time of this script.
 By modifying the variables `self.releases_list` and `self.species_list` user can
 determine which gtf files to put under test.
 """
+# pylint: disable=missing-docstring, protected-access
 
 import os
 from uuid import uuid4
 import unittest
+from collections import Counter
 
 import pybedtools
 
-from collections import Counter
-
 from iCount.genomes import ensembl, segment
-from __init__ import functional_test_folder
+from . import FUNCTIONAL_TEST_FOLDER
 
 
 class TestSegmentation(unittest.TestCase):
@@ -29,11 +31,11 @@ class TestSegmentation(unittest.TestCase):
         self.ref_results_file = __file__[:-3] + '.out.txt'
 
         # Folder where all gtf files are stored:
-        self.gtf_files_dir = os.path.join(functional_test_folder, 'gtf_files/')
+        self.gtf_files_dir = os.path.join(FUNCTIONAL_TEST_FOLDER, 'gtf_files/')
         if not os.path.exists(self.gtf_files_dir):
             os.makedirs(self.gtf_files_dir)
 
-        self.releases_list = ensembl.get_release_list()
+        self.releases_list = ensembl.releases()
         self.species_list = ['homo_sapiens', 'mus_musculus']
 
         self.order = ['gene', 'transcript', 'CDS', 'UTR3', 'UTR5', 'intron',
@@ -62,16 +64,19 @@ class TestSegmentation(unittest.TestCase):
                 if not os.path.isfile(gtf_regions):
                     # If gtf_regions file is not preswent, make it from
                     # gtf_base and chrom_length file
-                    gtf_base = os.path.join(self.gtf_files_dir, '{}.{}.gtf.gz'.format(species, release))
+                    gtf_base = os.path.join(
+                        self.gtf_files_dir, '{}.{}.gtf.gz'.format(species, release))
                     if not os.path.isfile(gtf_base):
-                        _ = ensembl.download_annotation(release, species, target_dir=self.gtf_files_dir)
+                        _ = ensembl.annotation(release, species, out_dir=self.gtf_files_dir)
 
                     chrom_length = os.path.join(
-                        self.gtf_files_dir, '{}.{}.fa.gz.chrom_length.txt'.format(species, release))
+                        self.gtf_files_dir,
+                        '{}.{}.fa.gz.chrom_length.txt'.format(species, release))
                     if not os.path.isfile(chrom_length):
-                        fasta = os.path.join(self.gtf_files_dir, '{}.{}.fa.gz'.format(species, release))
+                        fasta = os.path.join(
+                            self.gtf_files_dir, '{}.{}.fa.gz'.format(species, release))
                         if not os.path.isfile(fasta):
-                            fasta = ensembl.download_sequence(release, species, target_dir=self.gtf_files_dir)
+                            fasta = ensembl.genome(release, species, out_dir=self.gtf_files_dir)
                         # Now we have all the fasta file to produce chrom_length
                         chrom_length = ensembl.chrom_length(fasta)
 
@@ -79,7 +84,8 @@ class TestSegmentation(unittest.TestCase):
                     gtf_regions = segment.get_regions(gtf_base, gtf_regions, chrom_length)
                     # When multiple-cpu usage is supported in get_regions, one can
                     # speed up the test by using multiple cpus like this:
-                    # gtf_regions = segment.get_regions(gtf_base, gtf_regions, chrom_length, cores=6)
+                    # gtf_regions = segment.get_regions(
+                    #     gtf_base, gtf_regions, chrom_length, cores=6)
 
                 result = Counter(i[2] for i in pybedtools.BedTool(gtf_regions))
 

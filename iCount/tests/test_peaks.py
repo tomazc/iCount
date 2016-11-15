@@ -1,3 +1,5 @@
+# pylint: disable=missing-docstring, protected-access
+
 import unittest
 import warnings
 
@@ -28,9 +30,9 @@ class TestPeaks(unittest.TestCase):
         self.assertEqual(peaks._sum_within_window([]), [])
 
         self.assertEqual(
-            peaks._sum_within_window(sites1, hw=1), summed_sites_w1)
+            peaks._sum_within_window(sites1, half_window=1), summed_sites_w1)
         self.assertEqual(
-            peaks._sum_within_window(sites2, hw=3), summed_sites_w3)
+            peaks._sum_within_window(sites2, half_window=3), summed_sites_w3)
 
         # shuffle the input:
         sites3 = [
@@ -40,7 +42,7 @@ class TestPeaks(unittest.TestCase):
             (12, 2), (10, 2), (20, 2), (11, 3),
         ]
         self.assertEqual(
-            peaks._sum_within_window(sites3, hw=1), summed_sites_w1_2)
+            peaks._sum_within_window(sites3, half_window=1), summed_sites_w1_2)
 
     def test_sum_within_window_nopos(self):
         sites = [
@@ -52,9 +54,9 @@ class TestPeaks(unittest.TestCase):
         self.assertEqual(peaks._sum_within_window_nopos([]), [])
 
         self.assertEqual(
-            peaks._sum_within_window_nopos(sites, hw=1), summed_sites_w1)
+            peaks._sum_within_window_nopos(sites, half_window=1), summed_sites_w1)
         self.assertEqual(
-            peaks._sum_within_window_nopos(sites, hw=3), summed_sites_w3)
+            peaks._sum_within_window_nopos(sites, half_window=3), summed_sites_w3)
 
     def test_cumulative_prob(self):
         vals = [2, 3, 3, 3, 2]
@@ -74,8 +76,8 @@ class TestPeaks(unittest.TestCase):
         # Repeat the same call, so also lines that use cache are executed:
         result = peaks.get_avg_rnd_distrib(size, total_hits, 1, perms=perms)
 
-        for r, e, in zip(result, expected):
-            self.assertAlmostEqual(r, e, delta=0.02)
+        for res, exp, in zip(result, expected):
+            self.assertAlmostEqual(res, exp, delta=0.02)
 
     def test_run(self):
         fin_annotation = make_file_from_list([

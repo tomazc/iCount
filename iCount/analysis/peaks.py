@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Peak finding
 ------------
 
@@ -61,8 +62,9 @@ obviuous, that something more significantly is happening on position b than on
 position e, despite having the same score. To account for this, algorithm
 considers not only the score of single cross-link, but also scores of
 cross-links some nucleotides before and after. This behaviour in controlled by
-half-window (hw) parameter. In the upper example, score of position b eqals to
-160 if hw = 1 and 2530 if hw=2. Score of position e remains 100.
+half-window (half_window) parameter. In the upper example, score of position b
+eqals to 160 if half_window = 1 and 2530 if half_window=2. Score of position e
+remains 100.
 
 Let's also look at the transcript-wise analysis. In this case, scenario also
 includes transcripts and sub-transcript elements::
@@ -117,22 +119,20 @@ reported in it, no matter the FDR value.
 import math
 import bisect
 import logging
+from collections import Counter
 
 import numpy
 import pybedtools
 
 import iCount
-
-from collections import Counter
-
-from iCount.files.bed import _f2s
+from iCount.files import _f2s
 
 LOGGER = logging.getLogger(__name__)
 
 
-def _sum_within_window(pos_val, hw=3):
+def _sum_within_window(pos_val, half_window=3):
     """
-    Sum counts in windows of half-window size ``hw`` in ``pos_val``.
+    Sum counts in windows of half-window size ``half_window`` in ``pos_val``.
 
     Example::
 
@@ -148,22 +148,22 @@ def _sum_within_window(pos_val, hw=3):
     """
     if not pos_val:
         return []
-    pos_val_ind = sorted((p, v, i) for i, (p, v) in enumerate(pos_val))
+    pos_val_ind = sorted((pos, val, i) for i, (pos, val) in enumerate(pos_val))
     poss, vals, inds = zip(*pos_val_ind)
 
     ret_list = [None] * len(pos_val)
     max_i = len(poss)
-    for i, p in enumerate(poss):
-        i_start = bisect.bisect_left(poss, p - hw, lo=max(0, i - hw), hi=i)
-        i_stop = bisect.bisect_left(poss, p + 1 + hw, lo=i_start, hi=min(i + hw + 1, max_i))
-        ret_list[inds[i]] = (p, sum(vals[i_start:i_stop]))
+    for i, pos in enumerate(poss):
+        i_start = bisect.bisect_left(
+            poss, pos - half_window, lo=max(0, i - half_window), hi=i)
+        i_stop = bisect.bisect_left(
+            poss, pos + 1 + half_window, lo=i_start, hi=min(i + half_window + 1, max_i))
+        ret_list[inds[i]] = (pos, sum(vals[i_start:i_stop]))
     return ret_list
 
 
-def _sum_within_window_nopos(pos_val, hw=3):
-    """
-    Same as _sum_within_window but without positions.
-    """
+def _sum_within_window_nopos(pos_val, half_window=3):
+    """Same as _sum_within_window but without positions."""
     if not pos_val:
         return []
     pos_val = sorted(pos_val)
@@ -171,19 +171,22 @@ def _sum_within_window_nopos(pos_val, hw=3):
 
     ret_list = []
     max_i = len(poss)
-    for i, p in enumerate(poss):
-        i_start = bisect.bisect_left(poss, p - hw, lo=max(0, i - hw), hi=i)
-        i_stop = bisect.bisect_left(poss, p + 1 + hw,
-                                    lo=i_start, hi=min(i + hw + 1, max_i))
+    for i, pos in enumerate(poss):
+        i_start = bisect.bisect_left(
+            poss, pos - half_window, lo=max(0, i - half_window), hi=i)
+        i_stop = bisect.bisect_left(
+            poss, pos + 1 + half_window, lo=i_start, hi=min(i + half_window + 1, max_i))
         ret_list.append(sum(vals[i_start:i_stop]))
     return ret_list
 
 
 def cumulative_prob(vals, max_val):
     """
-    Given a list of SWW scores in region ``vals``, return list ``freqs_cum`` where
-    probability that randomly picked value in `vals` is equal or greater than i
-    equals freqs_cum[i].
+    Compute cumulative probability.
+
+    Given a list of SWW scores in region ``vals``, return list ``freqs_cum``
+    where probability that randomly picked value in `vals` is equal or greater
+    than i equals freqs_cum[i].
 
     Max_val is the largest possible value that can be expected in `vals`.
     """
@@ -192,7 +195,7 @@ def cumulative_prob(vals, max_val):
 
     # + 1 for the probability of observing 0 or more
     # + 1 beacouse range() excludes last element
-    freqs, _ = numpy.histogram(vals, bins=range(max_val+1+1), density=True)
+    freqs, _ = numpy.histogram(vals, bins=range(max_val + 1 + 1), density=True)
 
     # Now we want to know not how many events with exactly x cross links is
     # possible, but with x cross-links OR MORE. We sum from behind:
@@ -202,7 +205,7 @@ def cumulative_prob(vals, max_val):
     return freqs_cum[::-1]
 
 
-# def get_rnd_distrib(size, total_hits, hw, perms=100):
+# def get_rnd_distrib(size, total_hits, half_window, perms=100):
 #     """The simplest (and fastest) permutation test.
 #
 #     Not used by default.
@@ -210,7 +213,7 @@ def cumulative_prob(vals, max_val):
 #     rnd_cns = numpy.zeros(total_hits+1)
 #     for i in range(perms):
 #         rnd_hits = Counter(numpy.random.randint(size, size=total_hits))
-#         rnd_hits_extended = _sum_within_window_nopos(rnd_hits.items(), hw)
+#         rnd_hits_extended = _sum_within_window_nopos(rnd_hits.items(), half_window)
 #         for v in rnd_hits_extended:
 #             rnd_cns[v] += 1
 #
@@ -224,13 +227,12 @@ def cumulative_prob(vals, max_val):
 #     return cum_prob_ret[::-1]
 
 
-ps_cache = {}
+PS_CACHE = {}
 
 
-def get_avg_rnd_distrib(size, total_hits, hw, perms=10000):
+def get_avg_rnd_distrib(size, total_hits, half_window, perms=10000):
     """
-    Return background distribution of peak heights for given region size
-    and number of hits.
+    Return background distribution for given region size and number of hits.
 
     We follow the modified FDR for peak height, proposed by [1]
 
@@ -247,8 +249,8 @@ def get_avg_rnd_distrib(size, total_hits, hw, perms=10000):
         Size of region.
     total_hits : int
         Number of cross-link events in region.
-    hw : int
-        Half-window size. The actal window size is: 2 * hw + 1.
+    half_window : int
+        Half-window size. The actal window size is: 2 * half_window + 1.
     perms : int
         Number of permutations to make.
 
@@ -258,38 +260,39 @@ def get_avg_rnd_distrib(size, total_hits, hw, perms=10000):
         Probability to find CWW score i or more on chosen position is equal to
         i-th element or returned array.
     """
-    global ps_cache
-    cache_key = (size, total_hits, hw, perms)
-    if cache_key not in ps_cache:
+    cache_key = (size, total_hits, half_window, perms)
+    if cache_key not in PS_CACHE:
 
         rnd_ps = numpy.zeros((perms, total_hits + 1))
         for i in range(perms):
 
             # Draw random distribution of cross-link events in a group with
             # group size = `size` and number of cross-link events = `total_hits`
+            # pylint: disable=no-member
             rnd_hits = Counter(numpy.random.randint(size, size=total_hits))
 
             # This is then list. i-th element in list is probability, that there
             # is equal or more than i crossslinks on some position???
 
-            scores_cww = _sum_within_window_nopos(rnd_hits.items(), hw=hw)
+            scores_cww = _sum_within_window_nopos(rnd_hits.items(), half_window=half_window)
             rnd_ps[i, :] = cumulative_prob(scores_cww, total_hits)
 
         rnd_dist = numpy.mean(rnd_ps, axis=0) + numpy.std(rnd_ps, axis=0)
         # Adding std, can make probability higher than 1, which is nonsense. Fix:
         rnd_dist_fixed = [min(1.0, prob) for prob in rnd_dist]
-        ps_cache[cache_key] = rnd_dist_fixed
+        PS_CACHE[cache_key] = rnd_dist_fixed
 
-    return ps_cache[cache_key]
+    return PS_CACHE[cache_key]
 
 
-def _process_group(pos_scores, group_size, hw, perms):
+def _process_group(pos_scores, group_size, half_window, perms):
     """
     Assign FDR value to each position in group.
 
     One is given a region of size N, with given distribution of K cross-link
     events (scores). How likely it is, that the observed distribution of scores
-    is random? Additionally, scores need to be averaged in windows of size `hw`.
+    is random? Additionally, scores need to be averaged in windows of size
+    `half_window`.
 
     Lets do an example, with region size 5 and 3 cross-link events::
 
@@ -299,7 +302,7 @@ def _process_group(pos_scores, group_size, hw, perms):
         pos_scores = [(0, 0), (1, 0), (2, 2), (3, 0), (4, 1)]
 
     First, do the averaging. This is done by function ``_sum_within_window``. If
-    half-window size is hw=1, the result is::
+    half-window size is half_window=1, the result is::
 
          0 2 2 3 1
         |_|_|_|_|_|
@@ -356,12 +359,12 @@ def _process_group(pos_scores, group_size, hw, perms):
     sum_scores = math.ceil(sum([score for _, score in pos_scores]))
 
     # Calculate the observed cumulative_prob:
-    pos_scores_sww = _sum_within_window(pos_scores, hw=hw)
+    pos_scores_sww = _sum_within_window(pos_scores, half_window=half_window)
     positions, scores_sww = zip(*pos_scores_sww)
     observed = cumulative_prob(scores_sww, sum_scores)
 
     # Calculate random cumulative_prob for given group_size and sum_scores:
-    random_ = get_avg_rnd_distrib(group_size, sum_scores, hw, perms=perms)
+    random_ = get_avg_rnd_distrib(group_size, sum_scores, half_window, perms=perms)
 
     # This step follows the article [1] to produce FDR values. First, produce
     # mapping from sww_scores to FDR value:
@@ -374,10 +377,10 @@ def _process_group(pos_scores, group_size, hw, perms):
 
 
 def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id',
-        merge_features=False, hw=3, fdr=0.05, perms=100, rnd_seed=42, report_progress=False):
+        merge_features=False, half_window=3, fdr=0.05, perms=100, rnd_seed=42,
+        report_progress=False):
     """
     Find positions with high density of cross-linked sites.
-
 
     When detrmining feature.name, value of the first existing attribute in the
     following tuple is taken::
@@ -407,7 +410,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     merge_features : bool
         Treat all features as one when grouping. Has no effect when only one
         feature is given in features parameter.
-    hw : int
+    half_window : int
         Half-window size.
     fdr : float
         FDR threshold.
@@ -432,7 +435,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     assert peaks.endswith(('.bed', '.bed.gz'))
     if scores:
         assert scores.endswith(('.tsv', '.tsv.gz', '.csv', '.csv.gz', 'txt', 'txt.gz'))
-    numpy.random.seed(rnd_seed)
+    numpy.random.seed(rnd_seed)  # pylint: disable=no-member
 
     LOGGER.info('Loading annotation file...')
     annotation = pybedtools.BedTool(annotation).saveas()
@@ -440,8 +443,8 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
     annotation = annotation.filter(lambda x: x[2] in features).sort().saveas()
     metrics.annotation_used = len(annotation)
     metrics.annotation_skipped = metrics.annotation_all - metrics.annotation_used
-    LOGGER.info('{} out of {} annotation records will be used ({} skipped).'.format(
-        metrics.annotation_used, metrics.annotation_all, metrics.annotation_skipped))
+    LOGGER.info('%d out of %d annotation records will be used (%d skipped).',
+                metrics.annotation_used, metrics.annotation_all, metrics.annotation_skipped)
 
     LOGGER.info('Loading cross-links file...')
     sites = pybedtools.BedTool(sites).sort().saveas()
@@ -479,7 +482,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
 
     # calculate total length of each group by summing element sizes:
     group_sizes = dict([(name, sum([end - start for start, end in elements])) for
-                       name, elements in group_sizes.items()])
+                        name, elements in group_sizes.items()])
 
     # calculate and assign FDRs to each cross-linked site. FDR values are
     # calcualated together for each group.
@@ -490,6 +493,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
         j += 1
         if report_progress:
             new_progress = j / metrics.all_groups
+            # pylint: disable=protected-access
             progress = iCount._log_progress(new_progress, progress, LOGGER)
 
         group_size = group_sizes[(chrom, strand, group_id, name)]
@@ -498,7 +502,7 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
         # hits in group, group_size, half-window size and number of
         # permutations. Than, FDR scores (+ some other info) are written to
         # `results` container:
-        processed = _process_group(hits, group_size, hw, perms)
+        processed = _process_group(hits, group_size, half_window, perms)
         for (pos, val, val_extended, fdr_score) in processed:
             results.setdefault((chrom, pos, strand), []).\
                 append((fdr_score, name, group_id, val, val_extended))

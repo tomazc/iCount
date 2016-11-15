@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Demultiplexing
 ==============
 
@@ -59,10 +60,8 @@ def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux
     if not os.path.isdir(out_dir):
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
     out_fn_prefix = []
-    for bc in ['nomatch'] + barcodes:
-        out_fn_prefix.append(
-            os.path.join(out_dir, '{:s}_{:s}'.format(prefix, bc))
-        )
+    for barcode in ['nomatch'] + barcodes:
+        out_fn_prefix.append(os.path.join(out_dir, '{}_{}'.format(prefix, barcode)))
 
     if adapter:
         # need to remove adapter
@@ -73,15 +72,14 @@ def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux
     # demultiplex
     LOGGER.info('Allowing max %d mismatches in barcodes.', mismatches)
     LOGGER.info('Demultiplexing file: %s', reads)
-    demultiplex(reads, out_fns[1:], out_fns[0], barcodes, mismatches,
-                minimum_length)
+    demultiplex(reads, out_fns[1:], out_fns[0], barcodes, mismatches, minimum_length)
     LOGGER.info('Saving results to:')
     for fn in out_fns:
         LOGGER.info('    %s', fn)
 
-    LOGGER.info('Trimming adapters (discarding shorter than %d)...', minimum_length)
     # remove adapter, if requested
     if adapter:
+        LOGGER.info('Trimming adapters (discarding shorter than %d)...', minimum_length)
         out_fns_intermediate = out_fns
         out_fns = ['{:s}.fastq.gz'.format(fn) for fn in out_fn_prefix]
         for fn_in, fn_out in zip(out_fns_intermediate, out_fns):
@@ -93,7 +91,8 @@ def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux
 
 def demultiplex(reads, out_fastq_fnames, not_matching_fastq_fname,
                 barcodes, mismatches=1, minimum_length=15):
-    """Extract reads and save to individual FASTQ files.
+    """
+    Extract reads and save to individual FASTQ files.
 
     All non-matching reads are stored in FASTQ file not_matching_fastq_fname.
 
@@ -119,13 +118,11 @@ def demultiplex(reads, out_fastq_fnames, not_matching_fastq_fname,
         out_fastq_fnames).
 
     """
-
     out_fastq = [iCount.files.fastq.Writer(fn) for fn in
                  out_fastq_fnames + [not_matching_fastq_fname]]
-    reader = iCount.files.fastq.Reader(reads)
-    for r_id, exp_id, r_randomer, r_seq, r_plus, r_qual in \
-            _extract(reader, barcodes, mismatches=mismatches,
-                     minimum_length=minimum_length):
+    reader = iCount.files.fastq.reader(reads)
+    for r_id, exp_id, r_randomer, r_seq, _, r_qual in \
+            _extract(reader, barcodes, mismatches=mismatches, minimum_length=minimum_length):
         if r_randomer:
             if r_id[-2] == '/':
                 r_pair = r_id[-2:]
@@ -135,8 +132,8 @@ def demultiplex(reads, out_fastq_fnames, not_matching_fastq_fname,
 
         out_fastq[exp_id].write(r_id, r_seq, '+', r_qual)
     while out_fastq:
-        f = out_fastq.pop()
-        f.close()
+        fastq_file = out_fastq.pop()
+        fastq_file.close()
     return out_fastq_fnames
 
 
@@ -167,52 +164,52 @@ def _extract(seqs, barcodes, mismatches=1, minimum_length=15):
     # at each barcode position, map nucleotide to corresponding exp_id
     p2n2i = {}
     i2start_pos = {}
-    for bi, bar5 in enumerate(barcodes):
-        for p, n in enumerate(bar5):
-            if n == 'N':
-                ns = ['A', 'T', 'C', 'G']
+    for i, bar5 in enumerate(barcodes):
+        for pos, nuc in enumerate(bar5):
+            if nuc == 'N':
+                nucs = ['A', 'T', 'C', 'G']
             else:
-                ns = [n]
-            assert set(ns) & valid_nucs == set(ns)
-            for n2 in ns:
-                p2n2i.setdefault(p, {}).setdefault(n2, set()).add(bi)
-        assert i2start_pos.setdefault(bi, len(bar5)) == len(bar5)
+                nucs = [nuc]
+            assert set(nucs) & valid_nucs == set(nucs)
+            for nuc2 in nucs:
+                p2n2i.setdefault(pos, {}).setdefault(nuc2, set()).add(i)
+        assert i2start_pos.setdefault(i, len(bar5)) == len(bar5)
 
     # determine the randomer positions - those that cannot be distinguished
     # based on barcodes
     random_pos = []
     p2i = []
     max_votes = 0
-    for p, n2i in sorted(p2n2i.items()):
+    for pos, n2i in sorted(p2n2i.items()):
         if all(len(i) == all_barcodes for i in n2i.values()):
-            random_pos.append(p)
+            random_pos.append(pos)
         else:
-            p2i.append((p, n2i))
+            p2i.append((pos, n2i))
             max_votes += 1
 
     # process sequences
-    for r_cn, r_per, r in seqs:
-        votes = [0]*all_barcodes
-        for p, n2i in p2i:
-            bis = n2i.get(r.r_seq[p], [])
-            for bi in bis:
-                votes[bi] += 1
+    for _, _, read in seqs:
+        votes = [0] * all_barcodes
+        for pos, n2i in p2i:
+            bis = n2i.get(read.r_seq[pos], [])
+            for bi_ in bis:
+                votes[bi_] += 1
         mvotes = max(votes)
         if mvotes < max_votes - mismatches:  # allowed mismatches
             # not recognized
             exp_id = -1
 
             r_randomer = ''
-            r_seq = r.r_seq
-            r_qual = r.r_qual
+            r_seq = read.r_seq
+            r_qual = read.r_qual
         else:
             # recognized as valid barcode
             exp_id = votes.index(mvotes)
 
-            r_randomer = ''.join(r.r_seq[p] for p in random_pos)
-            ps = i2start_pos[exp_id]
-            r_seq = r.r_seq[ps:]
-            r_qual = r.r_qual[ps:]
+            r_randomer = ''.join(read.r_seq[p] for p in random_pos)
+            positions = i2start_pos[exp_id]
+            r_seq = read.r_seq[positions:]
+            r_qual = read.r_qual[positions:]
 
         if len(r_seq) >= minimum_length:
-            yield r.r_id, exp_id, r_randomer, r_seq, r.r_plus, r_qual
+            yield read.r_id, exp_id, r_randomer, r_seq, read.r_plus, r_qual

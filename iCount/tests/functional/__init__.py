@@ -1,9 +1,13 @@
+"""TODO."""
+# pylint: disable=missing-docstring, protected-access
+
 import os
 
 import iCount
 
-functional_test_folder = os.path.join(iCount.tmp_root, 'tests/functional/')
-if not os.path.exists(functional_test_folder):
+FUNCTIONAL_TEST_FOLDER = os.path.join(iCount.TMP_ROOT, 'tests/functional/')
+
+if not os.path.exists(FUNCTIONAL_TEST_FOLDER):
     print("Test folder does not exist. Will create it at: "
-          "{0:s}".format(functional_test_folder))
-    os.makedirs(functional_test_folder)
+          "{0:s}".format(FUNCTIONAL_TEST_FOLDER))
+    os.makedirs(FUNCTIONAL_TEST_FOLDER)

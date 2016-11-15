@@ -1,4 +1,6 @@
-"""
+# pylint: disable=invalid-name
+""".. Line to protect from pydocstyle D205, D400.
+
 iCount: protein-RNA interaction analysis
 ========================================
 
@@ -33,30 +35,30 @@ from .metrics import Metrics
 
 # CONFIG
 #: Output path points to the current working folder by default.
-output_root = '.'
+OUTPUT_ROOT = '.'
 
 #: Default output folder can be set via the environment variable specified here.
 #: Note, output path may be overridden by optional parameters of individual commands.
 ICOUNT_OUTPUT_ROOT_VAR = 'ICOUNT_OUTPUT_ROOT'
-output_root = os.environ.get(ICOUNT_OUTPUT_ROOT_VAR, output_root)
+OUTPUT_ROOT = os.environ.get(ICOUNT_OUTPUT_ROOT_VAR, OUTPUT_ROOT)
 
 
 #: Path to temporary folder.
-tmp_root = '/tmp/iCount'
+TMP_ROOT = '/tmp/iCount'
 
 #: Default temporary folder can be set via the environment variable specified here.
 #: Note, temporary path may be overridden by optional parameters of individual commands.
 ICOUNT_TMP_ROOT_VAR = 'ICOUNT_TMP_ROOT'
-tmp_root = os.environ.get(ICOUNT_TMP_ROOT_VAR, tmp_root)
+TMP_ROOT = os.environ.get(ICOUNT_TMP_ROOT_VAR, TMP_ROOT)
 
 
 # create folders if needed
-if not os.path.exists(output_root):
+if not os.path.exists(OUTPUT_ROOT):
     print("Output root folder does not exist. Will create it at: "
-          "{0:s}".format(output_root))
-    os.makedirs(output_root)
+          "{0:s}".format(OUTPUT_ROOT))
+    os.makedirs(OUTPUT_ROOT)
 
-if not os.path.exists(tmp_root):
+if not os.path.exists(TMP_ROOT):
     print("tmp root folder does not exist. Will create it at: "
-          "{0:s}".format(tmp_root))
-    os.makedirs(tmp_root)
+          "{0:s}".format(TMP_ROOT))
+    os.makedirs(TMP_ROOT)

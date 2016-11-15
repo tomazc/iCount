@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Externals
 =========
 
@@ -15,4 +16,4 @@ A number of external software is needed for iCount to work.
 from . import cutadapt
 from . import star
 
-expected_cutadapt_version = '1.10'
+EXPECTED_CUTADAPT_VERSION = '1.10'

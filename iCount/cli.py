@@ -1,6 +1,5 @@
-#!/usr/bin/env python
+""".. Line to protect from pydocstyle D205, D400.
 
-"""
 Automated CLI creation
 ======================
 
@@ -36,7 +35,7 @@ LOGGER = logging.getLogger(__name__)
 ########################################
 
 def _list_str(string, separator=','):
-    """Convert comma separated string to list"""
+    """Convert comma separated string to list."""
     return string.strip('{:s} \n\t'.format(separator))
 
 VALID_TYPES = {
@@ -114,7 +113,6 @@ def _extract_parameter_data(function):
           not found, set to 'No description'
 
     """
-
     # Use OrderedDict to keep the order of parameters
     data = collections.OrderedDict()
 
@@ -124,17 +122,12 @@ def _extract_parameter_data(function):
     # descriptions are indented with spaces. Remove such indentation:
     function_docstring = re.sub(r'\ {2,}', '', function_docstring_)
 
-    # Determine weather argument is positional or optional: positional arguments
-    # are the ones that do not have default values defined:
-    params = inspect.getargspec(function).args
-    default_values = list(inspect.getargspec(function).defaults or [])
-    pos_opt_border = len(params) - len(default_values)
-    optional = {par: default for par, default in
-                zip(params[pos_opt_border:], default_values)}
-
-    for param in params:
-        if param in optional:
-            data[param] = {'name': '--' + param, 'default': optional[param], 'metavar': ''}
+    # Extract parameter name and default value:
+    params = [(key, par.default) for key, par in inspect.signature(function).parameters.items()]
+    for param, default in params:
+        # if default value is not empty, it is a optional parameter:
+        if default != inspect._empty:  # pylint: disable=protected-access
+            data[param] = {'name': '--' + param, 'default': default, 'metavar': ''}
         else:
             data[param] = {'name': param}
 
@@ -152,9 +145,9 @@ def _extract_parameter_data(function):
                     param_type, function.__name__))
             data[param]['type'] = VALID_TYPES[param_type]
             data[param]['help'] = match_help.group(1).strip().rstrip('.')
-            if param in optional:
+            if default != inspect._empty:  # pylint: disable=protected-access
                 # Append default value to parameter description:
-                default_value = ' (default: {})'.format(_format_defaults(optional[param]))
+                default_value = ' (default: {})'.format(_format_defaults(default))
                 data[param]['help'] += default_value
 
             if param_type == 'bool':
@@ -237,7 +230,6 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
           beggining until "Parameters" section) for CLI help message.
 
     """
-
     if module:
         # Command name is determined from module name:
         name = module.__name__.split('.')[-1]
@@ -300,7 +292,11 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
 
 
 def main():
+    """
+    Main.
 
+    TODO
+    """
     #####################
     # Define root parser:
     #####################
@@ -334,9 +330,10 @@ def main():
     make_parser_from_function(iCount.demultiplex.run, subparsers)
     make_parser_from_function(iCount.demultiplex.remove_adapter, subparsers,
                               module=iCount.externals.cutadapt)
-    make_parser_from_function(iCount.mapping.mapindex.run, subparsers,
-                              module=iCount.mapping.mapindex)
-    make_parser_from_function(iCount.mapping.map.run, subparsers, module=iCount.mapping.map)
+    make_parser_from_function(iCount.mapping.indexstar.run, subparsers,
+                              module=iCount.mapping.indexstar)
+    make_parser_from_function(iCount.mapping.mapstar.run, subparsers,
+                              module=iCount.mapping.mapstar)
     make_parser_from_function(iCount.mapping.xlsites.run, subparsers)
 
     # Analysis:
@@ -356,8 +353,10 @@ def main():
         iCount.examples.run, subparsers)
 
     def verbose_help(mode):
+        """Print help text for all available CLI commands."""
         if mode == 'txt':
             print(root_parser.format_help() + '\n')
+            # pylint: disable=protected-access
             for name, parser in root_parser._action_groups[2]._actions[2].choices.items():
                 if name == 'man':
                     continue
@@ -374,6 +373,7 @@ def main():
 
     # all_args command:
     def all_args():
+        """Print all posssible parameter names and CLI commands where they are used."""
         for param_name, commands in sorted(PARAMETERS.items(), key=lambda x: x[0].lstrip('-')):
             if param_name in SHORT_OPTARG_NAMES:
                 short_name = ' ({})'.format(SHORT_OPTARG_NAMES[param_name])
@@ -414,7 +414,7 @@ def main():
 
         # Execute the wrapped function:
         command = 'iCount ' + ' '.join(sys.argv[1:])
-        LOGGER.info("Executing the following command: %s" % command)
+        LOGGER.info("Executing the following command: %s", command)
         result_object = func(**args)
 
         # Save results to results_file. If not given, don't do anything (don't print the result!)
@@ -422,11 +422,11 @@ def main():
             print(result_object, file=results_file)
         sys.exit(0)
 
-    except Exception as exception:
+    except Exception as exception:  # pylint: disable=broad-except
         exception_message = exception.args[0]
         exception_type = exception.__class__.__name__
 
-        LOGGER.error('[%s] %s' % (exception_type, exception_message))
+        LOGGER.error('[%s] %s', exception_type, exception_message)
         for line in traceback.format_list(traceback.extract_tb(exception.__traceback__)):
             LOGGER.error(line)
         sys.exit(1)

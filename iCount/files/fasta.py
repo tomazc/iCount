@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 FASTA
 -----
 
@@ -6,9 +7,10 @@ Reading `FASTA`_ files.
 
 """
 
+
 def read_fasta(fasta_file):
     """
-    Read fasta file and return list
+    Read fasta file and return list.
 
     The retuned list (named data) has the following structure::
 

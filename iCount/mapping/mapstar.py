@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Map using STAR
 --------------
 
@@ -18,5 +19,5 @@ following parameters:
 --outFilterMultimapNmax maxHits # default 10
 --outFilterMismatchNmax # default 10
 """
-
+# pylint: disable=unused-import
 from iCount.externals.star import map_reads as run
