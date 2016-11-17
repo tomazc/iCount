@@ -48,9 +48,12 @@ def get_ftp_instance():
     ftplib.FTP
         FTP object connected to {0}
     """
-    ftp = ftplib.FTP(BASE_URL)
-    ftp.login()
-    return ftp
+    try:
+        ftp = ftplib.FTP(BASE_URL)
+        ftp.login()
+        return ftp
+    except Exception as exception:
+        raise ConnectionError('Problems connecting to ENSEMBL FTP server.')
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
@@ -97,6 +100,10 @@ def species(release=MAX_RELEASE_SUPPORTED):
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
+    if not MIN_RELEASE_SUPPORTED <= release <= MAX_RELEASE_SUPPORTED:
+        raise ValueError('Release should be a number between {} and {}.'.format(
+            MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED))
+
     ftp = get_ftp_instance()
     ftp.cwd('pub/' + 'release-' + str(release) + '/fasta/')
     spec_list = sorted([item for item in ftp.nlst()])
@@ -131,6 +138,13 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
+
+    if species not in iCount.genomes.ensembl.species():
+        raise ValueError('Invalid species name.')
+
+    if not MIN_RELEASE_SUPPORTED <= release <= MAX_RELEASE_SUPPORTED:
+        raise ValueError('Release should be a number between {} and {}.'.format(
+            MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED))
 
     if annotation:
         assert annotation.endswith(('.gtf', '.gtf.gz'))
@@ -250,6 +264,13 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
+    if species not in iCount.genomes.ensembl.species():
+        raise ValueError('Invalid species name.')
+
+    if not MIN_RELEASE_SUPPORTED <= release <= MAX_RELEASE_SUPPORTED:
+        raise ValueError('Release should be a number between {} and {}.'.format(
+            MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED))
+
     if genome:
         assert genome.endswith(('.fa', '.fasta', '.fa.gz', '.fasta.gz'))
 
@@ -291,13 +312,15 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     # If parameter chromosomes is given, take only a subset of all chromosomes
     if chromosomes:
         subset_list = []
-        for file_ in filtered_files:
-            for chromosome in chromosomes:
-                regex = r'.*chromosome\.{}\.fa\.gz'.format(str(chromosome))
+        for chromosome in chromosomes:
+            regex = r'.*chromosome\.{}\.fa\.gz'.format(str(chromosome))
+            chromosome_found = False
+            for file_ in filtered_files:
                 if re.match(regex, file_):
                     subset_list.append(file_)
-                else:
-                    pass
+                    chromosome_found = True
+            if not chromosome_found:
+                raise ValueError('Could not find file with chromosome {}.'.format(chromosome))
         filtered_files = subset_list
         if not genome:
             genome = '{}.{}.chr{}.fa.gz'.format(
