@@ -119,7 +119,10 @@ def _extract_parameter_data(function):
     data = collections.OrderedDict()
 
     # Get function docstring and convert from Numpy to rst docstring style:
-    function_docstring = str(NumpyDocstring(inspect.getdoc(function))) or ''
+    function_docstring_ = str(NumpyDocstring(inspect.getdoc(function))) or ''
+    # When converting from NumpyDocstring to rst format, mutiline parameter
+    # descriptions are indented with spaces. Remove such indentation:
+    function_docstring = re.sub(r'\ {2,}', '', function_docstring_)
 
     # Determine weather argument is positional or optional: positional arguments
     # are the ones that do not have default values defined:
@@ -136,9 +139,9 @@ def _extract_parameter_data(function):
             data[param] = {'name': param}
 
         # Extract help (parameter description) and type from function docstring:
-        regex_help = r'.*:param {}: (.+?)\n.*'.format(param)
+        regex_help = r'.*:param {}: (.+?):type .*'.format(param)
         regex_type = r'.*:type {}: (.+?)\n.*'.format(param)
-        # Use DOTALL flag - this way '.' matches also newline characters:
+        # Use DOTALL flag - this way r'.' also matches newline characters:
         match_help = re.match(regex_help, function_docstring, flags=re.DOTALL)
         match_type = re.match(regex_type, function_docstring, flags=re.DOTALL)
 
