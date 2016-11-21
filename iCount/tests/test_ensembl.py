@@ -1,6 +1,7 @@
+# pylint: disable=missing-docstring, protected-access
+
 import os
 import ftplib
-import tempfile
 import warnings
 import unittest
 from unittest import mock
@@ -23,7 +24,7 @@ class TestEnsembl(unittest.TestCase):
         ftp_instance.quit()
 
     @mock.patch('iCount.genomes.ensembl.ftplib')
-    def test_get_ftp_instance_no_connection(self, ftplib_mock):
+    def test_no_connection(self, ftplib_mock):
         ftplib_mock.FTP = mock.MagicMock(side_effect=Exception())
         message = "Problems connecting to ENSEMBL FTP server."
         with self.assertRaisesRegex(Exception, message):
@@ -52,7 +53,7 @@ class TestEnsembl(unittest.TestCase):
     def test_species_bad_release_number(self):
         message = r"Release should be a number between \d+ and \d+"
         with self.assertRaisesRegex(ValueError, message):
-            species = ensembl.species(1)
+            ensembl.species(1)
 
 
 class TestEnsemblAnnotation(unittest.TestCase):
@@ -63,7 +64,7 @@ class TestEnsemblAnnotation(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_annotation(self):
-        ann_file = ensembl.annotation(
+        ensembl.annotation(
             'homo_sapiens', release=84, out_dir=self.tempdir, annotation=self.tmpfile)
 
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, self.tmpfile)))
@@ -93,7 +94,7 @@ class TestEnsemblGenome(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_genome(self):
-        fasta_file = ensembl.genome(
+        ensembl.genome(
             'homo_sapiens', release=84, out_dir=self.tempdir, chromosomes=['MT'])
 
         self.assertTrue(os.path.isfile(

@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 BED
 ---
 
@@ -18,17 +19,17 @@ import iCount
 LOGGER = logging.getLogger(__name__)
 
 
-def load(fname):
-    return pybedtools.BedTool(fname)
-
-
 def _convert_legacy_bed_format(feature):
-    # old iCount legacy format:
-    # chrome, start, end, [+-]score
-    # where +/- indicate strand of cross-link site and score indicates the
-    # intensity of interaction
-    # use BED6 format, see:
-    # http://bedtools.readthedocs.io/en/latest/content/general-usage.html
+    """
+    TODO.
+
+    Old iCount legacy format:
+    chrome, start, end, [+-]score
+    where +/- indicate strand of cross-link site and score indicates the
+    intensity of interaction
+    use BED6 format, see:
+    http://bedtools.readthedocs.io/en/latest/content/general-usage.html
+    """
     chrom = feature.chrom
     start = feature.start
     end = feature.stop
@@ -45,7 +46,8 @@ def _convert_legacy_bed_format(feature):
 
 
 def convert_legacy(bedgraph_legacy, bed_converted):
-    """Convert legacy iCount's four-column format into proper BED6 format.
+    """
+    Convert legacy iCount's four-column format into proper BED6 format.
 
     Old iCount legacy format: chrome, start, end, [+-]value
     Strand can be either '+' or '-', and value indicates the intensity of
@@ -95,7 +97,8 @@ def merge_bed(sites_grouped, sites):
 
     # Marge intervals in "joined" file (needs to be sorted before!):
     # s=True - only merge features that are on the same strand
-    # d=-1 - join only intervals with at least one base-pair overlap - default (0) merges also touching intervals
+    # d=-1 - join only intervals with at least one base-pair overlap - default
+    # (0) merges also touching intervals
     # c=5, o='sum' - when merging intervals, make operation 'sum' on column 5 (score)
     merged = pybedtools.BedTool(joined.name).sort().merge(
         s=True, d=-1, c=5, o='sum').sort().saveas()
@@ -109,37 +112,3 @@ def merge_bed(sites_grouped, sites):
 
     LOGGER.info('Done. Results saved to: %s', os.path.abspath(result.fn))
     return os.path.abspath(result.fn)
-
-
-def _f2s(number, dec=4):
-    """
-    Return string representation of ``number`` without trailing decimal
-    zeros and with maximum ``dec`` decimal places.
-    """
-    if not isinstance(number, (int, float)):
-        return number
-    return '{{:.{:d}f}}'.format(dec).format(number).rstrip('0').rstrip('.')
-
-
-def _iter_bedgraph_dict(bedgraph, val_index=None):
-    if val_index is not None:
-        for (chrome, strand), by_pos in bedgraph.items():
-            for pos, val in by_pos.items():
-                val = val[val_index]
-                yield pybedtools.create_interval_from_list(
-                    [chrome, pos, pos+1, '.', _f2s(val), strand]
-                )
-    else:
-        for (chrome, strand), by_pos in bedgraph.items():
-            for pos, val in by_pos.items():
-                yield pybedtools.create_interval_from_list(
-                    [chrome, pos, pos+1, '.', _f2s(val), strand]
-                )
-
-
-def save_dict(bedgraph, out_fname, val_index=None):
-    sites = pybedtools.BedTool(
-        _iter_bedgraph_dict(bedgraph, val_index=val_index)
-    ).saveas()
-    sites1 = sites.sort().saveas(out_fname)
-    return sites1

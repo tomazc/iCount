@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Generate STAR index
 -------------------
 
@@ -15,4 +16,5 @@ by passing the following parameters:
 --sjdbOverhang ReadLength-1
 
 """
+# pylint: disable=unused-import
 from iCount.externals.star import build_index as run

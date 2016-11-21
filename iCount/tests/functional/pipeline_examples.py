@@ -1,4 +1,6 @@
 """
+Test consistency of example scripts.
+
 This script tests if results of iCount/examples/*.sh are consistent with the
 reference results stored under
 iCount/tests/pipeline_examples.[script_name].out.txt
@@ -6,18 +8,19 @@ iCount/tests/pipeline_examples.[script_name].out.txt
 If reference results are not present, they are created and saved under
 iCount/tests/pipeline_examples.[script_name].out-cur.txt
 """
+# pylint: disable=missing-docstring, protected-access
 
 import os
 import shutil
 import unittest
 
-from iCount.tests.functional import functional_test_folder
+from . import FUNCTIONAL_TEST_FOLDER
 
 
 def _read_file(fn):
-    with open(fn) as f:
+    with open(fn) as file_:
         # skip STAR status reports because time-stamped
-        lines = [r.strip() for r in f]
+        lines = [r.strip() for r in file_]
         return [r for r in lines if ' ..... ' not in r and ' ... ' not in r]
 
 
@@ -28,7 +31,7 @@ class TestPipeline(unittest.TestCase):
         self.ref_pref = os.path.abspath(__file__[:-3])
 
         # folder where all examples will be run
-        self.test_dir = os.path.join(functional_test_folder, 'pipeline')
+        self.test_dir = os.path.join(FUNCTIONAL_TEST_FOLDER, 'pipeline')
         # remove it first
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)

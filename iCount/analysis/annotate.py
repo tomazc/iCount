@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Cross-link site annotation
 --------------------------
 
@@ -10,10 +11,9 @@ import os
 import logging
 
 import pybedtools
+from pybedtools import create_interval_from_list
 
 import iCount
-
-from pybedtools import create_interval_from_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -81,11 +81,13 @@ def annotate_cross_links(annotation, sites, sites_annotated, subtype='biotype',
 
     for interval in overlaps:
         # Detect new cross link:
-        if interval.start != previous_interval.start or interval.strand != previous_interval.strand:
+        if interval.start != previous_interval.start or \
+           interval.strand != previous_interval.strand:
             finalize(site_types, previous_interval)
             site_types = []
         if subtype:
-            stype = re.match(r'.*{} "(.*?)";'.format(subtype), interval[-1])  # Extract subtype attribute
+            # Extract subtype attribute:
+            stype = re.match(r'.*{} "(.*?)";'.format(subtype), interval[-1])
             site_types.append('{} {}'.format(interval[8], stype.group(1) if stype else '.'))
         else:
             site_types.append(interval[8])

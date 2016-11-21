@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Examples
 ========
 
@@ -6,23 +7,26 @@ Examples
 
 import os
 import shutil
+import logging
 
-analysis_name = 'examples'
-analysis_description_short = 'setup examples folder'
-analysis_description = 'Create a subfolder with example scripts for running ' \
-                       'iCount pipeline for iCLIP data.'
+import iCount
 
-params_opt = []
-params_pos = []
+
+LOGGER = logging.getLogger(__name__)
 
 
 def run(out_dir='.'):
     """
-    Creates an examples subfolder with example scripts.
+    Create an examples subfolder with example scripts.
 
     This will create an examples subfolder in current working directory and
     will copy bash scripts needed to run the iCount pipeline on a few
     examples (for now, only the hnRNP C data from Konig et al.).
+
+    Parameters
+    ----------
+    out_dir : str
+        Directory to which example scripts should be copied.
 
     Returns
     -------
@@ -32,31 +36,24 @@ def run(out_dir='.'):
     """
     examples_folder = os.path.abspath(os.path.join(out_dir, 'examples'))
     if os.path.exists(examples_folder):
-        print('Examples folder already exists: {:s}'.format(examples_folder))
-        print('Scripts will NOT be copied into it.')
-        print('Make sure subfolder \'examples\' does not exist before '
-              'rerunning the command.')
-        return
+        raise FileExistsError('Examples folder already exists.')
 
     try:
         os.makedirs(examples_folder)
-    except OSError as e:
-        print('Error creating examples folder {:s}'.format(e))
-        return
-    print('Setting up folder with examples.')
+        LOGGER.info('Setting up folder with examples.')
+    except OSError:
+        raise OSError('Error creating examples folder.')
 
     cur_folder = os.path.dirname(os.path.abspath(__file__))
     for script in ['hnRNPC.sh', 'hnRNPC_reduced.sh']:
         src_fn = os.path.join(cur_folder, script)
         dst_fn = os.path.join(examples_folder, script)
-        print('   copying example script {:s}'.format(script))
+        LOGGER.info('   copying example script %s', script)
         try:
             shutil.copy(src_fn, dst_fn)
-        except OSError as e:
-            print('Error copying example script: ', e)
-            print('   from: {:s}'.format(src_fn))
-            print('   to: {:s}'.format(dst_fn))
-            return
+        except OSError:
+            message = 'Error copying example script from: {} to: {}'.format(src_fn, dst_fn)
+            raise OSError(message)
 
-    print('Check example bash scripts in subfolder \'examples\'')
+    LOGGER.info('Done. Check example bash scripts in subfolder \'examples\'')
     return examples_folder

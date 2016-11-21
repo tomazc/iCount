@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Cluster sites
 -------------
 
@@ -20,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 def _fix_proper_bed6_format(feature):
     """
-    Take a feature and convert it to BED6 format
+    Take a feature and convert it to BED6 format.
 
     http://bedtools.readthedocs.io/en/latest/content/general-usage.html
     """

@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Metrics
 =======
 
@@ -13,10 +14,7 @@ import inspect
 
 
 class Metrics:
-    """
-    Placeholder for collecting processing statistics during the execution of a function.
-
-    """
+    """Storge for statistics calculated during function execution."""
 
     def __init__(self, context=None, **kwargs):
         """
@@ -43,6 +41,7 @@ class Metrics:
             setattr(self, arg, value)
 
     def __repr__(self):
+        """Customize repr to enable recreatin of objects with eval statement."""
         attrs = [(k, v) for k, v in self.__dict__.items() if k != 'context' and not callable(v)]
         attrs = [('context', self.context)] + attrs
         args = ', '.join('{}="{}"'.format(k, v.__repr__()) for k, v in attrs)

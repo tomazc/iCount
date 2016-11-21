@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Cross-link site summary
 -----------------------
 
@@ -9,11 +10,9 @@ import re
 import logging
 
 import pybedtools
-
-import iCount
-
 from pybedtools import create_interval_from_list
 
+import iCount
 from iCount.genomes.segment import _complement
 
 LOGGER = logging.getLogger(__name__)
@@ -76,6 +75,7 @@ def make_types_length_file(annotation, fai, out_file=None, subtype='biotype', ex
     type_lengths = {}
     for type_, list_ in data.items():
         total_bp = 0
+        # pylint: disable=unexpected-keyword-arg
         for feature in pybedtools.BedTool(i for i in list_).merge(s=True):
             total_bp += len(feature)
         type_lengths[type_] = total_bp
@@ -165,7 +165,7 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
     previous_segment = overlaps[0]
 
     def finalize(types, segment):
-        """Increase counter for all types that intersect with segment"""
+        """Increase counter for all types that intersect with segment."""
         for type_ in set(types):
             type_counter[type_][0] += 1  # sites
             type_counter[type_][1] += int(segment[4])  # events

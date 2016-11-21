@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 STAR aligner
 ------------
 
@@ -6,12 +7,11 @@ Interface to running STAR.
 """
 
 import os
-import sys
 import logging
 import subprocess
 
 from threading import Thread
-from queue import Queue, Empty
+from queue import Queue
 
 import iCount
 
@@ -19,11 +19,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _execute(cmd):
-    """
-    Iterator giving stdout and stderr in realtime when executing the cmd.
-    """
-
-    def readline_output(out, queue, name):
+    """Iterator giving stdout and stderr in realtime when executing the cmd."""
+    def readline_output(out, queue, name):  # pylint: disable=missing-docstring
         for line in iter(out.readline, ''):
             queue.put((name, line))
         out.close()
@@ -32,13 +29,13 @@ def _execute(cmd):
     popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              universal_newlines=True)
 
-    q = Queue()
-    t1 = Thread(target=readline_output, args=(popen.stdout, q, 'stdout'), daemon=True).start()
-    t2 = Thread(target=readline_output, args=(popen.stderr, q, 'stderr'), daemon=True).start()
+    queue = Queue()
+    Thread(target=readline_output, args=(popen.stdout, queue, 'stdout'), daemon=True).start()
+    Thread(target=readline_output, args=(popen.stderr, queue, 'stderr'), daemon=True).start()
 
     done = 0
     while True:
-        out, message = q.get()
+        out, message = queue.get()
         if message == 'readline_output finished.':
             done += 1
         else:
@@ -51,12 +48,13 @@ def _execute(cmd):
 
 
 def get_version():
+    """Get STAR version."""
     args = ['STAR', '--version']
     try:
         ver = subprocess.check_output(args, shell=False,
                                       universal_newlines=True)
         return str(ver).rstrip('\n\r')
-    except:
+    except:  # pylint: disable=bare-except
         return None
 
 
@@ -91,7 +89,7 @@ def build_index(genome, genome_index, annotation='', overhang=100, overhang_min=
     if not os.path.isdir(genome_index):
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
 
-    LOGGER.info('Building genome index with STAR for genome %s' % genome)
+    LOGGER.info('Building genome index with STAR for genome %s', genome)
     genome_fname2 = iCount.files.decompress_to_tempfile(
         genome, 'starindex')
     args = [
@@ -136,7 +134,9 @@ def build_index(genome, genome_index, annotation='', overhang=100, overhang_min=
 
 def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatches=2, threads=1):
     """
-    Map FASTQ file reads to reference genome. TODO
+    Map FASTQ file reads to reference genome.
+
+    TODO
 
     Parameters
     ----------
@@ -167,7 +167,7 @@ def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatch
     if not os.path.isdir(out_dir):
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
 
-    LOGGER.info('Mapping reads from %s' % reads)
+    LOGGER.info('Mapping reads from %s', reads)
     sequences_fname2 = iCount.files.decompress_to_tempfile(
         reads, 'starmap')
 

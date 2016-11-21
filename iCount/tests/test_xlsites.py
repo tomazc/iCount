@@ -1,13 +1,10 @@
-import os
-import unittest
+# pylint: disable=missing-docstring, protected-access
+
 import warnings
-
-import pysam
-import pybedtools
-
+import unittest
 from unittest import mock
 
-from numpy import random
+import pybedtools
 
 from iCount.mapping import xlsites
 from iCount.tests.utils import get_temp_file_name, make_bam_file
@@ -312,14 +309,14 @@ class TestSecondStart(unittest.TestCase):
     def test_second_start_no_annotation(self):
         # If hole size is lower than holesize_th, strange should be empty:
         strange = []
-        second_start = xlsites._second_start(
+        xlsites._second_start(
             read='the_read', poss=(1, 2, 5, 6), strange=strange, strand='+', chrom=1,
             annotation=None, holesize_th=1)
         self.assertEqual(strange, ['the_read'])
 
         # If hole size is lower than holesize_th, strange should be empty:
         strange = []
-        second_start = xlsites._second_start(
+        xlsites._second_start(
             read='the_read', poss=(1, 2, 5, 6), strange=strange, strand='+', chrom=1,
             annotation=None, holesize_th=2)
         self.assertEqual(strange, [])
@@ -337,12 +334,10 @@ class TestProcessBamFile(unittest.TestCase):
         Provide onyl file with no content - error shoud be raised.
         """
         bam_fname = get_temp_file_name()
-        unique_fname = get_temp_file_name()
-        multi_fname = get_temp_file_name()
 
         message = r"Error opening BAM file: .*"
         with self.assertRaisesRegex(ValueError, message):
-            result = xlsites._processs_bam_file(bam_fname, self.metrics, 50, self.tmp)
+            xlsites._processs_bam_file(bam_fname, self.metrics, 50, self.tmp)
 
     def test_unmapped(self):
         """
@@ -370,23 +365,21 @@ class TestProcessBamFile(unittest.TestCase):
         })
         self.metrics.lowmapq_recs = 0
         self.metrics.used_recs = 0
-        xlsites._processs_bam_file(bam_fname, self.metrics, 10,  self.tmp)
+        xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp)
         self.assertEqual(self.metrics.lowmapq_recs, 1)
         self.assertEqual(self.metrics.used_recs, 0)
 
-    def test_no_NH_tag(self):
-        data_no_NH = {
+    def test_no_nh_tag(self):
+        data_no_nh = {
             'chromosomes': [('chr1', 3000)],
             'segments': [
                 # No NH tag is set
                 ('name5', 0, 0, 0, 50, [(0, 0)], {})]}
-        bam_fname = make_bam_file(data_no_NH)
-        unique_fname = get_temp_file_name()
-        multi_fname = get_temp_file_name()
+        bam_fname = make_bam_file(data_no_nh)
 
         message = r'"NH" tag not set for record: .*'
         with self.assertRaisesRegex(ValueError, message):
-            result = xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp)
+            xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp)
 
     def test_pos_neg_strand(self):
         """
@@ -448,7 +441,7 @@ class TestRun(unittest.TestCase):
         result = xlsites.run(
             bam_fname, unique_fname, multi_fname, strange_fname, mapq_th=5, report_progress=True)
 
-        # All records:
+        # pylint: disable=no-member
         self.assertEqual(result.all_recs, 6)
         # Unmapped records:
         self.assertEqual(result.notmapped_recs, 1)

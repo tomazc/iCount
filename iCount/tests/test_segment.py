@@ -1,15 +1,14 @@
+# pylint: disable=missing-docstring, protected-access
+
 import tempfile
-import unittest
 import warnings
-
-import iCount  # pylint: disable=unused-import
-
+import unittest
 from unittest.mock import patch  # pylint: disable=unused-import
 
 from pybedtools import create_interval_from_list
 
+import iCount  # pylint: disable=unused-import
 from iCount.genomes import segment
-
 from iCount.tests.utils import list_to_intervals, intervals_to_list, \
     reverse_strand, make_file_from_list, make_list_from_file
 
@@ -20,27 +19,27 @@ class TestOtherFunctions(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_a_in_b(self):
-        b = create_interval_from_list(['1', '10', '20', 'Name', '42', '+'])
+        second = create_interval_from_list(['1', '10', '20', 'Name', '42', '+'])
 
         # a completely in b
-        a = create_interval_from_list(['1', '12', '18', 'Name', '42', '+'])
-        self.assertTrue(segment._a_in_b(a, b))
+        first = create_interval_from_list(['1', '12', '18', 'Name', '42', '+'])
+        self.assertTrue(segment._a_in_b(first, second))
 
         # a == b
-        a = create_interval_from_list(['1', '10', '20', 'Name', '42', '+'])
-        self.assertTrue(segment._a_in_b(a, b))
+        first = create_interval_from_list(['1', '10', '20', 'Name', '42', '+'])
+        self.assertTrue(segment._a_in_b(first, second))
 
         # a streches out of b on left
-        a = create_interval_from_list(['1', '5', '15', 'Name', '42', '+'])
-        self.assertFalse(segment._a_in_b(a, b))
+        first = create_interval_from_list(['1', '5', '15', 'Name', '42', '+'])
+        self.assertFalse(segment._a_in_b(first, second))
 
         # a streches out of b on right
-        a = create_interval_from_list(['1', '15', '25', 'Name', '42', '+'])
-        self.assertFalse(segment._a_in_b(a, b))
+        first = create_interval_from_list(['1', '15', '25', 'Name', '42', '+'])
+        self.assertFalse(segment._a_in_b(first, second))
 
         # a completely out of b
-        a = create_interval_from_list(['1', '25', '35', 'Name', '42', '+'])
-        self.assertFalse(segment._a_in_b(a, b))
+        first = create_interval_from_list(['1', '25', '35', 'Name', '42', '+'])
+        self.assertFalse(segment._a_in_b(first, second))
 
     def test_add_biotype_attribute1(self):
         gene_content = {
@@ -452,7 +451,7 @@ class TestComplement(unittest.TestCase):
                 ['MT', '500'],
             ], bedtool=False)
 
-        gs = list_to_intervals([
+        genes = list_to_intervals([
             ['1', '.', 'gene1', '200', '400', '.', '+', '.', '.'],
             ['1', '.', 'gene2', '300', '600', '.', '+', '.', '.'],
             ['1', '.', 'gene3', '200', '500', '.', '+', '.', '.'],
@@ -461,7 +460,7 @@ class TestComplement(unittest.TestCase):
         ])
 
         complement = make_list_from_file(
-            segment._complement(gs, genome_file, '+'), fields_separator='\t')
+            segment._complement(genes, genome_file, '+'), fields_separator='\t')
 
         empty_col8 = 'gene_id "."; transcript_id ".";'
         expected = [
@@ -533,7 +532,7 @@ class TestGetGeneContent(unittest.TestCase):
         self.assertEqual(gene1, expected1)
         self.assertEqual(gene2, expected2)
 
-    def test_already_processed_transcript(self):
+    def test_already_processed(self):
         """
         Raise error if member of already processed transcript is found.
         """

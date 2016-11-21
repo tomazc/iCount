@@ -1,4 +1,5 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Identify and quantify cross-linked sites
 ----------------------------------------
 
@@ -80,46 +81,71 @@ of randomers among) unique mapped sites that overlap with multimapped reads
 
 """
 
-import tempfile
 import logging
 
-import pysam
+import pybedtools
+from pysam import AlignmentFile  # pylint: disable=no-name-in-module
 
 import iCount
+from iCount.files import _f2s
 
 
 LOGGER = logging.getLogger(__name__)
 VALID_NUCLEOTIDES = set('ATCGN')
 
 
+def _iter_bed_dict(bed, val_index=None):
+    """Iterate through dict object."""
+    if val_index is not None:
+        for (chrome, strand), by_pos in bed.items():
+            for pos, val in by_pos.items():
+                val = val[val_index]
+                yield pybedtools.create_interval_from_list(
+                    [chrome, pos, pos + 1, '.', _f2s(val), strand]
+                )
+    else:
+        for (chrome, strand), by_pos in bed.items():
+            for pos, val in by_pos.items():
+                yield pybedtools.create_interval_from_list(
+                    [chrome, pos, pos + 1, '.', _f2s(val), strand]
+                )
+
+
+def _save_dict(bed, out_fname, val_index=None):
+    """Save data from dict to BED file."""
+    sites = pybedtools.BedTool(
+        _iter_bed_dict(bed, val_index=val_index)
+    ).saveas()
+    sites1 = sites.sort().saveas(out_fname)
+    return sites1
+
+
 def _get_random_barcode(query_name, metrics):
-    """
-    Extract random barcode from ``query_name``.
-    """
+    """Extract random barcode from ``query_name``."""
     if ':rbc:' in query_name:
-        bc = query_name.rsplit(':rbc:', 1)[1].split(':')[0]
+        barcode = query_name.rsplit(':rbc:', 1)[1].split(':')[0]
     elif ':' in query_name:
-        bc = query_name.rsplit(':', 1)[1]
-        if set(bc) - VALID_NUCLEOTIDES:
+        barcode = query_name.rsplit(':', 1)[1]
+        if set(barcode) - VALID_NUCLEOTIDES:
             # invalid barcode characters
-            bc = ''
+            barcode = ''
             metrics.invalidrandomer_recs += 1
     else:
-        bc = ''
+        barcode = ''
         metrics.norandomer_recs += 1
 
-    return bc
+    return barcode
 
 
-def _match(s1, s2, mismatches):
+def _match(seq1, seq2, mismatches):
     """
-    Do sequence `s1` and `s2` have less or equal than ``mismatches``?
+    Test if sequence seq1 and seq2 are sufficiently similar.
 
     Parameters
     ----------
-    s1 : str
+    seq1 : str
         First sequence.
-    s2 : str
+    seq2 : str
         Second sequence.
     mismatches : int
         Number of allowed mismatches between given sequences.
@@ -127,17 +153,17 @@ def _match(s1, s2, mismatches):
     Returns
     -------
     bool
-        Do sequence `s1` and `s2` have less or equal than ``mismatches``
+        Do sequence `seq1` and `seq2` have less or equal than ``mismatches``
 
     """
-    s1, s2 = s1.upper(), s2.upper()
-    cn = sum([(c1 == 'N' or c2 == 'N' or c1 == c2) for c1, c2 in zip(s1, s2)])
-    return max(len(s1), len(s2)) - cn <= mismatches
+    seq1, seq2 = seq1.upper(), seq2.upper()
+    matches = sum([(nuc1 == 'N' or nuc2 == 'N' or nuc1 == nuc2) for nuc1, nuc2 in zip(seq1, seq2)])
+    return max(len(seq1), len(seq2)) - matches <= mismatches
 
 
 def _update(cur_vals, to_add):
     """
-    Add the values from `to_add` to appropriate place in `cur_vals`
+    Add the values from ``to_add`` to appropriate place in ``cur_vals``.
 
     Note: cur_vals is updated in place!
 
@@ -153,13 +179,13 @@ def _update(cur_vals, to_add):
 
     """
     for pos, vals_to_add in to_add.items():
-        prev_vals = cur_vals.get(pos, [0]*len(vals_to_add))
+        prev_vals = cur_vals.get(pos, [0] * len(vals_to_add))
         cur_vals[pos] = [p + n for p, n in zip(prev_vals, vals_to_add)]
 
 
 def _merge_similar_randomers(by_bc, mismatches):
     """
-    Merge randomers on same site that are max ``mismatches`` different
+    Merge randomers on same site that are max ``mismatches`` different.
 
     Input parameter `by_bc` has te following structure:
     by_bc = {
@@ -205,11 +231,11 @@ def _merge_similar_randomers(by_bc, mismatches):
     accepted_bcs = set()  # accepted_barcodes
     ambig_bcs = []  # ambigious_barcodes
     for barcode in by_bc.keys():
-        Ns = barcode.count('N')
-        if Ns == 0:
+        undefined_nucleotides = barcode.count('N')
+        if undefined_nucleotides == 0:
             accepted_bcs.add(barcode)
         else:
-            ambig_bcs.append((Ns, barcode))
+            ambig_bcs.append((undefined_nucleotides, barcode))
 
     # Step #1:
     # For each ambigious randomer, identify similar non-ambigious one. If
@@ -224,10 +250,10 @@ def _merge_similar_randomers(by_bc, mismatches):
         order_bcs = sorted([(len(hits), bc) for bc, hits in by_bc.items() if
                             bc in accepted_bcs], reverse=True)
 
-        for _, bc in order_bcs:
-            if _match(bc, amb_bc, mismatches):
+        for _, barcode in order_bcs:
+            if _match(barcode, amb_bc, mismatches):
                 matches = True
-                by_bc[bc].extend(by_bc.pop(amb_bc))
+                by_bc[barcode].extend(by_bc.pop(amb_bc))
                 break
         if not matches:
             accepted_bcs.add(amb_bc)
@@ -241,18 +267,18 @@ def _merge_similar_randomers(by_bc, mismatches):
         order_bcs = [(len(hits), bc) for bc, hits in by_bc.items()]
         order_bcs = sorted(order_bcs, reverse=True)
         merged = False
-        for i, (_, bc) in enumerate(order_bcs):
-            for _, bc2 in order_bcs[i + 1:]:
-                if _match(bc, bc2, mismatches):
+        for i, (_, barcode) in enumerate(order_bcs):
+            for _, barcode2 in order_bcs[i + 1:]:
+                if _match(barcode, barcode2, mismatches):
                     merged = True
-                    by_bc[bc].extend(by_bc.pop(bc2))
+                    by_bc[barcode].extend(by_bc.pop(barcode2))
             if merged:
                 break
 
 
 def _collapse(xlink_pos, by_bc, group_by, multimax=1):
     """
-    Report number of cDNAs and reads in cross-link site on xlink_pos
+    Report number of cDNAs and reads in cross-link site on xlink_pos.
 
     Input parameter `by_bc` has te following structure:
     by_bc = {
@@ -319,12 +345,12 @@ def _collapse(xlink_pos, by_bc, group_by, multimax=1):
         Number of cDNA and reads for each position.
 
     """
-    gi = ['start', 'middle', 'end'].index(group_by)
+    group_by_index = ['start', 'middle', 'end'].index(group_by)
 
     # Container for cDNA and read counts:
     counts = {}
 
-    for bc, hits in by_bc.items():
+    for hits in by_bc.values():
 
         # separate in groups by second-start
         ss_groups = {}
@@ -339,11 +365,11 @@ def _collapse(xlink_pos, by_bc, group_by, multimax=1):
             for middle_pos, end_pos, read_len, num_mapped, _ in ss_group:
                 if num_mapped > multimax:
                     continue
-                grp_pos = (xlink_pos, middle_pos, end_pos)[gi]
-                w = read_len / (num_mapped * sum_len_per_barcode)
+                grp_pos = (xlink_pos, middle_pos, end_pos)[group_by_index]
+                weight = read_len / (num_mapped * sum_len_per_barcode)
 
                 current_values = counts.get(grp_pos, (0, 0))
-                upadated_values = (current_values[0] + w, current_values[1] + 1)
+                upadated_values = (current_values[0] + weight, current_values[1] + 1)
                 counts[grp_pos] = upadated_values
 
     return counts
@@ -351,14 +377,14 @@ def _collapse(xlink_pos, by_bc, group_by, multimax=1):
 
 def _intersects_with_annotaton(second_start, annotation, chrom, strand):
     """
-    Does a second_start corresopnd to any entry in annotation?
+    Test if second_start corresopnds to any entry in annotation.
 
     Returns
     -------
         bool
     Does the read's second_start corresopnd to any known segment in annotation
     """
-    for gene_id, gene_content in annotation[(chrom, strand)].items():
+    for gene_content in annotation[(chrom, strand)].values():
         for transcript_id, transcript_content in gene_content.items():
             if transcript_id == 'gene_segment':
                 continue
@@ -374,11 +400,12 @@ def _intersects_with_annotaton(second_start, annotation, chrom, strand):
 
 def _second_start(read, poss, strange, strand, chrom, annotation, holesize_th):
     """
-    Return the coordinate of second start. If read is not split or we wish algorithm
-    to think of read as linear, second_start equals to 0.
+    Return the coordinate of second start.
 
+    If read is not split or we wish algorithm
+    to think of read as linear, second_start equals to 0.
     """
-    holes = [j-i-1 for i, j in zip(poss, poss[1:])]
+    holes = [j - i - 1 for i, j in zip(poss, poss[1:])]
     # Get the size of the biggest hole:
     biggest_hole_size = max(holes) if holes else 0
 
@@ -454,11 +481,12 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
     """
     # Process annotation, if given:
     if annotation:
+        # pylint: disable=protected-access
         annotation = iCount.genomes.segment._prepare_annotation(annotation)
 
     try:
-        bamfile = pysam.AlignmentFile(bam_fname, 'rb')
-    except OSError as e:
+        bamfile = AlignmentFile(bam_fname, 'rb')
+    except OSError:
         raise ValueError('Error opening BAM file: {:s}'.format(bam_fname))
 
     # counters
@@ -477,34 +505,34 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
     strange = []
 
     _cache_bcs = {}
-    for r in bamfile:
+    for read in bamfile:
         metrics.all_recs += 1
-        if r.is_unmapped:
+        if read.is_unmapped:
             metrics.notmapped_recs += 1
             continue
 
         metrics.mapped_recs += 1
 
-        if r.mapq < mapq_th:
+        if read.mapq < mapq_th:
             metrics.lowmapq_recs += 1
             continue
 
         metrics.used_recs += 1
 
         # NH (number of reported alignments) tag is required:
-        if r.has_tag('NH'):
-            num_mapped = r.get_tag('NH')
+        if read.has_tag('NH'):
+            num_mapped = read.get_tag('NH')
         else:
-            raise ValueError('"NH" tag not set for record: {}'.format(r.query_name))
+            raise ValueError('"NH" tag not set for record: {}'.format(read.query_name))
 
         # Extract randomer sequence (``bc``) from querry name (= read name)
-        bc = _get_random_barcode(r.query_name, metrics)
-        bc = _cache_bcs.setdefault(bc, bc)  # reduce memory consumption
-        metrics.bc_cn[bc] = metrics.bc_cn.get(bc, 0) + 1
+        barcode = _get_random_barcode(read.query_name, metrics)
+        barcode = _cache_bcs.setdefault(barcode, barcode)  # reduce memory consumption
+        metrics.bc_cn[barcode] = metrics.bc_cn.get(barcode, 0) + 1
 
         # position of cross-link is one nucleotide before start of read
-        poss = sorted(r.positions)
-        if r.is_reverse:
+        poss = sorted(read.positions)
+        if read.is_reverse:
             strand = '-'
             xlink_pos = poss[-1] + 1
             end_pos = poss[0]
@@ -512,7 +540,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
             strand = '+'
             xlink_pos = poss[0] - 1
             end_pos = poss[-1]
-        chrom = bamfile.references[r.tid]
+        chrom = bamfile.references[read.tid]
 
         # middle position is position of middle nucleotide. Because we can have
         # spliced reads, middle position is not necessarily the middle of
@@ -527,22 +555,22 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
         else:
             i = i // 2
         middle_pos = poss[i]
-        read_len = len(r.seq)
+        read_len = len(read.seq)
 
-        second_start = _second_start(r, poss, strange, strand, chrom, annotation, holesize_th)
+        second_start = _second_start(read, poss, strange, strand, chrom, annotation, holesize_th)
 
         read_data = (middle_pos, end_pos, read_len, num_mapped, second_start)
 
         # store hit data in a "grouped" contianer:
         grouped.setdefault((chrom, strand), {}).\
             setdefault(xlink_pos, {}).\
-            setdefault(bc, []).\
+            setdefault(barcode, []).\
             append(read_data)
 
     # Write strange behaved reads to a BAM file:
     metrics.strange_recs = len(strange)
     if strange:
-        with pysam.AlignmentFile(sites_strange, "w", header=bamfile.header) as outf:
+        with AlignmentFile(sites_strange, "w", header=bamfile.header) as outf:
             for read in strange:
                 outf.write(read)
 
@@ -557,11 +585,12 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
     LOGGER.info('Records with invalid randomer info in header: %d', metrics.invalidrandomer_recs)
     LOGGER.info('Records with no randomer info: %d', metrics.norandomer_recs)
     LOGGER.info('Ten most frequent randomers:')
-    top10 = sorted([(cn, bc) for bc, cn in metrics.bc_cn.items()], reverse=True)[:10]
-    for cn, bc in top10:
-        LOGGER.info('    %s: %d', bc, cn)
-    LOGGER.info('There are {} reads with second-start not falling on annotation. They are '
-                'reported in file: {}'.format(metrics.strange_recs, sites_strange))
+    top10 = sorted(
+        [(count, barcode) for barcode, count in metrics.bc_cn.items()], reverse=True)[:10]
+    for count, barcode in top10:
+        LOGGER.info('    %s: %d', barcode, count)
+    LOGGER.info('There are {%d reads with second-start not falling on annotation. They are '
+                'reported in file: %s', metrics.strange_recs, sites_strange)
 
     return grouped
 
@@ -569,8 +598,9 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
 def run(bam, sites_unique, sites_multi, sites_strange, group_by='start', quant='cDNA',
         segmentation=None, mismatches=2, mapq_th=0, multimax=50, holesize_th=4,
         report_progress=False):
-
     """
+    Identify and quantify cross-linked sites.
+
     Interpret mapped sites and generate BED file with coordinates and
     number of cross-linked events.
 
@@ -618,7 +648,7 @@ def run(bam, sites_unique, sites_multi, sites_strange, group_by='start', quant='
         Metrics object, storing analysis metadata.
 
     """
-    iCount.log_inputs(LOGGER, level=logging.INFO)
+    iCount.log_inputs(LOGGER, level=logging.INFO)  # pylint: disable=protected-access
 
     assert sites_unique.endswith(('.bed', '.bed.gz'))
     assert sites_multi.endswith(('.bed', '.bed.gz'))
@@ -637,6 +667,7 @@ def run(bam, sites_unique, sites_multi, sites_strange, group_by='start', quant='
     for (chrom, strand), by_pos in grouped.items():
         if report_progress:
             new_progress = 1 - len(grouped) / length
+            # pylint: disable=protected-access
             progress = iCount._log_progress(new_progress, progress, LOGGER)
 
         unique_by_pos = {}
@@ -655,9 +686,9 @@ def run(bam, sites_unique, sites_multi, sites_strange, group_by='start', quant='
 
     # Write output
     val_index = ['cDNA', 'reads'].index(quant)
-    iCount.files.bed.save_dict(unique, sites_unique, val_index=val_index)
+    _save_dict(unique, sites_unique, val_index=val_index)
     LOGGER.info('Saved to BED file (uniquely mapped reads): %s', sites_unique)
-    iCount.files.bed.save_dict(multi, sites_multi, val_index=val_index)
+    _save_dict(multi, sites_multi, val_index=val_index)
     LOGGER.info('Saved to BED file (multi-mapped reads): %s', sites_multi)
 
     return metrics

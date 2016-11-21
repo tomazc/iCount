@@ -1,5 +1,7 @@
-"""
+""".. Line to protect from pydocstyle D205, D400.
+
 Tests for iCount python package and corresponding CLI.
+======================================================
 
 There are two types of tests: *unit* and *functional* (regression) tests.
 Continious development testing supported on GitHub is also explained in the
@@ -73,6 +75,7 @@ import iCount
 
 
 def suite(loader=None, pattern='test*.py'):
+    """Define test suite."""
     test_dir = os.path.dirname(__file__)
     if loader is None:
         loader = unittest.TestLoader()
@@ -87,6 +90,7 @@ def suite(loader=None, pattern='test*.py'):
 
 
 def load_tests(loader, tests, pattern):
+    """Load tests."""
     return suite(loader, pattern)
 
 

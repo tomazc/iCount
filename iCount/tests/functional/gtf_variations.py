@@ -13,9 +13,9 @@ the execution time of this script.
 By modifying the variables `self.releases_list` and `self.species_list` user can
 determine which gtf files to put under test.
 """
+# pylint: disable=missing-docstring, protected-access
 
 import os
-import re
 import time
 import sys
 import pickle
@@ -24,14 +24,14 @@ import unittest
 import pybedtools
 
 from iCount.genomes import ensembl
-from __init__ import functional_test_folder
+from . import FUNCTIONAL_TEST_FOLDER
 
 SEPARATOR = '-' * 72
 
 
 def produce_report(infile, outfile, report_columns=[1, 2, 8]):
     """
-    Reports how column values in GTF file format change between releases.
+    Report how column values in GTF file format change between releases.
 
     GTF file consits from lines with 9 columns. Function enables to examine
     desired set of colums, but the default is to invetigate the 2nd, 3rd
@@ -70,7 +70,8 @@ def produce_report(infile, outfile, report_columns=[1, 2, 8]):
                 for column in report_columns:
                     previous_report = root_contents[i - 1][1]
                     new_values = [e for e in report[column] if e not in previous_report[column]]
-                    missing_values = [e for e in previous_report[column] if e not in report[column]]
+                    missing_values = [
+                        e for e in previous_report[column] if e not in report[column]]
                     if any([new_values, missing_values]):
                         changes += 1
                         rfile.write('column {}\n'.format(column))
@@ -89,7 +90,7 @@ def produce_report(infile, outfile, report_columns=[1, 2, 8]):
         rfile.write('Values present in all releases:\n')
         for column in report_columns:
             always_present = set(root_contents[0][1][column])
-            for i in range(len(root_contents)):
+            for i, _ in enumerate(root_contents):
                 always_present = always_present & set(root_contents[i][1][column])
             rfile.write('column {}: {}\n'.format(column, always_present))
 
@@ -104,11 +105,11 @@ class TestGTFVariation(unittest.TestCase):
         self.report_file = __file__[:-3] + '.report.txt'
 
         # Folder where all gtf files are stored:
-        self.gtf_files_dir = os.path.join(functional_test_folder, 'gtf_files/')
+        self.gtf_files_dir = os.path.join(FUNCTIONAL_TEST_FOLDER, 'gtf_files/')
         if not os.path.exists(self.gtf_files_dir):
             os.makedirs(self.gtf_files_dir)
 
-        self.releases_list = ensembl.get_release_list()
+        self.releases_list = ensembl.releases()
         self.species_list = ['homo_sapiens', 'mus_musculus']
 
         self.current_results = []
@@ -128,24 +129,24 @@ class TestGTFVariation(unittest.TestCase):
     def test_reference_variation(self):
         for species in self.species_list:
             for release in self.releases_list:
-                t1 = time.time()
+                time1 = time.time()
 
-                gtf_file = os.path.join(self.gtf_files_dir, '{}.{}.gtf.gz'.format(species, release))
+                gtf_file = os.path.join(
+                    self.gtf_files_dir, '{}.{}.gtf.gz'.format(species, release))
                 # If gtf_in file is not preswent, download it:
                 if not os.path.isfile(gtf_file):
                     print('Could not find file: {}'.format(gtf_file))
                     print('Donloading it to: {}'.format(self.gtf_files_dir))
-                    _ = ensembl.download_annotation(
-                        release, species, target_dir=self.gtf_files_dir)
+                    _ = ensembl.annotation(release, species, out_dir=self.gtf_files_dir)
 
                 print("Reading file: {}".format(gtf_file))
 
-                gs = pybedtools.BedTool(gtf_file)
-                number_of_segments = gs.count()
+                gtf = pybedtools.BedTool(gtf_file)
+                number_of_segments = gtf.count()
                 field_data = {name: [] for name in range(9)}
 
                 print("Processing segments: ")
-                for i, segment in enumerate(gs):
+                for i, segment in enumerate(gtf):
                     # Display progress in terminal:
                     sys.stdout.write("\r{0:.1f} %".format(i / number_of_segments * 100))
                     sys.stdout.flush()
@@ -195,7 +196,7 @@ class TestGTFVariation(unittest.TestCase):
                     pickle.dump(self.root_container, output, pickle.HIGHEST_PROTOCOL)
 
                 print()
-                print("This took {0:.2f} minutes to complete".format((time.time() - t1)/60))
+                print("This took {0:.2f} minutes to complete".format((time.time() - time1) / 60))
 
         # Call function to generate report file:
         self.report_file = produce_report(self.pickle_file, self.report_file)
