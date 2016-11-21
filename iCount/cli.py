@@ -346,6 +346,8 @@ def main():
     make_parser_from_function(
         iCount.analysis.peaks.run, subparsers)
     make_parser_from_function(
+        iCount.analysis.rnamaps.run, subparsers)
+    make_parser_from_function(
         iCount.analysis.summary.make_summary_report, subparsers)
 
     # Examples:

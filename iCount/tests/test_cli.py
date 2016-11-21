@@ -47,6 +47,17 @@ class TestCLI(unittest.TestCase):
              'gene_id "A"; transcript_id "AA"; exon_number "1";'],
         ])
 
+        self.bam = make_bam_file({
+            'chromosomes': [
+                ('1', 3000),
+                ('2', 2000),
+            ],
+            'segments': [
+                ('name3:rbc:CCCC:', 0, 0, 100, 20, [(0, 100)], {'NH': 1}),
+                ('name4:ABC', 0, 0, 300, 20, [(0, 200)], {'NH': 11}),
+            ]
+        })
+
     def test_releases(self):
         command_basic = [
             'iCount', 'releases',
@@ -219,27 +230,13 @@ class TestCLI(unittest.TestCase):
         unique = get_temp_file_name(extension='.bed')
         multi = get_temp_file_name(extension='.bed')
         strange = get_temp_file_name(extension='.bam')
-        bam = make_bam_file({
-            'chromosomes': [
-                ('chr1', 3000),
-                ('chr2', 2000),
-            ],
-            'segments': [
-                ('name1', 4, 0, 100, 20, [(0, 100)], {'NH': 1}),
-                ('name2', 0, 0, 100, 20, [(0, 201)], {'NH': 7}),
-                ('name3:rbc:CCCC:', 16, 0, 100, 20, [(0, 100)], {'NH': 1}),
-                ('name4:ABC', 0, 1, 300, 20, [(0, 200)], {'NH': 11}),
-                ('name4:ACG', 0, 1, 300, 20, [(0, 200)], {'NH': 11}),
-                ('name5', 0, 1, 300, 3, [(0, 200)], {'NH': 13})],
-        })
 
         command_basic = [
-            'iCount', 'xlsites', bam, unique, multi, strange,
+            'iCount', 'xlsites', self.bam, unique, multi, strange,
             '-S', '40',  # Supress lower than ERROR messages.
         ]
-
         command_full = [
-            'iCount', 'xlsites', bam, unique, multi, strange,
+            'iCount', 'xlsites', self.bam, unique, multi, strange,
             '--group_by', 'start',
             '--quant', 'cDNA',
             '--mismatches', '2',
@@ -320,6 +317,19 @@ class TestCLI(unittest.TestCase):
 
         self.assertEqual(subprocess.call(command_basic), 0)
         self.assertEqual(subprocess.call(command_full), 0)
+
+    def test_rnamaps(self):
+        command_basic = [
+            'iCount', 'rnamaps',
+            self.bam,
+            self.gtf,
+            self.tmp1,
+            get_temp_file_name(extension='.bam'),
+            self.tmp2,
+            '-S', '40',  # Supress lower than ERROR messages.
+        ]
+
+        self.assertEqual(subprocess.call(command_basic), 0)
 
     def test_summary(self):
         chrom_len = make_file_from_list(bedtool=False, data=[

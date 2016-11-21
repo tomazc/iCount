@@ -729,12 +729,26 @@ def _prepare_annotation(ann_file):
     annotation = {}
 
     for segment in pybedtools.BedTool(ann_file):
-        if segment[2] == 'gene' or segment[2] == 'intergenic':
+        if segment[2] == 'gene':
             annotation.setdefault((segment.chrom, segment.strand), {}). \
                 setdefault(segment.attrs['gene_id'], {}). \
                 setdefault('gene_segment', segment)
 
-        if segment[2] != 'gene':  # normal segment, transcript or intergenic segment
+        elif segment[2] == 'intergenic':
+            # Make artificial_id from chromosome, strand and start:
+            fake_gid = 'G_{}_{}_{}'.format(segment.chrom, segment.strand, segment.start)
+            fake_tid = 'T_{}_{}_{}'.format(segment.chrom, segment.strand, segment.start)
+            annotation.setdefault((segment.chrom, segment.strand), {}). \
+                setdefault(fake_gid, {})['gene_segment'] = segment
+            annotation[(segment.chrom, segment.strand)][fake_gid][fake_tid] = [segment]
+
+        elif segment[2] == 'transcript':
+            annotation.setdefault((segment.chrom, segment.strand), {}). \
+                setdefault(segment.attrs['gene_id'], {}). \
+                setdefault(segment.attrs['transcript_id'], []). \
+                insert(0, segment)  # Ensure that transcript segment is the first one in list.
+
+        else:  # normal segment
             annotation.setdefault((segment.chrom, segment.strand), {}). \
                 setdefault(segment.attrs['gene_id'], {}). \
                 setdefault(segment.attrs['transcript_id'], []). \
