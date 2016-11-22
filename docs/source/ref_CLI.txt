@@ -23,11 +23,11 @@ Commands:
     species      Get list of species for given release.
     annotation   Download annotation in GTF file fromat.
     genome       Download genome file in FASTA fromat.
-    segment      Parse genome annotation, segment it and prepare a number of versions needed
+    segment      Parse genome annotation, segment it and prepare a number of annotations.
     demultiplex  Split FASTQ file into separate FASTQ files, one for each sample barcode.
     cutadapt     Interface to running cutadapt.
-    indexstar    Call STAR to generate genome index, which is used for mapping.
-    mapstar      Call STAR to map reads to genome index and produce BAM file.
+    indexstar    Generate STAR index for mapping based on genome sequence and annotation.
+    mapstar      Map reads to genome index and produce BAM file by using STAR.
     xlsites      Determine positions and quantity of cross-link events.
     annotate     Annotate each cross link site with types of regions that intersect with it.
     clusters     Merge adjacent cross-linked sites into clusters.
@@ -37,7 +37,7 @@ Commands:
     summary      Report proportion of cross-link events/sites on each region type
     examples     This module provides a set of example bash scripts that can be run by the user.
     man          Print help for all commands.
-    args         Print arguments form all CLI commands
+    args         Print arguments form all CLI commands.
 
 
 releases
@@ -139,8 +139,9 @@ segment
 usage: iCount segment [-h] [-prog] [-S] [-F] [-P] [-M]
                       annotation segmentation fai
 
-Parse genome annotation, segment it and prepare a number of versions needed
-for mapping and for various analyses:
+Parse genome annotation, segment it and prepare a number of annotations.
+
+These annotations are used for mapping and for various analyses:
 
 - regions of genes (all isoforms and other parts merged into one region)
 - regions of individual region types (segment each gene into exonic, intronic, nc, utr, etc..)
@@ -228,10 +229,9 @@ usage: iCount indexstar [-h] [-a] [--overhang] [--overhang_min] [--threads]
                         [-S] [-F] [-P] [-M]
                         genome genome_index
 
-Call STAR to generate genome index, which is used for mapping.
+Generate STAR index for mapping based on genome sequence and annotation.
 
-Calls STAR to generate index based on genome sequence and annotation,
-by passing the following parameters:
+Calls STAR to generate index by passing the following parameters:
 
 --runThreadN NumberOfThreads
 --runMode genomeGenerate
@@ -264,10 +264,9 @@ usage: iCount mapstar [-h] [-a] [--multimax] [-mis] [--threads] [-S] [-F] [-P]
                       [-M]
                       reads genome_index out_dir
 
-Call STAR to map reads to genome index and produce BAM file.
+Map reads to genome index and produce BAM file by using STAR.
 
-Calls STAR to map sequence reads to reference genome, by passing the
-following parameters:
+Call STAR by passing the following parameters:
 
 --runThreadN NumberOfThreads
 --genomeDir /path/to/genomeDir

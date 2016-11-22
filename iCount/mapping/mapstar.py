@@ -1,12 +1,11 @@
 """.. Line to protect from pydocstyle D205, D400.
 
-Map using STAR
---------------
+Mapping reads with STAR
+-----------------------
 
-Call STAR to map reads to genome index and produce BAM file.
+Map reads to genome index and produce BAM file by using STAR.
 
-Calls STAR to map sequence reads to reference genome, by passing the
-following parameters:
+Call STAR by passing the following parameters:
 
 --runThreadN NumberOfThreads
 --genomeDir /path/to/genomeDir

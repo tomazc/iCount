@@ -3,8 +3,9 @@
 Segmentation
 ------------
 
-Parse genome annotation, segment it and prepare a number of versions needed
-for mapping and for various analyses:
+Parse genome annotation, segment it and prepare a number of annotations.
+
+These annotations are used for mapping and for various analyses:
 
 - regions of genes (all isoforms and other parts merged into one region)
 - regions of individual region types (segment each gene into exonic, intronic, nc, utr, etc..)

@@ -402,7 +402,7 @@ def main():
                 short_name = ''
             print('{}{}: {}'.format(param_name, short_name, ', '.join(commands)))
 
-    parser = subparsers.add_parser('args', help='Print arguments form all CLI commands')
+    parser = subparsers.add_parser('args', help='Print arguments form all CLI commands.')
     parser.set_defaults(func=all_args)
 
     #############################
