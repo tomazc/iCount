@@ -431,7 +431,7 @@ def _second_start(read, poss, strange, strand, chrom, annotation, holesize_th):
     return second_start
 
 
-def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=None, holesize_th=4):
+def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, annotation=None, gap_th=4):
     """
     Extract data from BAM file into dictionary.
 
@@ -461,16 +461,16 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
         Metrics object for storing analysis metadata.
     mapq_th : int
         Ignore hits with MAPQ < mapq_th.
-    sites_strange : str
-        Output BED6 file to store reads with strange properties. If read's
-        second start does not fall on any of annotation borders, it is
-        considered strange. If segmentation is not provided, every read in two
-        parts, longer than holesize_th is considered as strange.
+    skipped : str
+        Output BAM file to store reads that do not map as expected by annotation and
+        reference genome sequence. If read's second start does not fall on any of
+        annotation borders, it is considered problematic. If segmentation is not provided,
+        every read in two parts with gap longer than gap_th is not used (skipped).
+        All such reads are reported to the user for further exploration.
     annotation : str
         File with custon annotation format (obtained by ``iCount segment``).
-    holesize_th : int
-        Raeads with size of holes less than holesize_th are treted as if they
-        would have no holes.
+    gap_th : int
+        Reads with gaps less than gap_th are treated as if they have no gap.
 
     Returns
     -------
@@ -557,7 +557,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
         middle_pos = poss[i]
         read_len = len(read.seq)
 
-        second_start = _second_start(read, poss, strange, strand, chrom, annotation, holesize_th)
+        second_start = _second_start(read, poss, strange, strand, chrom, annotation, gap_th)
 
         read_data = (middle_pos, end_pos, read_len, num_mapped, second_start)
 
@@ -570,7 +570,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
     # Write strange behaved reads to a BAM file:
     metrics.strange_recs = len(strange)
     if strange:
-        with AlignmentFile(sites_strange, "w", header=bamfile.header) as outf:
+        with AlignmentFile(skipped, "w", header=bamfile.header) as outf:
             for read in strange:
                 outf.write(read)
 
@@ -589,14 +589,14 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, sites_strange, annotation=No
         [(count, barcode) for barcode, count in metrics.bc_cn.items()], reverse=True)[:10]
     for count, barcode in top10:
         LOGGER.info('    %s: %d', barcode, count)
-    LOGGER.info('There are {%d reads with second-start not falling on annotation. They are '
-                'reported in file: %s', metrics.strange_recs, sites_strange)
+    LOGGER.info('There are %d reads with second-start not falling on annotation. They are '
+                'reported in file: %s', metrics.strange_recs, skipped)
 
     return grouped
 
 
-def run(bam, sites_unique, sites_multi, sites_strange, group_by='start', quant='cDNA',
-        segmentation=None, mismatches=2, mapq_th=0, multimax=50, holesize_th=4,
+def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
+        segmentation=None, mismatches=2, mapq_th=0, multimax=50, gap_th=4,
         report_progress=False):
     """
     Identify and quantify cross-linked sites.
@@ -618,11 +618,12 @@ def run(bam, sites_unique, sites_multi, sites_strange, group_by='start', quant='
         Output BED6 file to store data from uniquely mapped reads.
     sites_multi : str
         Output BED6 file to store data from multi-mapped reads.
-    sites_strange : str
-        Output BAM file to store reads with strange properties. If read's
-        second start does not fall on any of annotation borders, it is
-        considered strange. If segmentation is not provided, every read in two
-        parts, longer than holesize_th is considered as strange.
+    skipped : str
+        Output BAM file to store reads that do not map as expected by annotation and
+        reference genome sequence. If read's second start does not fall on any of
+        annotation borders, it is considered problematic. If segmentation is not provided,
+        every read in two parts with gap longer than gap_th is not used (skipped).
+        All such reads are reported to the user for further exploration.
     group_by : str
         Assign score of a read to either 'start', 'middle' or 'end' nucleotide.
     quant : str
@@ -638,9 +639,8 @@ def run(bam, sites_unique, sites_multi, sites_strange, group_by='start', quant='
         Ignore reads, mapped to more than ``multimax`` places.
     report_progress : bool
         Switch to report progress.
-    holesize_th : int
-        Raeads with size of holes less than holesize_th are treted as if they
-        would have no holes.
+    gap_th : int
+        Reads with gaps less than gap_th are treated as if they have no gap.
 
     Returns
     -------
@@ -652,13 +652,13 @@ def run(bam, sites_unique, sites_multi, sites_strange, group_by='start', quant='
 
     assert sites_unique.endswith(('.bed', '.bed.gz'))
     assert sites_multi.endswith(('.bed', '.bed.gz'))
-    assert sites_strange.endswith(('.bam', '.bam.gz'))
+    assert skipped.endswith(('.bam', '.bam.gz'))
     assert quant in ['cDNA', 'reads']
     assert group_by in ['start', 'middle', 'end']
 
     metrics = iCount.Metrics()
     LOGGER.info('Processing BAM file to internal structure...')
-    grouped = _processs_bam_file(bam, metrics, mapq_th, sites_strange, segmentation, holesize_th)
+    grouped = _processs_bam_file(bam, metrics, mapq_th, skipped, segmentation, gap_th)
 
     LOGGER.info('Detecting cross-links...')
     unique, multi = {}, {}

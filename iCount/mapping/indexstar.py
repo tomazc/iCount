@@ -1,12 +1,11 @@
 """.. Line to protect from pydocstyle D205, D400.
 
-Generate STAR index
--------------------
+Mapping index
+-------------
 
-Call STAR to generate genome index, which is used for mapping.
+Generate STAR index for mapping based on genome sequence and annotation.
 
-Calls STAR to generate index based on genome sequence and annotation,
-by passing the following parameters:
+Calls STAR to generate index by passing the following parameters:
 
 --runThreadN NumberOfThreads
 --runMode genomeGenerate

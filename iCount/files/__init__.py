@@ -5,6 +5,7 @@ Files
 
 iCount works with various formats that store `FASTA`_ and `FASTQ`_ sequencing data, `GTF`_ genome
 annotation, `BAM`_ data on mapped reads, `BED`_ files with quantified cross-linked sites.
+Parsing of `GTF`_ files is done with `pybedtools`_.
 
 .. autofunction:: iCount.files.gz_open
 .. autofunction:: iCount.files.decompress_to_tempfile
@@ -18,8 +19,6 @@ annotation, `BAM`_ data on mapped reads, `BED`_ files with quantified cross-link
 .. automodule:: iCount.files.fasta
    :members:
 
-.. automodule:: iCount.files.gtf
-   :members:
 
 .. _FASTA:
     https://en.wikipedia.org/wiki/FASTA_format
@@ -35,6 +34,9 @@ annotation, `BAM`_ data on mapped reads, `BED`_ files with quantified cross-link
 
 .. _BED:
     http://bedtools.readthedocs.io/en/latest/content/general-usage.html#bed-format
+
+.. _pybedtools:
+    https://daler.github.io/pybedtools/index.html
 
 """
 

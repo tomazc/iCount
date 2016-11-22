@@ -7,9 +7,9 @@ Python package
 Two attributes and associated environment variables define where output and temporary files will
 be stored:
 
-.. autodata:: iCount.output_root
+.. autodata:: iCount.OUTPUT_ROOT
 .. autodata:: iCount.ICOUNT_OUTPUT_ROOT_VAR
-.. autodata:: iCount.tmp_root
+.. autodata:: iCount.TMP_ROOT
 .. autodata:: iCount.ICOUNT_TMP_ROOT_VAR
 
 .. automodule:: iCount.genomes
@@ -18,10 +18,10 @@ be stored:
 .. automodule:: iCount.analysis
 .. automodule:: iCount.externals
 .. automodule:: iCount.files
-.. automodule:: iCount.examples
 .. automodule:: iCount.metrics
-
+.. automodule:: iCount.examples
 .. automodule:: iCount.cli
+
 
 Indices
 -------

@@ -3,7 +3,8 @@
 Group BED files
 ---------------
 
-Group analysis docstring... TODO!
+Merge BED files into one BED file.
+
 """
 # pylint: disable=unused-import
 from .. files.bed import merge_bed as run

@@ -22,22 +22,22 @@ Commands:
     releases     Get list of available ENSEMBL releases.
     species      Get list of species for given release.
     annotation   Download annotation in GTF file fromat.
-    genome       Downloads genome file in FASTA fromat.
-    segment      Segmentation
-    genes        Extract largest possible gene segments from GTF file.
-    demultiplex  Demultiplexing
-    cutadapt     Cutadapt
-    mapindex     Generate STAR index
-    map          Map using STAR
-    xlsites      Identify and quantify cross-linked sites
-    annotate     Cross-link site annotation
-    clusters     Cluster sites
-    group        Group BED files
-    peaks        Peak finding
-    summary      Cross-link site summary
-    examples     Examples
+    genome       Download genome file in FASTA fromat.
+    segment      Parse genome annotation, segment it and prepare a number of annotations.
+    demultiplex  Split FASTQ file into separate FASTQ files, one for each sample barcode.
+    cutadapt     Interface to running cutadapt.
+    indexstar    Generate STAR index for mapping based on genome sequence and annotation.
+    mapstar      Map reads to genome index and produce BAM file by using STAR.
+    xlsites      Determine positions and quantity of cross-link events.
+    annotate     Annotate each cross link site with types of regions that intersect with it.
+    clusters     Merge adjacent cross-linked sites into clusters.
+    group        Merge BED files into one BED file.
+    peaks        Find positions with high density of cross-linked sites.
+    rnamaps      Distribution of cross-links relative to genomic landmarks.
+    summary      Report proportion of cross-link events/sites on each region type
+    examples     This module provides a set of example bash scripts that can be run by the user.
     man          Print help for all commands.
-    args         Print arguments form all CLI commands
+    args         Print arguments form all CLI commands.
 
 
 releases
@@ -87,7 +87,9 @@ optional arguments:
   -h, --help            show this help message and exit
   -r , --release        Release number. Only ENSEMBL releases 59..84 are available (default: 84)
   -od , --out_dir       Download to this directory (if not given, current working directory) (default: None)
-  -a , --annotation     Annotation filename (must have .gz file extension). If not given, (default: None)
+  -a , --annotation     Annotation filename (must have .gz file extension). If not given,
+                        species.release.gtf.gz is used. If annotation is provided as absolute
+                        path, out_dir is ignored and file is saved to given path (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -97,11 +99,11 @@ optional arguments:
 genome
 ======
 
-usage: iCount genome [-h] [-r] [-od] [--genome] [--temp_dir]
-                     [--chromosomes  [...]] [-S] [-F] [-P] [-M]
+usage: iCount genome [-h] [-r] [-od] [--genome] [--chromosomes  [...]] [-S]
+                     [-F] [-P] [-M]
                      species
 
-Downloads genome file in FASTA fromat.
+Download genome file in FASTA fromat.
 
 Several steps are performed:
 
@@ -118,10 +120,13 @@ optional arguments:
   -h, --help            show this help message and exit
   -r , --release        Release number. Only ENSEMBL releases 59..84 are available (default: 84)
   -od , --out_dir       Download to this directory (if not given, current working directory) (default: None)
-  --genome              Annotation filename (must have .gz file extension). If not given, (default: None)
-  --temp_dir            Temporary directory with intermediate results (default: None)
+  --genome              Genome filename (must have .gz file extension). If not given,
+                        species.release.fa.gz is used. If only filename is given, out_dir
+                        parameter is used. However, if full path is provided, out_dir is ignored
+                        and file is saved to given path (default: None)
   --chromosomes  [ ...]
-                        If given, don't download the whole genome, but juts the given (default: None)
+                        If given, do not download the whole genome, but listed
+                        chromosomes only. Chromosomes can be given as strings or integers (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -134,11 +139,9 @@ segment
 usage: iCount segment [-h] [-prog] [-S] [-F] [-P] [-M]
                       annotation segmentation fai
 
-Segmentation
-------------
+Parse genome annotation, segment it and prepare a number of annotations.
 
-Parse genome annotation, segment it and prepare a number of versions needed
-for mapping and for various analyses:
+These annotations are used for mapping and for various analyses:
 
 - regions of genes (all isoforms and other parts merged into one region)
 - regions of individual region types (segment each gene into exonic, intronic, nc, utr, etc..)
@@ -146,35 +149,12 @@ for mapping and for various analyses:
 positional arguments:
   annotation            Path to input GTF file
   segmentation          Path to output GTF file
-  fai                   Path to genome_file (.fai or similar)
+  fai                   Path to input genome_file (.fai or similar)
 
 optional arguments:
   -h, --help            show this help message and exit
   -prog, --report_progress
                         Switch to show progress (default: False)
-  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
-  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
-  -P , --file_logpath   Path to log file.
-  -M , --results_file   File into which to store Metrics.
-
-
-genes
-=====
-
-usage: iCount genes [-h] [--fai] [--feature] [--attribute] [-S] [-F] [-P] [-M]
-                    annotation segmentation
-
-Extract largest possible gene segments from GTF file.
-
-positional arguments:
-  annotation            Path to GTF input file
-  segmentation          Path to GTF output file that includes segmentation
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --fai                 Path to genome_file (.fai or similar) (default: None)
-  --feature             Name for the 3rd column of output intervals (default: gene)
-  --attribute           Attribute to use as unique identifier for output intervals (default: gene_id)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -187,9 +167,6 @@ demultiplex
 usage: iCount demultiplex [-h] [-mis] [-ml] [--prefix] [-od] [-S] [-F] [-P]
                           [-M]
                           reads adapter barcodes [barcodes ...]
-
-Demultiplexing
-==============
 
 Split FASTQ file into separate FASTQ files, one for each sample barcode.
 Saved FASTQ files contain sequences where sample barcode, random
@@ -225,9 +202,6 @@ usage: iCount cutadapt [-h] [--qual_base] [--qual_trim] [-ml] [-S] [-F] [-P]
                        [-M]
                        reads reads_trimmed adapter
 
-Cutadapt
---------
-
 Interface to running cutadapt.
 
 positional arguments:
@@ -237,7 +211,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --qual_base           Assume that quality values in FASTQ are encoded as ascii(quality + (default: 64)
+  --qual_base           Assume that quality values in FASTQ are encoded as ascii(quality +
+                        QUALITY_BASE). value of 64 corresponds to old Illumina FASTQ files (default: 64)
   --qual_trim           Trim low-quality bases before adapter removal (default: None)
   -ml , --minimum_length 
                         Discard trimmed reads that are shorter than `minimum_length` (default: None)
@@ -247,20 +222,16 @@ optional arguments:
   -M , --results_file   File into which to store Metrics.
 
 
-mapindex
-========
+indexstar
+=========
 
-usage: iCount mapindex [-h] [-a] [--overhang] [--overhang_min] [--threads]
-                       [-S] [-F] [-P] [-M]
-                       genome genome_index
+usage: iCount indexstar [-h] [-a] [--overhang] [--overhang_min] [--threads]
+                        [-S] [-F] [-P] [-M]
+                        genome genome_index
 
-Generate STAR index
--------------------
+Generate STAR index for mapping based on genome sequence and annotation.
 
-Call STAR to generate genome index, which is used for mapping.
-
-Calls STAR to generate index based on genome sequence and annotation,
-by passing the following parameters:
+Calls STAR to generate index by passing the following parameters:
 
 --runThreadN NumberOfThreads
 --runMode genomeGenerate
@@ -276,7 +247,8 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -a , --annotation     Annotation that defines splice junctions (default: )
-  --overhang            Sequence length around annotated junctions to be used by STAR when (default: 100)
+  --overhang            Sequence length around annotated junctions to be used by STAR when
+                        constructing splice junction database (default: 100)
   --overhang_min        TODO (default: 8)
   --threads             Number of threads that STAR can use for generating index (default: 1)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
@@ -285,20 +257,16 @@ optional arguments:
   -M , --results_file   File into which to store Metrics.
 
 
-map
-===
+mapstar
+=======
 
-usage: iCount map [-h] [-a] [--multimax] [-mis] [--threads] [-S] [-F] [-P]
-                  [-M]
-                  reads genome_index out_dir
+usage: iCount mapstar [-h] [-a] [--multimax] [-mis] [--threads] [-S] [-F] [-P]
+                      [-M]
+                      reads genome_index out_dir
 
-Map using STAR
---------------
+Map reads to genome index and produce BAM file by using STAR.
 
-Call STAR to map reads to genome index and produce BAM file.
-
-Calls STAR to map sequence reads to reference genome, by passing the
-following parameters:
+Call STAR by passing the following parameters:
 
 --runThreadN NumberOfThreads
 --genomeDir /path/to/genomeDir
@@ -331,29 +299,79 @@ optional arguments:
 xlsites
 =======
 
-usage: iCount xlsites [-h] [-g] [--quant] [-mis] [--mapq_th] [--multimax]
-                      [-prog] [-S] [-F] [-P] [-M]
-                      bam sites_unique sites_multi
+usage: iCount xlsites [-h] [-g] [--quant] [--segmentation] [-mis] [--mapq_th]
+                      [--multimax] [--gap_th] [-prog] [-S] [-F] [-P] [-M]
+                      bam sites_unique sites_multi skipped
 
-Identify and quantify cross-linked sites
-----------------------------------------
+Determine positions and quantity of cross-link events.
 
-Transforms information in BAM file on mapped reads and their randomers into BED file.
+The simplest version of this script would oprate on such example::
 
-Reads information on mapped reads and their associated randomer sequence
-to produce BED file with cross-link sites.
+    |--a---b--- reference sequence, chr 14, positive strand ------------
+        |rbc1---R1--------|
+        |rbc1---R2------|
+        |rbc2---R3------|
+            |rbc1--------R4-------------|
+            |rbc3------R5-----|
 
-Reads are first grouped by the start position. Multiple reads that start on
-same position and have the same (similar) randomer are collapsed into one (
-most common, if many of same frequency, take longest) read.
+Five reads (R1-R5) are mapped to a reference sequence (chromosome 14, positive
+strand). Reads start on two distinct positons. On first position, there is
+R1-R3. Cross-link site is located one nucleotide before start of the read (on
+negative strand, one nucleotide after end of read). However, we wish to count
+number of cDNA molecules, not the number of reads. This can be done by counting
+the number of distinct random barcodes (sometimes also called randomers). So in
+upper example, we have:
 
-Collapsed reads can then be grouped in three different ways: by the start,
-middle or end position.
+    Postion a: 3 reads, 2 distinct random barcodes = 2 cDNA's
+    Postion b: 2 reads, 2 distinct random barcodes = 2 cDNA's
 
-When grouping by the start, we report one positions before read start. That
-is the most likely cross-linked site.
+However, things can get complicated when a single read is mapped in multiple
+parts. This can happen for several reasons. One common example is that introns
+are removed during transcription. This can be illustrated with the following
+image::
 
-Grouping by middle and end positions can be used for diagnostic purposes.
+    |---------------- reference -----------------------
+
+    |--------------------------transcript--------------------------|
+    |---UTR5---||---intron---||---exon---||---intron---||---exon---|
+
+                                |-------R1-------|
+                                |--R2.1-->              <-R2.2-|
+                      |-R3.1->      <-R3.2->            <-R3.3-|
+                        |-R4.1->      <-R4.2-|
+
+Read R1 and R2 are starting on same position. For the sake of argument, let's
+also pretend they also have same random barcode. In so, we would count them as a
+single cDNA molecule (= single cross-link event), even though it is obvious that
+they represent two separate cross-link events. In order to fix this, we count
+not just the number of different randomers on same position, but also number of
+different "second-start" coordinates. Second-start coordinate is just the
+coordinate of the second part of the read. This way, the actual number of
+cross-link events can be determined more accurately. If read is not split, it's
+second-start coordinate is 0. If read has multiple "holes" (as read R3) we
+determine second-start from the largest hole.
+
+Reads whose second-start do NOT fall on segmentation (like R4) are stored in a
+separate BAM file ``sites_strange``. They should be treated with special care,
+since they can indicate not-yet annotated features in genome. If segmentation is
+not given, all reads with holes, bigger than ``holesize_th`` are considered
+strange.
+
+Another parameter needs more explanation: ``group_by``. When algorithm starts,
+reads from BAM file are grouped in hierarchical structure by::
+
+    * chromosome and strand
+    * cross-link position
+    * random barcode
+    * second-start
+
+Each second-start group receives 1 cDNA score. This score is divided to each
+read in group (if there are 5 reads in group, each one gets 1/5 score). This
+enables that each read has it's cDNA score and of course, 1 "read score". This
+scores can be assigned to start (actually, to cross-link position), midlle or
+end position of read. By default, score is of course assigned to cross-link
+location. But for diagnostic purpuses, scores can also be assigned to middle or
+end coordinate of the read.
 
 TODO: check overlap between unique and multimap BED files, should be small,
 otherwise, we should think of a more approapriate quantification of (division
@@ -363,14 +381,22 @@ positional arguments:
   bam                   Input BAM file with mapped reads
   sites_unique          Output BED6 file to store data from uniquely mapped reads
   sites_multi           Output BED6 file to store data from multi-mapped reads
+  skipped               Output BAM file to store reads that do not map as expected by annotation and
+                        reference genome sequence. If read's second start does not fall on any of
+                        annotation borders, it is considered problematic. If segmentation is not provided,
+                        every read in two parts with gap longer than gap_th is not used (skipped).
+                        All such reads are reported to the user for further exploration
 
 optional arguments:
   -h, --help            show this help message and exit
-  -g , --group_by       Group reads together by 'start', 'middle' or 'end' nucleotide (default: start)
+  -g , --group_by       Assign score of a read to either 'start', 'middle' or 'end' nucleotide (default: start)
   --quant               Report number of 'cDNA' or number of 'reads' (default: cDNA)
-  -mis , --mismatches   Reads on same position with random barcode differing less than (default: 2)
+  --segmentation        File with custon annotation format (obtained by ``iCount segment``) (default: None)
+  -mis , --mismatches   Reads on same position with random barcode differing less than
+                        ``mismatches`` are grouped together (default: 2)
   --mapq_th             Ignore hits with MAPQ < mapq_th (default: 0)
   --multimax            Ignore reads, mapped to more than ``multimax`` places (default: 50)
+  --gap_th              Reads with gaps less than gap_th are treated as if they have no gap (default: 4)
   -prog, --report_progress
                         Switch to report progress (default: False)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
@@ -384,9 +410,6 @@ annotate
 
 usage: iCount annotate [-h] [--subtype] [-e  [...]] [-S] [-F] [-P] [-M]
                        annotation sites sites_annotated
-
-Cross-link site annotation
---------------------------
 
 Annotate each cross link site with types of regions that intersect with it.
 
@@ -410,9 +433,6 @@ clusters
 ========
 
 usage: iCount clusters [-h] [--dist] [-S] [-F] [-P] [-M] sites clusters
-
-Cluster sites
--------------
 
 Merge adjacent cross-linked sites into clusters.
 
@@ -438,10 +458,7 @@ group
 
 usage: iCount group [-h] [-S] [-F] [-P] [-M] sites_grouped sites [sites ...]
 
-Group BED files
----------------
-
-Group analysis docstring... TODO!
+Merge BED files into one BED file.
 
 positional arguments:
   sites_grouped         Path to output BED6 file containing merged data from input sites files
@@ -458,35 +475,312 @@ optional arguments:
 peaks
 =====
 
-usage: iCount peaks [-h] [--scores] [--hw] [--fdr] [-p] [-rnd]
-                    [--features  [...]] [-prog] [-g] [-S] [-F] [-P] [-M]
+usage: iCount peaks [-h] [--scores] [--features  [...]] [-g]
+                    [--merge_features] [--half_window] [--fdr] [-p] [-rnd]
+                    [-prog] [-S] [-F] [-P] [-M]
                     annotation sites peaks
 
-Peak finding
-------------
+Find positions with high density of cross-linked sites.
 
-Determine local clusters of significantly cross-linked sites.
+There are two typical variants of this analysis, depending on the parameters:
 
-Read annotation and bedGraph with cross-linked sites. Perform permutation
-analysis to determine significance (FDR) of individual sites. Return bedGraph of
-significant sites.
+* Gene-wise analysis, where:
+    * features = gene
+    * group_by = gene_id
+
+* Transcript-wise analysis where:
+    * features = CDS, intron, UTR3, UTR5, ncRNA, intergenic
+    * group_by = transcript_id
+
+Let's look at the Gene-wise analysis in more detail first. Imagine the following
+situation::
+
+    |-----------gene1----------|
+            |-----------------------------gene2------------------------------|
+           ab c                d                 e
+
+    a = 60
+    b = 100
+    c = 70
+    d = 40
+    e = 100
+    gene1: gene_id = 001
+    gene2: gene_id = 002
+
+There are two genes (partially intersecting) and five positions with cross-links
+(noted with a, b, c, d and e). Crosslink position "a" has 60 cross-link events,
+"b" has 100 cross-link events and so on. Also, gene1 has gene_id 001, etc.
+
+The algorithm first finds all intersections between annotation and
+cross-links. In this case cross-link position "a" intersects only with gene1,
+while position "b" intersects also with gene2... Annotation can include
+various other types of segments (transcripts, intergenic, ncRNA, etc.), but only
+segments of type ``gene`` are considered for intersection. This behaviour is
+controlled by parameter ``features``.
+
+Next step is to make groups of cross-links. They are grouped by ``group_by``
+parameter (in this case, it equals to ``gene_id``). There will be 2 groups.
+First group name will be 001 and will contain a, b, c and d. Second group name
+will be 002 and will contain b, c, d and e.
+
+The question now is: has any of positions in each group significantly increased
+number of cross-link events? And how can one quantify this significance?
+
+This is done by parmutation analysis. It draws a number of random situations
+with same group size and number of cross-link scores. Number of such draws is
+determined by ``perm`` parameter. This way, a random distribution is calculated.
+When comparing the observed distribution with the random one, FDR values are
+assigned to each position. A cutoff FRD value is chosen and only positions with
+FDR < FDR cutoff are considered as significant.
+
+One must also know that when considering only scores on single positions
+significant *clusters* of cross-links can be missed. In the upper example, it is
+obviuous, that something more significantly is happening on position b than on
+position e, despite having the same score. To account for this, algorithm
+considers not only the score of single cross-link, but also scores of
+cross-links some nucleotides before and after. This behaviour in controlled by
+half-window (half_window) parameter. In the upper example, score of position b
+eqals to 160 if half_window = 1 and 2530 if half_window=2. Score of position e
+remains 100.
+
+Let's also look at the transcript-wise analysis. In this case, scenario also
+includes transcripts and sub-transcript elements::
+
+    |-----------gene1----------|
+    |--------transcript1-------|
+    |-ncRNA-||-intron-||-ncRNA-|
+            |-----------------------------gene2------------------------------|
+            |---------------transcript2--------------|
+            |-CDS-||-intron-||-CDS-||-intron-||-UTR3-|
+                                    |---------------transcript3--------------|
+                                    |-UTR5-||-intron-||-CDS-||-intron-||-CDS-|
+
+           ab c                d                 e
+
+    a = 60
+    b = 100
+    c = 70
+    d = 40
+    e = 100
+    gene1: gene_id = 001
+    gene2: gene_id = 002
+    transcript1: transcript_id = 0001
+    transcript2: transcript_id = 0002
+    transcript3: transcript_id = 0003
+
+Value of parameter features is: CDS, intron, UTR3, UTR5, ncRNA, intergenic.
+Value of parameter group_by is transcript_id. Since we have multiple values in
+feature parameter, another parameter becomes important: merge_features. If set
+to false (default) algorithm will make the following groups:
+
+    * group name: ncRNA-0001, members: a, b, d
+    * group name: intron-0001, members: c
+    * group name: CDS-0002, members: b, c, d
+    * group name: UTR3-0002, members: e
+    * group name: intron-0003, members: e
+
+However, if merge_features equals to true, groups are:
+
+    * group name: 0001, members: a, b, c, d
+    * group name: 0002, members: b, c, d, e
+    * group name: 0003, members: e
+
+Then, for each group, procedure is exactly the same as in Gene-wise case.
+
+When analysis is done, significant positions are reported in file, given by
+peaks parameter. If scores parameter is also given, all positions are
+reported in it, no matter the FDR value.
 
 positional arguments:
-  annotation            Path to input GTF annotation file
-  sites                 Path to input BED6 file listing all cross-linked sites
-  peaks                 Path to output BED6 file listing significant sites
+  annotation            Annotation file in GTF format, obtained from "iCount segment" command
+  sites                 File with cross-links in BED6 format
+  peaks                 File name for "peaks" output. File reports positions with significant
+                        number of cross-link events. It should have .bed or .bed.gz extension
 
 optional arguments:
   -h, --help            show this help message and exit
-  --scores              Path to output tab-delimited file with detailed info on significance calculations (default: None)
-  --hw                  Half-window size (default: 3)
+  --scores              File name for "scores" output. File reports all cross-link events,
+                        independent from their FDR score It should have .tsv, .csv, .txt or .gz
+                        extension (default: None)
+  --features  [ ...]    Features from annotation to consider. If None, 'gene' is used (default: None)
+  -g , --group_by       Attribute by which cross-link positions are grouped (default: gene_id)
+  --merge_features      Treat all features as one when grouping. Has no effect when only one
+                        feature is given in features parameter (default: False)
+  --half_window         Half-window size (default: 3)
   --fdr                 FDR threshold (default: 0.05)
-  -p , --perms          Number of permutations (default: 100)
+  -p , --perms          Number of permutations when calculating random distribution (default: 100)
   -rnd , --rnd_seed     Seed for random generator (default: 42)
-  --features  [ ...]    Features over which to perform analysis (default: gene)
   -prog, --report_progress
-                        Print analysis progress (default: False)
-  -g , --group_by       No description
+                        Report analysis progress (default: False)
+  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
+  -P , --file_logpath   Path to log file.
+  -M , --results_file   File into which to store Metrics.
+
+
+rnamaps
+=======
+
+usage: iCount rnamaps [-h] [--implicit_handling] [-mis] [--mapq_th]
+                      [--holesize_th] [-S] [-F] [-P] [-M]
+                      bam segmentation out_file strange cross_transcript
+
+Distribution of cross-links relative to genomic landmarks.
+
+What is an RNA-map?
+^^^^^^^^^^^^^^^^^^^
+
+Imagine the following situation (on positive strand)::
+
+    |---intron1---||---exon2---||---intron2---||---exon3---|
+                              x|-----R1-----|
+
+Situation is simple: a read perfectly maps to reference genome. First cross-link
+(nucletide before the start of read R1) is located -2 nucleotides before
+landmark of type 'exon-intron'. By examining all cross-links(reads) that are
+located in vicinity of landmarks one can obtain the distribution of
+cross-link-to-landmark distances. Such distibution is called an RNA map.
+
+Of course, situation gets complicated. Real-world-situation more likely looks
+like this::
+
+    |--------transcript1-------|
+    |-ncRNA-||-intron-||-ncRNA-|
+            |------------------transcript2-----------------|
+            |--CDS--||-intron-||--CDS--||-intron-||--UTR3--|
+                                    |---------------transcript3--------------|
+                                    |-UTR5-||-intron-||-CDS-||-intron-||-CDS-|
+
+             x|-----R1-----|
+             x|R2.1->          <--R2.2-|
+                                x|-R3-|
+
+All sort of situations can arise:
+
+    * read can intersect with multiple genes/transcripts/segments
+      simultaneously, which means that one read is relevant for different types
+      of RNA maps.
+    * if whole read is mapped to one segment (as is read R3 on transcript2),
+      then it is impossible to tell the type of RNA map it belongs to: is it
+      CDS-intron or intron-CDS?
+    * read can be mapped in multiple parts - for example when introns are
+      removed before translation, first half of read will map to ``exon1`` and
+      second half to ``exon2``.
+    * same cross-link event can be represented by multiple reads with same
+      random barcode.
+    * ...
+
+The algorithm takes care for all of this. Finally, it outputs a container
+``data`` with the following structure::
+
+    data = {
+        rna_map_type: {relative_position: [all, explicit], ...}
+        exon-intron: {-42: [1042, 114], -41: [784, 69] ...}
+        exon-intron-neg: {-42: [219, 65], ...}
+        ...
+    }
+
+The structure is a dict, with keys corresponding to different RNA map types.
+Values are also dicts. Keys in these dicts are positions of cross links relative
+to the landmark of the RNA map. Values for each position are lists: the first
+and second element count number of *all* and *explicit* cross-link events
+respectively. Cross link is explicit, if read identifying cross-link is mapped
+to both parts of RNA-map. In upper example, R1 is explicit, since it maps to
+intron *and* exon. Read R3 on transcript2 is implicit, since one has to decide
+wheather it's cross-link belongs to ``CDS-intron`` or ``intron-CDS`` RNA map.
+The term *all* means explicit + implicit in this context.
+
+If read is implicit (start and stop within same segment), one can choose two
+varinats of the algorithm. One can choose that whole score of read is given to
+RNA-map of the closest landmark. Other option is to split score on half to both
+neighbouring segments. This behaviour is controlled by parameter
+implicit_handling.
+
+There are also two cases when read can map in a way that is not predicted with annotation:
+
+    * For split reads, second start can fall on nucleotide that is not start of
+      a new segment. This behaviour is excactly the same as in xlsites analysis.
+      Such reads are reported in file defined with ``strange`` parameter.
+    * Reads that map on two different transcripts or even two different genes
+      are repoted in file with name defined in cross_transcript.
+
+-------------------------------------------------------------------------------
+
+Things that still need to be resolved:
+
+    * negative strand inspection:
+        * for each ss_group, take annotation from reverse strand and check what
+          is the situation on other side.
+        * What si again the bio-contxt here - explain in docs...?
+    * Test: Each cross-link should have the same cDNA count as in xlsites
+      results. The final check should be: sum all scores - the result should be
+      the same as for xlsites. Actually, the metrics.cross_transcript should
+      also be considered:
+      assert: sum(xlsites scores) == sum(RNAmaps "all" + metrics.cross_transc)
+    * if read crosses two ore more regions from start to end, only end-type is
+      considered for RNAmap type. Should we fix this and which region type to
+      take? Since reads are tpyically much shorted than regions, this is
+      probably a rare case.
+
+-------------------------------------------------------------------------------
+
+Wishes and ideas(Jernej, Tomaz):
+
+    * The whole idea is to get a feeling what is happening around landmarks
+
+    * separate pre-mRNA and mRNA [this is partially done in _add_entry]
+        * Life cyle of RNA: part of DNA in transcribed to RNA in nucleus. Introns
+          are cut out already between this process! Really???
+        * pre-mRNA contains introns, mature mRNA has no introns and goes outside
+          from the nucleus.
+        * so: RNAmap exon-intron will for sure contain only pre-mRNA, but RNAmap
+          exon-exon can contain pre-mRNA and mRNA... It would be really nice to
+          report on percentage of theese two categories.
+        * This can be done by introducing three categories:  pre-mRNa, mRNA and
+          undecided. This can be determined from results - they contain explicit /
+          implicit info and RNAmap type:
+
+    * Intoduce three categories (colors in visualisation?) in every RNAmap type.
+      Let's take exon-intron as example:
+
+        * whole read in left part - color #1 (negative coord, implicit)
+        * whole read in right part - color #2 (positive coord, implicit)
+        * read crossing junction - color #3 (explicit)
+
+    * How to handle situation when one region in individual's sequence clearly
+      differs from reference sequence but it is just some variation?
+
+        * Change the reference sequence? This can be complex... Make a helper
+          tool for this?
+        * Provide additional data in function - which exceptions /abnormalities
+          to ignore?
+
+    * Gaussian smooting of RNAmaps?
+
+    * split read - it can differ also on "first-stop", not juts second-start
+        * we could have some sort of quality check when observing the variance
+          of first-stop-s. THe major question is: "Do all reads for certain
+          xlink event indicate the same behaviour?"
+
+    * Normalization?
+
+positional arguments:
+  bam                   BAM file with alligned reads
+  segmentation          GTF file with annotation. Should be a file produced by function
+                        `get_regions`
+  out_file              Output file with analysis results
+  strange               File with strange propertieas obtained when processing bam file
+  cross_transcript      File with reads spanning over multiple transcripts or multiple genes
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --implicit_handling   Can be 'closest' or 'split'. In case of implicit read - split score to
+                        both neighbours or give it just to the closest neighbour (default: closest)
+  -mis , --mismatches   Reads on same position with random barcode differing less than
+                        ``mismatches`` are grouped together (default: 2)
+  --mapq_th             Ignore hits with MAPQ < mapq_th (default: 0)
+  --holesize_th         Raeads with size of holes less than holesize_th are treted as if they
+                        would have no holes (default: 4)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -499,9 +793,6 @@ summary
 usage: iCount summary [-h] [--types_length_file] [--digits] [--subtype]
                       [-e  [...]] [-S] [-F] [-P] [-M]
                       annotation sites summary fai
-
-Cross-link site summary
------------------------
 
 Report proportion of cross-link events/sites on each region type
 
@@ -529,12 +820,14 @@ examples
 
 usage: iCount examples [-h] [-od] [-S] [-F] [-P] [-M]
 
-Examples
-========
+This module provides a set of example bash scripts that can be run by the user.
+The included script ``tutorial.sh`` replicates all the steps described in the tutorial.
+
+.. autofunction:: iCount.examples.run
 
 optional arguments:
   -h, --help            show this help message and exit
-  -od , --out_dir       No description
+  -od , --out_dir       Directory to which example scripts should be copied (default: .)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.

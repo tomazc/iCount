@@ -62,7 +62,6 @@ RUN chown -R icuser.icuser /home/icuser
 
 USER icuser
 WORKDIR /home/icuser
-ADD requirements.txt /home/icuser
 RUN virtualenv -p python3 /home/icuser/.icountenv
 
 USER root
@@ -82,7 +81,5 @@ USER icuser
 RUN mkdir /home/icuser/storage
 
 ENV PATH /home/icuser/bin:$PATH
-
-EXPOSE 6543
 
 CMD ["/bin/bash"]
