@@ -2,6 +2,14 @@
 Contributing
 ************
 
+Thanks for taking the time to contribute to iCount!
+
+Please submit contributions in accordance with the flow explained in the
+`GitHub Guides`_.
+
+.. _`GitHub Guides`:
+    https://guides.github.com/
+
 
 Installation for development
 ============================

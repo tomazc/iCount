@@ -20,3 +20,22 @@ protein-RNA interactions and generate:
 + and other.
 
 A introductory tutorial is provided [here](http://icount.readthedocs.io/en/latest/tutorial/index.html).
+
+Documentation can be found [here](http://icount.readthedocs.io/en/latest/index.html).
+
+
+## Authors
+
+iCount is developed and supported by [Tomaž Curk](http://curk.info) from the 
+[Bioinformatics Laboratory](http://biolab.si) at the [University of Ljubljana](http://www.uni-lj.si), 
+[Faculty of Computer and Information Science](http://www.fri.uni-lj.si) and in collaboration with 
+the laboratory of [Jernej Ule](http://ulelab.info). Starting in mid-2016, 
+[Jure Zmrzlikar](https://github.com/JureZmrzlikar) from [Genialis](http://www.genialis.com) helped in
+refactoring and improving the code. For details, see the 
+[how to cite](http://icount.readthedocs.io/en/latest/index.html) section in the documentation.
+
+
+## Contributing
+
+Contributions (pull requests) are welcome! Please submit your contributions by following the
+[guidelines](http://icount.readthedocs.io/en/latest/contributing.html).

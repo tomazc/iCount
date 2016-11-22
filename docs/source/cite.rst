@@ -49,4 +49,4 @@ Curk et al. (2016) iCount: protein-RNA interaction iCLIP data analysis (in prepa
     http://www.genialis.com
 
 .. _`Jure Zmrzlikar`:
-    https://www.genialis.com/team/
+    https://github.com/JureZmrzlikar
