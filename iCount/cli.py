@@ -64,6 +64,20 @@ SHORT_OPTARG_NAMES = {
 PARAMETERS = {}
 
 
+def remove_comments(description):
+    """
+    Remove reStructuredText comment lines.
+
+    """
+    description = description.splitlines()
+    if len(description) > 0:
+        if description[0].startswith('..'):
+            description = description[1:]
+    while description and description[0].strip() == '':
+        description.pop(0)
+
+    return '\n'.join(description)
+
 def _format_defaults(value):
     """
     Format value to CLI syntax.
@@ -186,7 +200,7 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         * Positional and optional arguments (and default values) are sourced
           from function signature
         * Help text for each of the arguments is sourced from function
-          docstring. For this to work functions needs to follow Nummpy docstrig
+          docstring. For this to work functions needs to follow Nummpy docstring
           formatting. All parameters should have meaningful description. All
           parameters should also have type equal to one of the keys in
           VALID_TYPES.
@@ -218,7 +232,7 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
 
         * In some cases function that performs the work is only *imported* in the
           correct module ("exposed module"), but the actual function definition is
-          loctated somewhere else ("source module"). It that case, one can use
+          located somewhere else ("source module"). It that case, one can use
           ``module`` parameter with "source module" value. In this case, the
           command name and CLI docstring will be defined from "exposed module" but
           function, default values and parameter descriptions will be sourced from
@@ -227,7 +241,7 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         * In some cases, there will be more CLI exposed functions in the same
           module. In such case, use set ``only_func`` parameter to ``True``. This will
           use function name for CLI command name and use function docstring (form
-          beggining until "Parameters" section) for CLI help message.
+          beginning until "Parameters" section) for CLI help message.
 
     """
     if module:
@@ -235,6 +249,8 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         name = module.__name__.split('.')[-1]
         # Description is determined from module docstring:
         description = inspect.getdoc(module)
+        description = remove_comments(description)
+        description = '\n'.join(description.split('\n')[3:])
     elif only_func:
         # If only_func=True than name of the command equals function name
         name = function.__name__
@@ -242,11 +258,14 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         desc = inspect.getdoc(function).split('\n')
         idx = [i for i, d in enumerate(desc) if d == 'Parameters' or d == 'Returns'][0]
         description = '\n'.join(desc[:idx])
+        description = remove_comments(description)
     else:
         # Command name is determined from module name:
         name = inspect.getmodule(function).__name__.split('.')[-1]
         # Description is determined from module docstring:
         description = inspect.getdoc(inspect.getmodule(function))
+        description = remove_comments(description)
+        description = '\n'.join(description.split('\n')[3:])
 
     if not description:
         description = 'No description provided.'
@@ -302,7 +321,7 @@ def main():
     #####################
 
     root_parser = argparse.ArgumentParser(
-        description=inspect.getdoc(iCount).split('\n..')[0],
+        description=remove_comments(inspect.getdoc(iCount)).split('\n..')[0],
         formatter_class=argparse.RawTextHelpFormatter  # ArgumentDefaultsHelpFormatter,
     )
     # Parser (general) arguments

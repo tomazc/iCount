@@ -1,7 +1,5 @@
 usage: iCount [-h] [-v]   ...
 
-.. Line to protect from pydocstyle D205, D400.
-
 iCount: protein-RNA interaction analysis
 ========================================
 
@@ -25,19 +23,19 @@ Commands:
     species      Get list of species for given release.
     annotation   Download annotation in GTF file fromat.
     genome       Download genome file in FASTA fromat.
-    segment      .. Line to protect from pydocstyle D205, D400.
-    demultiplex  .. Line to protect from pydocstyle D205, D400.
-    cutadapt     .. Line to protect from pydocstyle D205, D400.
-    indexstar    .. Line to protect from pydocstyle D205, D400.
-    mapstar      .. Line to protect from pydocstyle D205, D400.
-    xlsites      .. Line to protect from pydocstyle D205, D400.
-    annotate     .. Line to protect from pydocstyle D205, D400.
-    clusters     .. Line to protect from pydocstyle D205, D400.
-    group        .. Line to protect from pydocstyle D205, D400.
-    peaks        .. Line to protect from pydocstyle D205, D400.
-    rnamaps      .. Line to protect from pydocstyle D205, D400.
-    summary      .. Line to protect from pydocstyle D205, D400.
-    examples     .. Line to protect from pydocstyle D205, D400.
+    segment      Parse genome annotation, segment it and prepare a number of versions needed
+    demultiplex  Split FASTQ file into separate FASTQ files, one for each sample barcode.
+    cutadapt     Interface to running cutadapt.
+    indexstar    Call STAR to generate genome index, which is used for mapping.
+    mapstar      Call STAR to map reads to genome index and produce BAM file.
+    xlsites      Determine positions and quantity of cross-link events.
+    annotate     Annotate each cross link site with types of regions that intersect with it.
+    clusters     Merge adjacent cross-linked sites into clusters.
+    group        Merge BED files into one BED file.
+    peaks        Find positions with high density of cross-linked sites.
+    rnamaps      Distribution of cross-links relative to genomic landmarks.
+    summary      Report proportion of cross-link events/sites on each region type
+    examples     This module provides a set of example bash scripts that can be run by the user.
     man          Print help for all commands.
     args         Print arguments form all CLI commands
 
@@ -141,11 +139,6 @@ segment
 usage: iCount segment [-h] [-prog] [-S] [-F] [-P] [-M]
                       annotation segmentation fai
 
-.. Line to protect from pydocstyle D205, D400.
-
-Segmentation
-------------
-
 Parse genome annotation, segment it and prepare a number of versions needed
 for mapping and for various analyses:
 
@@ -173,11 +166,6 @@ demultiplex
 usage: iCount demultiplex [-h] [-mis] [-ml] [--prefix] [-od] [-S] [-F] [-P]
                           [-M]
                           reads adapter barcodes [barcodes ...]
-
-.. Line to protect from pydocstyle D205, D400.
-
-Demultiplexing
-==============
 
 Split FASTQ file into separate FASTQ files, one for each sample barcode.
 Saved FASTQ files contain sequences where sample barcode, random
@@ -213,11 +201,6 @@ usage: iCount cutadapt [-h] [--qual_base] [--qual_trim] [-ml] [-S] [-F] [-P]
                        [-M]
                        reads reads_trimmed adapter
 
-.. Line to protect from pydocstyle D205, D400.
-
-Cutadapt
---------
-
 Interface to running cutadapt.
 
 positional arguments:
@@ -244,11 +227,6 @@ indexstar
 usage: iCount indexstar [-h] [-a] [--overhang] [--overhang_min] [--threads]
                         [-S] [-F] [-P] [-M]
                         genome genome_index
-
-.. Line to protect from pydocstyle D205, D400.
-
-Generate STAR index
--------------------
 
 Call STAR to generate genome index, which is used for mapping.
 
@@ -285,11 +263,6 @@ mapstar
 usage: iCount mapstar [-h] [-a] [--multimax] [-mis] [--threads] [-S] [-F] [-P]
                       [-M]
                       reads genome_index out_dir
-
-.. Line to protect from pydocstyle D205, D400.
-
-Map using STAR
---------------
 
 Call STAR to map reads to genome index and produce BAM file.
 
@@ -330,11 +303,6 @@ xlsites
 usage: iCount xlsites [-h] [-g] [--quant] [--segmentation] [-mis] [--mapq_th]
                       [--multimax] [--gap_th] [-prog] [-S] [-F] [-P] [-M]
                       bam sites_unique sites_multi skipped
-
-.. Line to protect from pydocstyle D205, D400.
-
-Identify and quantify cross-linked sites
-----------------------------------------
 
 Determine positions and quantity of cross-link events.
 
@@ -444,11 +412,6 @@ annotate
 usage: iCount annotate [-h] [--subtype] [-e  [...]] [-S] [-F] [-P] [-M]
                        annotation sites sites_annotated
 
-.. Line to protect from pydocstyle D205, D400.
-
-Cross-link site annotation
---------------------------
-
 Annotate each cross link site with types of regions that intersect with it.
 
 positional arguments:
@@ -471,11 +434,6 @@ clusters
 ========
 
 usage: iCount clusters [-h] [--dist] [-S] [-F] [-P] [-M] sites clusters
-
-.. Line to protect from pydocstyle D205, D400.
-
-Cluster sites
--------------
 
 Merge adjacent cross-linked sites into clusters.
 
@@ -501,12 +459,7 @@ group
 
 usage: iCount group [-h] [-S] [-F] [-P] [-M] sites_grouped sites [sites ...]
 
-.. Line to protect from pydocstyle D205, D400.
-
-Group BED files
----------------
-
-Group analysis docstring... TODO!
+Merge BED files into one BED file.
 
 positional arguments:
   sites_grouped         Path to output BED6 file containing merged data from input sites files
@@ -527,11 +480,6 @@ usage: iCount peaks [-h] [--scores] [--features  [...]] [-g]
                     [--merge_features] [--half_window] [--fdr] [-p] [-rnd]
                     [-prog] [-S] [-F] [-P] [-M]
                     annotation sites peaks
-
-.. Line to protect from pydocstyle D205, D400.
-
-Peak finding
-------------
 
 Find positions with high density of cross-linked sites.
 
@@ -677,11 +625,6 @@ rnamaps
 usage: iCount rnamaps [-h] [--implicit_handling] [-mis] [--mapq_th]
                       [--holesize_th] [-S] [-F] [-P] [-M]
                       bam segmentation out_file strange cross_transcript
-
-.. Line to protect from pydocstyle D205, D400.
-
-RNA maps
---------
 
 Distribution of cross-links relative to genomic landmarks.
 
@@ -852,11 +795,6 @@ usage: iCount summary [-h] [--types_length_file] [--digits] [--subtype]
                       [-e  [...]] [-S] [-F] [-P] [-M]
                       annotation sites summary fai
 
-.. Line to protect from pydocstyle D205, D400.
-
-Cross-link site summary
------------------------
-
 Report proportion of cross-link events/sites on each region type
 
 positional arguments:
@@ -882,11 +820,6 @@ examples
 ========
 
 usage: iCount examples [-h] [-od] [-S] [-F] [-P] [-M]
-
-.. Line to protect from pydocstyle D205, D400.
-
-Examples
-========
 
 This module provides a set of example bash scripts that can be run by the user.
 The included script ``tutorial.sh`` replicates all the steps described in the tutorial.
