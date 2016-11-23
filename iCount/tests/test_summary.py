@@ -330,5 +330,6 @@ class TestMakeSummaryReport(unittest.TestCase):
                                    self.chrom_lengths, excluded_types=['intron'])
         self.assertEqual(out, expected)
 
+
 if __name__ == '__main__':
     unittest.main()

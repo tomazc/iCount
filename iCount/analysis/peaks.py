@@ -371,7 +371,7 @@ def _process_group(pos_scores, group_size, half_window, perms):
 
     # This step follows the article [1] to produce FDR values. First, produce
     # mapping from sww_scores to FDR value:
-    sww2fdr = [min(1.0, rnd / true_) for rnd, true_ in zip(random_, observed[:max_val+1])]
+    sww2fdr = [min(1.0, rnd / true_) for rnd, true_ in zip(random_, observed[:max_val + 1])]
     # Compute FDR scores por each position based on it's sww_score:
     fdr_scores = [sww2fdr[round(sww_score)] for _, sww_score in pos_scores_sww]
 

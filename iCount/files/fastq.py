@@ -28,6 +28,7 @@ def _x2l(s):
     # return ''.join(L)
     return ''.join((_Dx2l[ij] for ij in s))
 
+
 # -31 = -64 + 33
 _Dij2l = {chr(ij): chr(ij - 31) for ij in range(64, 104 + 1 + 1)}
 
@@ -35,6 +36,7 @@ _Dij2l = {chr(ij): chr(ij - 31) for ij in range(64, 104 + 1 + 1)}
 def _ij2l(s):
     """TODO."""
     return ''.join((_Dij2l[ij] for ij in s))
+
 
 # 0 = -33 + 33
 _Dsl2l = {chr(ij): chr(ij - 0) for ij in range(64, 104 + 1 + 1)}

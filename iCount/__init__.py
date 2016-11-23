@@ -21,13 +21,17 @@ protein-RNA interaction.
 
 import os
 
+from iCount.__about__ import (
+    __author__, __copyright__, __email__, __license__, __summary__, __title__,
+    __url__, __version__,
+)
+
 from . import analysis
 from . import externals
 from . import files
 from . import demultiplex
 from . import mapping
 from . import genomes
-from ._version import __version__
 
 from . import examples
 from .logger import log_to_stdout, log_to_file, log_inputs, _log_progress

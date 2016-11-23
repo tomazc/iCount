@@ -92,5 +92,6 @@ class TestPipeline(unittest.TestCase):
 
             self.assertEqual(ref_lines[script], cur_lines[script])
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,39 +1,47 @@
-language: python
-
-sudo: false   # use container-based infrastructure
+sudo: required
+# sudo: false   # use container-based infrastructure
 
 dist: trusty
 
-addons:
-    apt:
-        packages:
-            - gfortran
-            - libblas-dev
-            - liblapack-dev
-            - samtools
-            - rna-star
+language: python
 
-cache:
-    apt: true   # does not work for public repos
-    directories:
-        - $HOME/.cache/pip
-        - $HOME/.ccache
+# XXX: APT packages cannot be instaled with apt addon, because they are not
+#      whitelisted by Travis:
+#      https://github.com/travis-ci/apt-package-whitelist#package-approval-process
+# After whitelisting them, remove them from install section and change sudo
+# from `required` to `false` to enable builds on new Travis infrastructure which
+# (among other good things) supports caching.
 
-before_cache:   # prevent logs from caching
-    - rm -f $HOME/.cache/pip/log/debug.log
+# addons:
+#     apt:
+#         packages:
+#             - gfortran
+#             - libblas-dev
+#             - liblapack-dev
+#             - samtools
+#             - rna-star
 
-before_install:
-    - pip install -U setuptools pip wheel
+# cache:
+#     - ccache
+#     - pip
+
+# before_cache:   # prevent logs from caching
+#     - rm -f $HOME/.cache/pip/log/debug.log
 
 install:
-    - travis_wait pip install .
-    - travis_wait pip install .tests
-    - pip install coverage
     - pip install tox
+    # install apt packages
+    - sudo apt-get update
+    - sudo apt-get install gfortran libblas-dev liblapack-dev samtools
+    # install bedtools
     - wget https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2.26.0.tar.gz
     - tar -zxvf bedtools-2.26.0.tar.gz
     - pushd bedtools2 && make && popd
     - export PATH=$PATH:$PWD/bedtools2/bin/
+    # install STAR
+    - wget https://github.com/alexdobin/STAR/archive/2.5.2b.tar.gz
+    - tar -xzf 2.5.2b.tar.gz
+    - export PATH=$PATH:$PWD/STAR-2.5.2b/bin/Linux_x86_64/
 
 matrix:
   include:
@@ -43,14 +51,17 @@ matrix:
       python: "3.5"
     - env: TOX_ENV=linters
       python: "3.5"
+    - env: TOX_ENV=docs
+      python: "3.5"
+    - env: TOX_ENV=packaging
+      python: "3.5"
 
 script:
   - tox -e $TOX_ENV
 
 after_success:
-
   - pip install codecov
-  - codecov -t b99bec7c-6000-4438-ba89-e7c2cddfefa4
+  - codecov -e TOX_ENV
 
 notifications:
     email: false

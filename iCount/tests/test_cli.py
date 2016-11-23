@@ -355,5 +355,6 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(subprocess.call(command_basic), 0)
         self.assertEqual(subprocess.call(command_full), 0)
 
+
 if __name__ == '__main__':
     unittest.main()

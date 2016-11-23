@@ -115,5 +115,6 @@ class TestPeaks(unittest.TestCase):
         self.assertEqual(out_peaks, expected_peaks)
         self.assertEqual(out_scores, expected_scores)
 
+
 if __name__ == '__main__':
     unittest.main()

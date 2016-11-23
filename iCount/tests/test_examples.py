@@ -33,5 +33,6 @@ class TestExamplesScriptsInstall(unittest.TestCase):
         os.rmdir(self.examples_dir)
         os.rmdir(self.tempdir)
 
+
 if __name__ == '__main__':
     unittest.main()

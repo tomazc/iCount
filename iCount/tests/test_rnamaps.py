@@ -271,5 +271,6 @@ class TestRun(unittest.TestCase):
                     implicit_handling='split')
         self.assertEqual(expected, make_list_from_file(self.out))
 
+
 if __name__ == '__main__':
     unittest.main()

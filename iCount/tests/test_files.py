@@ -47,5 +47,6 @@ class TestFilesTemp(unittest.TestCase):
             os.remove(os.path.join(self.tempdir, file_))
         os.rmdir(self.tempdir)
 
+
 if __name__ == '__main__':
     unittest.main()
