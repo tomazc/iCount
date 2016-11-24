@@ -214,5 +214,6 @@ class TestGTFVariation(unittest.TestCase):
         # identical content:
         self.assertEqual(set(self.reference_results), set(self.current_results))
 
+
 if __name__ == '__main__':
     unittest.main()

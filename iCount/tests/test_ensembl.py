@@ -120,5 +120,6 @@ class TestEnsemblGenome(unittest.TestCase):
 
         os.rmdir(self.tempdir)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -68,7 +68,7 @@ output-format=text
 files-output=no
 
 # Tells whether to display a full report or only the messages
-reports=yes
+reports=no
 
 # Python expression which should return a note less than 10 (10 is the highest
 # note). You have access to the variables errors warning, statement which
@@ -215,7 +215,7 @@ ignored-classes=SQLObject,GenResource,GenUserManager,GroupManager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E0201 when accessed. Python regular
 # expressions are accepted.
-generated-members=REQUEST,acl_users,aq_parent,objects,id,_instance,_class_name,FULL_PERMISSIONS,isoformat,get_full_name,is_authenticated,throttle_check,method_check,_meta,wrap_view,fields,cleaned_data,build_bundle,_headers,DoesNotExist
+generated-members=
 
 
 [FORMAT]

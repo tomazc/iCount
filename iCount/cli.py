@@ -38,6 +38,7 @@ def _list_str(string, separator=','):
     """Convert comma separated string to list."""
     return string.strip('{:s} \n\t'.format(separator))
 
+
 VALID_TYPES = {
     'bool': bool,
     'str': str,
@@ -65,10 +66,7 @@ PARAMETERS = {}
 
 
 def remove_comments(description):
-    """
-    Remove reStructuredText comment lines.
-
-    """
+    """Remove reStructuredText comment lines."""
     description = description.splitlines()
     if len(description) > 0:
         if description[0].startswith('..'):
@@ -77,6 +75,7 @@ def remove_comments(description):
         description.pop(0)
 
     return '\n'.join(description)
+
 
 def _format_defaults(value):
     """
