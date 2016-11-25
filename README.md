@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/tomazc/iCount.svg?branch=master)](https://travis-ci.org/tomazc/iCount)
 [![codecov](https://codecov.io/gh/tomazc/iCount/branch/master/graph/badge.svg?token=JhUJ66rnJ3)](https://codecov.io/gh/tomazc/iCount)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bb21b3cc5fcd420c885ed12bf8393065)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tomazc/iCount&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b77d104b59a74946bf8905f82dd381e4)](https://www.codacy.com/app/tomazc/iCount?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tomazc/iCount&amp;utm_campaign=Badge_Grade)
 [![CLA assistant](https://cla-assistant.io/readme/badge/tomazc/iCount)](https://cla-assistant.io/tomazc/iCount)
 [![Documentation Status](https://readthedocs.org/projects/icount/badge/?version=latest)](http://icount.readthedocs.io/en/latest/?badge=latest)
 
