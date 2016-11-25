@@ -247,6 +247,10 @@ release::
     docs/changelog.sh > to_edit.rst
 
 Edit ``to_edit.rst`` and incorporate a description of most important changes into ``docs/source/revisions.rst``.
+Use syntax from `releases`_ package.
+
+.. _`releases`:
+    http://releases.readthedocs.io/en/latest/concepts.html#issue-and-release-types
 
 Remove ``-dev`` from project's version in ``iCount/__about__.py`` file.
 

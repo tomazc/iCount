@@ -4,7 +4,8 @@
 Contents of this documentation:
 
 .. toctree::
-   :maxdepth: 1
+   :glob:
+   :maxdepth: 2
 
    tutorial
    installation

@@ -5,6 +5,7 @@ include CLA
 # include documentation and files needed by documentation
 recursive-include docs/source *.py *.rst *.txt
 include docs/changelog.sh docs/Makefile
+include requirements-rtd.txt
 # include tests and files needed by tests
 include .pylintrc tox.ini
 recursive-include iCount/tests *.py

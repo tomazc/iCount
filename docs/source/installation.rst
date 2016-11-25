@@ -28,8 +28,8 @@ If you wish to install form source, follow instructions in section
 :doc:`Contributing <contributing>`.
 
 
-Using docker
-============
+Docker
+======
 
 When working with docker, make sure that the docker-machine has enough memory to run STAR and
 associated programs, *e.g.*, at least 64 GB::

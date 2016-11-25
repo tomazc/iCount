@@ -1,0 +1,10 @@
+numpy
+pandas
+cutadapt==1.10
+pysam
+pybedtools
+numpydoc
+sphinx>=1.4
+docutils
+sphinx_rtd_theme
+releases
