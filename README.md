@@ -33,7 +33,7 @@ iCount is developed and supported by [Tomaž Curk](http://curk.info) from the
 the laboratory of [Jernej Ule](http://ulelab.info). Starting in mid-2016, 
 [Jure Zmrzlikar](https://github.com/JureZmrzlikar) from [Genialis](http://www.genialis.com) helped in
 refactoring and improving the code. For details, see the 
-[how to cite](http://icount.readthedocs.io/en/latest/index.html) section in the documentation.
+[how to cite](http://icount.readthedocs.io/en/latest/cite.html) section in the documentation.
 
 
 ## Contributing
