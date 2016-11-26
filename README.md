@@ -21,9 +21,8 @@ protein-RNA interactions and generate:
 + kmer enrichment analysis,
 + and other.
 
-A introductory tutorial is provided [here](http://icount.readthedocs.io/en/latest/tutorial/index.html).
-
-Documentation can be found [here](http://icount.readthedocs.io/en/latest/index.html).
+You may start with the [tutorial](http://icount.readthedocs.io/en/latest/tutorial.html) or dive into the 
+[documentation](http://icount.readthedocs.io/en/latest/index.html).
 
 
 ## Authors
