@@ -52,6 +52,12 @@ singlehtml: refcli
 	@echo
 	@echo "Build finished. The HTML page is in $(BUILDDIR)/singlehtml."
 
+.PHONY: json
+json: refcli
+	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(BUILDDIR)/json
+	@echo
+	@echo "Build finished. The HTML page is in $(BUILDDIR)/json."
+
 .PHONY: latex
 latex: refcli
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex

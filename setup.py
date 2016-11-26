@@ -56,7 +56,8 @@ setup(
     extras_require={
         'docs': [
             'docutils',
-            'sphinxcontrib-fulltoc>=0.1.9',
+            'releases',
+            'sphinx_rtd_theme',
         ],
         'package': [
             'twine',
