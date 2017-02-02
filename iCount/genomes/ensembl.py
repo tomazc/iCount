@@ -294,8 +294,8 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     filtered_files = []
 
     # Recognize all "whole-chromosme" files
-    regex = r'{}\.[\w\d]+\.(\d+\.)*dna\.chromosome\.' \
-            r'[\dXYMT]+\.fa\.gz'.format(species.capitalize())
+    regex = r'{}\.[\w\d\-]+\.(\d+\.)*dna\.chromosome\.' \
+            r'[a-zA-Z0-9]+\.fa\.gz'.format(species.capitalize())
     for fasta_file in all_fasta_files:
         if re.match(regex, fasta_file):
             filtered_files.append(fasta_file)
