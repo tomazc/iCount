@@ -320,7 +320,11 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
                     subset_list.append(file_)
                     chromosome_found = True
             if not chromosome_found:
-                raise ValueError('Could not find file with chromosome {}.'.format(chromosome))
+                # Provide user with a list of available chromosomes:
+                chrom_regex = r'.*chromosome\.([a-zA-Z0-9]+)\.fa\.gz'
+                available = [re.match(chrom_regex, file_).group(1) for file_ in filtered_files]
+                raise ValueError('Could not find chromosome {}. Available chromosomes '
+                                 'are: {}'.format(chromosome, ' '.join(available)))
         filtered_files = subset_list
         if not genome:
             genome = '{}.{}.chr{}.fa.gz'.format(

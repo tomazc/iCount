@@ -113,6 +113,11 @@ class TestEnsemblGenome(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, message):
             ensembl.genome('homo_sapiens', release=1)
 
+    def test_invalid_chromosome(self):
+        message = r"Could not find chromosome .*"
+        with self.assertRaisesRegex(ValueError, message):
+            ensembl.genome('homo_sapiens', chromosomes=['ZZZ'])
+
     def tearDown(self):
         files = os.listdir(self.tempdir)
         for file_ in files:
