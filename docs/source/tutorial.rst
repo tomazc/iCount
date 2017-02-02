@@ -65,7 +65,7 @@ The next step is to generate a genome index that is used by `STAR`_ mapper. Let'
 ``hs84`` and use ensembl's GTF annotation on genes::
 
     $ mkdir hs84  # folder should be empty
-    $ iCount mapindex homo_sapiens.84.chr21_MT.fa.gz hs84 \
+    $ iCount indexstar homo_sapiens.84.chr21_MT.fa.gz hs84 \
     --annotation homo_sapiens.84.gtf.gz
 
     Building genome index with STAR for genome homo_sapiens.84.fa.gz
@@ -167,7 +167,7 @@ First, create a folder to store the mapping results::
 Then, map the reads in the selected FASTQ file using STAR and the genome index we have generated
 at the very beginning of this tutorial::
 
-    $ iCount map demultiplexed/demux_NNNACCTNN.fastq.gz hs84 mapping_NNNACCTNN \
+    $ iCount mapstar demultiplexed/demux_NNNACCTNN.fastq.gz hs84 mapping_NNNACCTNN \
     --annotation homo_sapiens.84.gtf.gz
 
     Mapping reads from demultiplexed/demux_NNNACCTNN.fastq.gz

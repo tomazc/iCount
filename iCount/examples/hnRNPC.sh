@@ -47,7 +47,7 @@ if [ ! -d ${genome_index} ];
 then
     mkdir -p ${genome_index}
     overhang="100"
-    iCount mapindex ${genome} ${genome_index} --annotation ${annotation} \
+    iCount indexstar ${genome} ${genome_index} --annotation ${annotation} \
         --overhang ${overhang} --threads 1
 fi
 
@@ -88,7 +88,7 @@ for barcode in ${barcodes//,/ }; do
     rm -Rf ${map_dir}
     mkdir -p ${map_dir}
 
-    iCount map ${sequences} "../${genome_index}" ${map_dir} --threads 1 \
+    iCount mapstar ${sequences} "../${genome_index}" ${map_dir} --threads 1 \
         --multimax ${multimax} --mismatches ${mismatches} \
         --annotation "../${annotation}"
 done
