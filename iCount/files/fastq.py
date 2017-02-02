@@ -120,7 +120,7 @@ def is_gzip(fname):
         f = gzip.open(fname, 'r')
         f.peek(10)
         return True
-    except:
+    except (OSError, AttributeError):
         return False
 
 
