@@ -87,8 +87,8 @@ def species(release=MAX_RELEASE_SUPPORTED):
 
     Parameters
     ----------
-    release : str
-        The release number (can be str or int). Only ENSEMBL releases {0}..{1} are available.
+    release : int
+        Release number. Only ENSEMBL releases {0}..{1} are available.
 
     Returns
     -------
