@@ -36,7 +36,13 @@ refactoring and improving the code. For details, see the
 [how to cite](http://icount.readthedocs.io/en/latest/cite.html) section in the documentation.
 
 
+
 ## Contributing
 
 Contributions (pull requests) are welcome! Please submit your contributions by following the
 [guidelines](http://icount.readthedocs.io/en/latest/contributing.html).
+
+
+## Reporting problems
+
+Use the [issues page](https://github.com/tomazc/iCount/issues) to report issues and request enhancements. Before submitting, please check the list of already reported issues. Also, have a look at the [FAQ](http://icount.readthedocs.io/en/latest/faq.html) to see if the problem has been addressed already. 
