@@ -11,6 +11,7 @@ Contents of this documentation:
    installation
    ref
    contributing
+   faq
    versions
    license
    cite
