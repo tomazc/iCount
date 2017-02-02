@@ -532,7 +532,10 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
                 min_fdr_records = [rec for rec in annot_list if rec[0] == min_fdr_score]
 
                 _, names, group_ids, group_scores, _ = zip(*min_fdr_records)
-                name = ','.join(names) + ' - ' + ','.join(group_ids)
+                if names == group_ids:
+                    name = ','.join(names)
+                else:
+                    name = ','.join(names) + '-' + ','.join(group_ids)
                 line = [chrom, pos, pos + 1, name, group_scores[0], strand]
                 peaks.write('\t'.join([_f2s(i, dec=4)for i in line]) + '\n')
     LOGGER.info('BED6 file with significant peaks saved to: %s', peaks.name)
