@@ -59,10 +59,10 @@ def run(sites, clusters, dist=20):  # , extend=0):
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
     # It is required to pre-sort your data:
-    sites = pybedtools.BedTool(sites).sort().saveas()
+    bt_sites = pybedtools.BedTool(sites).sort().saveas()
 
     LOGGER.info('Merging cross links form file %s', sites)
-    merged = sites.merge(s=True, d=dist, c=[5, 4], o='sum,distinct').saveas()
+    merged = bt_sites.merge(s=True, d=dist, c=[5, 4], o='sum,distinct').saveas()
     out = merged.sort().each(_fix_proper_bed6_format).saveas(clusters)
 
     LOGGER.info('Done. Results saved to: %s', os.path.abspath(out.fn))

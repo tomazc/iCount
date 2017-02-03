@@ -13,7 +13,7 @@ iCount genome homo_sapiens -r 84 --chromosomes 21 MT
 iCount annotation homo_sapiens -r 84
 
 mkdir hs84
-iCount mapindex homo_sapiens.84.chr21_MT.fa.gz hs84 --annotation homo_sapiens.84.gtf.gz
+iCount indexstar homo_sapiens.84.chr21_MT.fa.gz hs84 --annotation homo_sapiens.84.gtf.gz
 
 wget http://icount.fri.uni-lj.si/data/20101116_LUjh03/\
 SLX-2605.CRIRUN_501.s_4.sequence.txt.gz -O hnRNPC.fq.gz

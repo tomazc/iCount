@@ -2,7 +2,6 @@
 
 import warnings
 import unittest
-from unittest import mock
 
 import iCount.externals.cutadapt as cutadapt
 import iCount.externals.star as star
@@ -23,12 +22,6 @@ class TestCutadapt(unittest.TestCase):
     def test_get_version_ok(self):
         version = cutadapt.get_version()
         self.assertRegex(version, r'\d\.\d+')
-
-    @mock.patch('iCount.externals.cutadapt.subprocess')
-    def test_get_version_fail(self, subprocess_mock):
-        subprocess_mock.check_output.side_effect = Exception()
-        version = cutadapt.get_version()
-        self.assertIsNone(version)
 
     def test_run(self):
         return_code = cutadapt.run(self.reads, self.tmp, self.adapter, qual_base=64,
@@ -58,12 +51,6 @@ class TestStar(unittest.TestCase):
         # Version example: STAR_2.5.0a
         regex = r'STAR_\d\.[\d\w]+'
         self.assertRegex(version, regex)
-
-    @mock.patch('iCount.externals.star.subprocess')
-    def test_get_version_fail(self, subprocess_mock):
-        subprocess_mock.check_output.side_effect = Exception()
-        version = star.get_version()
-        self.assertIsNone(version)
 
     def test_build_index_bad_outdir(self):
 

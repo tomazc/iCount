@@ -93,14 +93,14 @@ if [ ! -d ${genome_index} ];
 then
     mkdir -p ${genome_index}
     overhang="100"
-    iCount mapindex ${genome} ${genome_index} --annotation ${annotation} \
+    iCount indexstar ${genome} ${genome_index} --annotation ${annotation} \
         --overhang ${overhang} --threads 1
 fi
 + '[' '!' -d star_index/hg19red ']'
 + mkdir -p star_index/hg19red
 + overhang=100
-+ iCount mapindex genomes/hs84red.fa.gz star_index/hg19red --annotation genomes/hs84.gtf.gz --overhang 100 --threads 1
-Executing the following command: iCount mapindex genomes/hs84red.fa.gz star_index/hg19red --annotation genomes/hs84.gtf.gz --overhang 100 --threads 1
++ iCount indexstar genomes/hs84red.fa.gz star_index/hg19red --annotation genomes/hs84.gtf.gz --overhang 100 --threads 1
+Executing the following command: iCount indexstar genomes/hs84red.fa.gz star_index/hg19red --annotation genomes/hs84.gtf.gz --overhang 100 --threads 1
 Input parameters for function 'build_index' in /home/icuser/iCount_src/iCount/externals/star.py
     genome_fname: genomes/hs84red.fa.gz
     outdir: star_index/hg19red
@@ -197,7 +197,7 @@ for barcode in ${barcodes//,/ }; do
     rm -Rf ${map_dir}
     mkdir -p ${map_dir}
 
-    iCount map ${sequences} "../${genome_index}" ${map_dir} --threads 1 \
+    iCount mapstar ${sequences} "../${genome_index}" ${map_dir} --threads 1 \
         --multimax ${multimax} --mismatches ${mismatches} \
         --annotation "../${annotation}"
 done
@@ -206,8 +206,8 @@ done
 + map_dir=mappings/exp_NNNGGTTNN
 + rm -Rf mappings/exp_NNNGGTTNN
 + mkdir -p mappings/exp_NNNGGTTNN
-+ iCount map extracted/exp_NNNGGTTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNGGTTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
-Executing the following command: iCount map extracted/exp_NNNGGTTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNGGTTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
++ iCount mapstar extracted/exp_NNNGGTTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNGGTTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
+Executing the following command: iCount mapstar extracted/exp_NNNGGTTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNGGTTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
 Input parameters for function 'map_reads' in /home/icuser/iCount_src/iCount/externals/star.py
     sequences_fname: extracted/exp_NNNGGTTNN.fastq.gz
     genomedir: ../star_index/hg19red
@@ -230,8 +230,8 @@ Done.
 + map_dir=mappings/exp_NNNTTGTNN
 + rm -Rf mappings/exp_NNNTTGTNN
 + mkdir -p mappings/exp_NNNTTGTNN
-+ iCount map extracted/exp_NNNTTGTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNTTGTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
-Executing the following command: iCount map extracted/exp_NNNTTGTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNTTGTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
++ iCount mapstar extracted/exp_NNNTTGTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNTTGTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
+Executing the following command: iCount mapstar extracted/exp_NNNTTGTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNTTGTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
 Input parameters for function 'map_reads' in /home/icuser/iCount_src/iCount/externals/star.py
     sequences_fname: extracted/exp_NNNTTGTNN.fastq.gz
     genomedir: ../star_index/hg19red
@@ -254,8 +254,8 @@ Done.
 + map_dir=mappings/exp_NNNCAATNN
 + rm -Rf mappings/exp_NNNCAATNN
 + mkdir -p mappings/exp_NNNCAATNN
-+ iCount map extracted/exp_NNNCAATNN.fastq.gz ../star_index/hg19red mappings/exp_NNNCAATNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
-Executing the following command: iCount map extracted/exp_NNNCAATNN.fastq.gz ../star_index/hg19red mappings/exp_NNNCAATNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
++ iCount mapstar extracted/exp_NNNCAATNN.fastq.gz ../star_index/hg19red mappings/exp_NNNCAATNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
+Executing the following command: iCount mapstar extracted/exp_NNNCAATNN.fastq.gz ../star_index/hg19red mappings/exp_NNNCAATNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
 Input parameters for function 'map_reads' in /home/icuser/iCount_src/iCount/externals/star.py
     sequences_fname: extracted/exp_NNNCAATNN.fastq.gz
     genomedir: ../star_index/hg19red
@@ -278,8 +278,8 @@ Done.
 + map_dir=mappings/exp_NNNACCTNN
 + rm -Rf mappings/exp_NNNACCTNN
 + mkdir -p mappings/exp_NNNACCTNN
-+ iCount map extracted/exp_NNNACCTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNACCTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
-Executing the following command: iCount map extracted/exp_NNNACCTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNACCTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
++ iCount mapstar extracted/exp_NNNACCTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNACCTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
+Executing the following command: iCount mapstar extracted/exp_NNNACCTNN.fastq.gz ../star_index/hg19red mappings/exp_NNNACCTNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
 Input parameters for function 'map_reads' in /home/icuser/iCount_src/iCount/externals/star.py
     sequences_fname: extracted/exp_NNNACCTNN.fastq.gz
     genomedir: ../star_index/hg19red
@@ -302,8 +302,8 @@ Done.
 + map_dir=mappings/exp_NNNGGCGNN
 + rm -Rf mappings/exp_NNNGGCGNN
 + mkdir -p mappings/exp_NNNGGCGNN
-+ iCount map extracted/exp_NNNGGCGNN.fastq.gz ../star_index/hg19red mappings/exp_NNNGGCGNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
-Executing the following command: iCount map extracted/exp_NNNGGCGNN.fastq.gz ../star_index/hg19red mappings/exp_NNNGGCGNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
++ iCount mapstar extracted/exp_NNNGGCGNN.fastq.gz ../star_index/hg19red mappings/exp_NNNGGCGNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
+Executing the following command: iCount mapstar extracted/exp_NNNGGCGNN.fastq.gz ../star_index/hg19red mappings/exp_NNNGGCGNN --threads 1 --multimax 50 --mismatches 2 --annotation ../genomes/hs84.gtf.gz
 Input parameters for function 'map_reads' in /home/icuser/iCount_src/iCount/externals/star.py
     sequences_fname: extracted/exp_NNNGGCGNN.fastq.gz
     genomedir: ../star_index/hg19red

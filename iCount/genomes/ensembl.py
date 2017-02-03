@@ -87,8 +87,8 @@ def species(release=MAX_RELEASE_SUPPORTED):
 
     Parameters
     ----------
-    release : str
-        The release number (can be str or int). Only ENSEMBL releases {0}..{1} are available.
+    release : int
+        Release number. Only ENSEMBL releases {0}..{1} are available.
 
     Returns
     -------
@@ -294,8 +294,8 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     filtered_files = []
 
     # Recognize all "whole-chromosme" files
-    regex = r'{}\.[\w\d]+\.(\d+\.)*dna\.chromosome\.' \
-            r'[\dXYMT]+\.fa\.gz'.format(species.capitalize())
+    regex = r'{}\.[\w\d\-]+\.(\d+\.)*dna\.chromosome\.' \
+            r'[a-zA-Z0-9]+\.fa\.gz'.format(species.capitalize())
     for fasta_file in all_fasta_files:
         if re.match(regex, fasta_file):
             filtered_files.append(fasta_file)
@@ -320,7 +320,11 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
                     subset_list.append(file_)
                     chromosome_found = True
             if not chromosome_found:
-                raise ValueError('Could not find file with chromosome {}.'.format(chromosome))
+                # Provide user with a list of available chromosomes:
+                chrom_regex = r'.*chromosome\.([a-zA-Z0-9]+)\.fa\.gz'
+                available = [re.match(chrom_regex, file_).group(1) for file_ in filtered_files]
+                raise ValueError('Could not find chromosome {}. Available chromosomes '
+                                 'are: {}'.format(chromosome, ' '.join(available)))
         filtered_files = subset_list
         if not genome:
             genome = '{}.{}.chr{}.fa.gz'.format(

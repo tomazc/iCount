@@ -15,7 +15,7 @@ def get_version():
     try:
         ver = subprocess.check_output(args, shell=False, universal_newlines=True)
         return str(ver).rstrip('\n\r')
-    except:  # pylint: disable=bare-except
+    except (FileNotFoundError, subprocess.CalledProcessError):
         return None
 
 
