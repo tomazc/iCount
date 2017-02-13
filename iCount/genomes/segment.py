@@ -3,18 +3,31 @@
 Segmentation
 ------------
 
-Parse genome annotation, segment it and prepare a number of annotations.
+Parse annotation file into internal iCount structure - segmentation.
 
-These annotations are used for mapping and for various analyses:
+Segmentation is used in almost all further analyses.
 
-- regions of genes (all isoforms and other parts merged into one region)
-- regions of individual region types (segment each gene into exonic, intronic, nc, utr, etc..)
+In segmentation, each transcript is partitioned into so called
+regions/intervals. Such regions must span the whole transcript, but should not
+intersect with each other. However, higher hierarchy levels: transcripts and
+genes can of course intersect each other.
+
+Example of possible segmentation::
+
+    Genome level: |---------------------------------------------------|
+
+    Gene level:    |--------------gene1--------------|   |-intergenic-|
+                                 |---------gene2--------|
+
+    Transcript l.: |----------transcript1---------|
+                           |-------transcript2-------|
+                                 |------transcript3-----|
+
+    Region level:  |-CDS-||-intron-||-CDS-||-UTR3-|
+
+For simplicity, only the partition of transcript1 is presented.
 
 """
-# TODO: segmentation should generate a list of landmarks (positions of exon-intron, intron-exon,
-# exon-exon, and other types of genomic regions) that can be used visualized and used in RNAmaps.
-
-
 import os
 import shutil
 import logging

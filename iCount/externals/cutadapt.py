@@ -3,7 +3,7 @@
 Cutadapt
 --------
 
-Interface to running cutadapt.
+Remove adapter sequences from reads in FASTQ file.
 """
 
 import subprocess

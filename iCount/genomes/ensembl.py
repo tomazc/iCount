@@ -59,7 +59,7 @@ def releases():
     """
     Get list of available ENSEMBL releases.
 
-    Only allows ENSEMBL releases {0}..{1}.
+    Only allows ENSEMBL releases {0}-{1}.
 
     Returns
     -------
@@ -83,12 +83,12 @@ def releases():
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
 def species(release=MAX_RELEASE_SUPPORTED):
     """
-    Get list of species for given release.
+    Get list of available species for given ENSEMBL release.
 
     Parameters
     ----------
     release : int
-        Release number. Only ENSEMBL releases {0}..{1} are available.
+        Release number. Only ENSEMBL releases {0}-{1} are available.
 
     Returns
     -------
@@ -115,20 +115,21 @@ def species(release=MAX_RELEASE_SUPPORTED):
 # pylint: disable=redefined-outer-name
 def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=None):
     """
-    Download annotation in GTF file fromat.
+    Download ENSEMBL annotation for given release/species.
 
     Parameters
     ----------
     species : str
         Species latin name.
     release : int
-        Release number. Only ENSEMBL releases {0}..{1} are available.
+        Release number. Only ENSEMBL releases {0}-{1} are available.
     out_dir : str
         Download to this directory (if not given, current working directory).
     annotation : str
         Annotation filename (must have .gz file extension). If not given,
         species.release.gtf.gz is used. If annotation is provided as absolute
-        path, out_dir is ignored and file is saved to given path.
+        path, value of out_dir parameter is ignored and file is saved to given
+        absolute path.
 
     Returns
     -------
@@ -227,29 +228,21 @@ def chrom_length(fasta_in):
 def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
            chromosomes=None):
     """
-    Download genome file in FASTA fromat.
-
-    Several steps are performed:
-
-        * querry for list off all FASTA files for given release and species
-        * filter this list to get only whole chromosome files
-        * if chromosomes paramter is given, take only specified chromosomes
-        * sort list of these files to have the correct order
-        * download each file and write it to target_fname
+    Download ENSEMBL genome for given release/species.
 
     Parameters
     ----------
     species : str
         Species latin name.
     release : int
-        Release number. Only ENSEMBL releases {0}..{1} are available.
+        Release number. Only ENSEMBL releases {0}-{1} are available.
     out_dir : str
         Download to this directory (if not given, current working directory).
     genome : str
         Genome filename (must have .gz file extension). If not given,
-        species.release.fa.gz is used. If only filename is given, out_dir
-        parameter is used. However, if full path is provided, out_dir is ignored
-        and file is saved to given path.
+        species.release.fa.gz is used. If genome is provided as absolute path,
+        value of out_dir parameter is ignored and file is saved to given
+        absolute path.
     chromosomes : list_str
         If given, do not download the whole genome, but listed
         chromosomes only. Chromosomes can be given as strings or integers.

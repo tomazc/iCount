@@ -8,9 +8,7 @@ Two attributes and associated environment variables define where output and temp
 be stored:
 
 .. autodata:: iCount.OUTPUT_ROOT
-.. autodata:: iCount.ICOUNT_OUTPUT_ROOT_VAR
 .. autodata:: iCount.TMP_ROOT
-.. autodata:: iCount.ICOUNT_TMP_ROOT_VAR
 
 .. automodule:: iCount.genomes
 .. automodule:: iCount.demultiplex

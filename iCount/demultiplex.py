@@ -3,11 +3,12 @@
 Demultiplexing
 ==============
 
-Split FASTQ file into separate FASTQ files, one for each sample barcode.
+Split FASTQ file into separate files, one for each sample barcode.
+
 Saved FASTQ files contain sequences where sample barcode, random
-barcode, and adapter sequences were removed. Random barcode is moved into
-the header line, because needed in later steps, when removing PCR duplicates
-and counting number of cross-link events.
+barcode, and adapter sequences are removed. Random barcode is moved into
+the header line, since it is needed in later steps (removing PCR duplicates
+and counting number of cross-link events).
 
 .. autofunction:: iCount.demultiplex.run
 .. autofunction:: iCount.demultiplex.demultiplex

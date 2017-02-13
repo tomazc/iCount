@@ -3,11 +3,8 @@
 Cluster sites
 -------------
 
-Merge adjacent cross-linked sites into clusters.
+Merge adjacent crosslinks into clusters and sum their scores.
 
-Read bedGraph with (significant) cross-linked sites. Cluster together sites that
-are apart at most a specified number of nucleotides. Return BED file with
-clusters' coordinates.
 """
 import logging
 import os
