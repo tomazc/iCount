@@ -61,12 +61,28 @@ def _a_in_b(first, second):
     return first.start >= second.start and first.stop <= second.stop
 
 
+def _get_gene_biotype(interval):
+    """Get gene biotype."""
+    if "gene_biotype" in interval.attrs:
+        return interval.attrs['gene_biotype']
+    elif "gene_type" in interval.attrs:
+        return interval.attrs['gene_type']
+
+
+def _get_transcript_biotype(interval):
+    """Get transcript biotype."""
+    if "transcript_biotype" in interval.attrs:
+        return interval.attrs['transcript_biotype']
+    elif "transcript_type" in interval.attrs:
+        return interval.attrs['transcript_type']
+
+
 def _add_biotype_attribute(gene_content):
     """
     Add `biotype` attribute to all intervals in gene_content.
 
-    biotype attribute is equal to transcript_biotype value if present,
-    else gene_biotype if present else value in column 2 (index 1). The
+    biotype attribute is equal to transcript_(bio)type value if present,
+    else gene_(bio)type if present else value in column 2 (index 1). The
     last option can only happen in some of early ensembl releases.
 
 
@@ -83,7 +99,7 @@ def _add_biotype_attribute(gene_content):
     gene_content = gene_content.copy()
 
     # Determine gene biotype:
-    gbiotype = gene_content['gene'].attrs.get('gene_biotype', None)
+    gbiotype = _get_gene_biotype(gene_content['gene'])
 
     # List to keep track of all possible biotypes in gene:
     gene_biotypes = [gbiotype] if gbiotype else []
@@ -94,8 +110,8 @@ def _add_biotype_attribute(gene_content):
         new_intervals = []
 
         exon = [i for i in transcript_intervals if i[2] in ['CDS', 'ncRNA']][0]
-        gbiotype = exon.attrs.get('gene_biotype', None)
-        tbiotype = exon.attrs.get('transcript_biotype', None)
+        gbiotype = _get_gene_biotype(exon)
+        tbiotype = _get_transcript_biotype(exon)
         biotype = tbiotype if tbiotype else (gbiotype if gbiotype else exon[1])
         gene_biotypes.append(biotype)
         for interval in transcript_intervals:

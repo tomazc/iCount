@@ -41,6 +41,22 @@ class TestOtherFunctions(unittest.TestCase):
         first = create_interval_from_list(['1', '25', '35', 'Name', '42', '+'])
         self.assertFalse(segment._a_in_b(first, second))
 
+    def test_get_gene_biotype(self):
+        gene_ensembl = create_interval_from_list(
+            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_biotype "G";'])
+        gene_gencode = create_interval_from_list(
+            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_type "G";'])
+        self.assertEqual(segment._get_gene_biotype(gene_ensembl), 'G')
+        self.assertEqual(segment._get_gene_biotype(gene_gencode), 'G')
+
+    def test_get_transcript_biotype(self):
+        transcript_ensembl = create_interval_from_list(
+            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'transcript_biotype "T";'])
+        transcript_gencode = create_interval_from_list(
+            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'transcript_type "T";'])
+        self.assertEqual(segment._get_transcript_biotype(transcript_ensembl), 'T')
+        self.assertEqual(segment._get_transcript_biotype(transcript_gencode), 'T')
+
     def test_add_biotype_attribute1(self):
         gene_content = {
             'gene': create_interval_from_list(
