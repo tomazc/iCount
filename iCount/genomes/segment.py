@@ -747,17 +747,17 @@ def get_regions(annotation, segmentation, fai, report_progress=False):
 
 def _prepare_annotation(ann_file, chrom):
     """
-    Parse annotation file to hierarchical structure.
+    Parse segmentation file to hierarchical structure.
 
-    Utility function to transformn internal annotation file to the following
+    Utility function to transformn segmentation file to the following
     hierarchical structure::
 
-        annotation = {
+        segmentation = {
             (chr1, +): {
                 gene_id#1: {
                     'gene_segment': gene_segment,
-                    transcript_id#1: [transcript_segment, exon1, intron1, exon2, ...],
-                    transcript_id#2: [transcript_segment, exon1, intron1, exon2, ...],
+                    transcript_id#1: [transcript, exon1, intron1, exon2, ...],
+                    transcript_id#2: [transcript, exon1, intron1, exon2, ...],
                     ...
                 },
                 gene_id#2: {},
@@ -775,13 +775,13 @@ def _prepare_annotation(ann_file, chrom):
 
     Parameters
     ----------
-    ann_file : str
+    seg_file : str
         Path to GTF file, produces by ``get_regions`` function.
 
     Returns
     -------
     dict
-        Annotation, wrapped in dict with chrom-strand/gene/transcript levels of
+        Segmentation, wrapped in dict with chrom-strand/gene/transcript levels of
         depth.
 
     """

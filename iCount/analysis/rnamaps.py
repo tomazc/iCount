@@ -14,7 +14,7 @@ Imagine the following situation (on positive strand)::
                               x|-----R1-----|
 
 Situation is simple: a read perfectly maps to reference genome. First cross-link
-(nucletide before the start of read R1) is located -2 nucleotides before
+(nucletide before the start of read R1) is located 2 nucleotides before
 landmark of type 'exon-intron'. By examining all cross-links(reads) that are
 located in vicinity of landmarks one can obtain the distribution of
 cross-link-to-landmark distances. Such distibution is called an RNA map.
@@ -50,33 +50,37 @@ All sort of situations can arise:
     * ...
 
 
-The algorithm takes care for all of this. Finally, it outputs a container
-``data`` with the following structure::
+The algorithm takes care for all of this, as explained below. It outputs a file,
+that looks like this::
 
-    data = {
-        rna_map_type: {relative_position: [all, explicit], ...}
-        exon-intron: {-42: [1042, 114], -41: [784, 69] ...}
-        exon-intron-neg: {-42: [219, 65], ...}
-        ...
-    }
+    rna_map_type    position    all     explicit
+    exon-intron     42          13      14
+    exon-intron     43          123     19
+    exon-intron     44          56      16
+    ....
+    intron-CDS      23474       34      2
+    intron-CDS      23475       85      65
+    intron-CDS      23476       92      1
+    ...
 
-The structure is a dict, with keys corresponding to different RNA map types.
-Values are also dicts. Keys in these dicts are positions of cross links relative
-to the landmark of the RNA map. Values for each position are lists: the first
-and second element count number of *all* and *explicit* cross-link events
-respectively. Cross link is explicit, if read identifying cross-link is mapped
-to both parts of RNA-map. In upper example, R1 is explicit, since it maps to
-intron *and* exon. Read R3 on transcript2 is implicit, since one has to decide
-wheather it's cross-link belongs to ``CDS-intron`` or ``intron-CDS`` RNA map.
-The term *all* means explicit + implicit in this context.
+Each line consits of four columns: RNA map type, position, all and explicit. RNA
+map type defines the landmark type, while position defines relative distance of
+cross-links to this landmark. All and explicit are counting number of crosslinks
+that are ``positions`` away from landmark of type RNA map type. Cross link is
+explicit, if read identifying cross-link is mapped to both parts of RNA-map. In
+upper example, R1 is explicit, since it maps to intron *and* exon. Read R3 on
+transcript2 is implicit, since one has to decide wheather it's cross-link
+belongs to ``CDS-intron`` or ``intron-CDS`` RNA map. The term *all* means
+explicit + implicit in this context.
 
 If read is implicit (start and stop within same segment), one can choose two
-varinats of the algorithm. One can choose that whole score of read is given to
-RNA-map of the closest landmark. Other option is to split score on half to both
-neighbouring segments. This behaviour is controlled by parameter
+varinats of the algorithm. One option is that whole score of read is given to
+RNA-map of the *closest* landmark. Other option is to *split* score on half to
+both neighbouring segments. This behaviour is controlled by parameter
 implicit_handling.
 
-There are also two cases when read can map in a way that is not predicted with annotation:
+There are also two cases when a read can map in a way that is not predicted by
+annotation:
 
     * For split reads, second start can fall on nucleotide that is not start of
       a new segment. This behaviour is excactly the same as in xlsites analysis.
@@ -88,6 +92,7 @@ There are also two cases when read can map in a way that is not predicted with a
 
 Things that still need to be resolved:
 
+    * Normalisation
     * negative strand inspection:
         * for each ss_group, take annotation from reverse strand and check what
           is the situation on other side.
@@ -142,8 +147,6 @@ Wishes and ideas(Jernej, Tomaz):
           of first-stop-s. THe major question is: "Do all reads for certain
           xlink event indicate the same behaviour?"
 
-    * Normalization?
-
 """
 import logging
 
@@ -155,17 +158,17 @@ LOGGER = logging.getLogger(__name__)
 EXON_TYPES = ['CDS', 'ncRNA', 'UTR3', 'UTR5']
 
 
-def _add_entry(start_type, stop_type, dist, score, strand, data, metrics, explict=False):
+def _add_entry(start_type, stop_type, distance, score, strand, data, metrics, explict=False):
     """Add RNA-map entry in ``data``."""
     if strand == '+':
         rna_map_type = start_type + '-' + stop_type
     else:
         rna_map_type = stop_type + '-' + start_type
-        dist = -dist
+        distance = -distance
 
-    data.setdefault(rna_map_type, {}).setdefault(dist, [0, 0])[0] += score
+    data.setdefault(rna_map_type, {}).setdefault(distance, [0, 0])[0] += score
     if explict:
-        data.setdefault(rna_map_type, {}).setdefault(dist, [0, 0])[1] += score
+        data.setdefault(rna_map_type, {}).setdefault(distance, [0, 0])[1] += score
 
     # Increment also mRNA / pre-mRNa counters:
     if 'intron' in rna_map_type or 'intergenic' in rna_map_type:
@@ -176,24 +179,24 @@ def _add_entry(start_type, stop_type, dist, score, strand, data, metrics, explic
         metrics.origin_ambiguous += score
 
 
-def _process_read_group(xlink, chrom, strand, read, data, annotation, metrics,
+def _process_read_group(xlink, chrom, strand, read, data, segmentation, metrics,
                         implicit_handling='closest'):
     """
     Process each read group.
 
     Each group is represented by read. It has a fixed xlink, start, second-start
-    and end position. This function finds all intersections with annotation and
-    determines for each of them:
+    and end position. This function finds all landmarks that this read is
+    overlapping. It also determines for each of them:
 
         * type of RNA map (+ explicit/implicit)
         * relative position to landmark
         * score that belongs to each intersection
 
 
-    Note#1: ``annotation`` contains just the genes that span over cross-link
+    Note#1: ``segmentation`` contains just the genes that span over cross-link
     position (+ one before and one after). It has the following shape::
 
-        annotation = {
+        segmentation = {
             gene_id#1: {
                 'gene_segment': gene_segment,
                 transcript_id#1: [transcript_segment, exon1, intron1, exon2, ...],
@@ -212,9 +215,9 @@ def _process_read_group(xlink, chrom, strand, read, data, annotation, metrics,
     stop = read[1]  # stop is in second column
     start = xlink + (1 if strand == '+' else - 1)
 
-    containing_start = {}
-    containing_stop = {}
-    for _, gene_content in annotation:
+    # Find transcripts that contain start or stop:
+    containing_start, containing_stop = {}, {}
+    for _, gene_content in segmentation:
         for transcript_id, transcript_content in gene_content.items():
             if transcript_id == 'gene_segment':
                 continue
@@ -225,29 +228,33 @@ def _process_read_group(xlink, chrom, strand, read, data, annotation, metrics,
             if transcript_segment.start <= stop <= transcript_segment.stop:
                 containing_stop[transcript_id] = transcript_content
 
+    # Find transcripts that contain both: start and stop of the read:
     containing_both = set(containing_start.keys()) & set(containing_stop.keys())
-    # There are transcripts that contin start and stop of the read:
     if containing_both:
         relevant_transcripts = dict(
-            [trs for _, g_cnt in annotation for trs in g_cnt.items() if trs[0] in containing_both])
-    # There are NO transcripts that contin start and stop of the read. Remaining
-    # options that do not violate annotation are:
-    # (a) 'intergenic-transcript' RNA map type:
+            [trs for _, gcnt in segmentation for trs in gcnt.items() if trs[0] in containing_both])
+
+    # If algorithm gets here, there are NO transcripts that contin start and
+    # stop of the read. There are two remaining options that do not violate
+    # segmentation: 'intergenic-transcript' or 'transcript-intergenic'
+
+    # 'intergenic-transcript' RNA map type:
     elif len(containing_start) == 1 and list(containing_start.values())[0][0][2] == 'intergenic':
         tr_score = 1 / len(containing_stop)
         for transcript_id, transcript_content in containing_stop.items():
-            stop_segment_index = next(
-                (i for i, segment in enumerate(transcript_content) if
-                 segment.start <= stop <= segment.stop and segment[2] != 'transcript'))
+            # transcript_content is sorted and transcript segment is the first
+            # element. This is ensured by _prepare_segmentation. Stop segment
+            # shoud then be the second element in the transcript_content:
+            stop_segment = transcript_content[1]
             start_type = 'intergenic'
-            stop_type = transcript_content[stop_segment_index][2]
-            rel_dist = xlink - transcript_content[stop_segment_index].start
+            stop_type = stop_segment[2]
+            rel_dist = xlink - stop_segment.start
             _add_entry(
                 start_type, stop_type, rel_dist, tr_score, strand, data, metrics, explict=True)
 
         return  # skip the rest of the algorithm
 
-    # (b) 'transcript-intergenic' RNA map type:
+    # 'transcript-intergenic' RNA map type:
     elif len(containing_stop) == 1 and list(containing_stop.values())[0][0][2] == 'intergenic':
         tr_score = 1 / len(containing_start)
         for transcript_id, transcript_content in containing_start.items():
@@ -262,7 +269,7 @@ def _process_read_group(xlink, chrom, strand, read, data, annotation, metrics,
 
         return  # skip the rest of the algorithm
 
-    # This read has mapped in way that is not predicted by annotation: it should be reported:
+    # This read has mapped in way that is not predicted by segmentation: it should be reported:
     else:
         # TODO: Ideally, this would produce a BAM file with such reads... but
         # read instance from all BAM related info is far back in
@@ -310,12 +317,12 @@ def _process_read_group(xlink, chrom, strand, read, data, annotation, metrics,
                 start_type = transcript_content[start_segment_index - 1][2]
                 options.append([start_type, segment[2], rel_dist_down])
             else:
-                # Gene beefore start (downstream) is the first entry in annotation:
-                gene_down = annotation[0][1]['gene_segment']
+                # Gene beefore start (downstream) is the first entry in segmentation:
+                gene_down = segmentation[0][1]['gene_segment']
                 # this segment OR the downstream gene has to be intergenic for
-                # this to be OK with annotation:
+                # this to be OK with segmentation:
                 if 'intergenic' in [gene_down[2], segment[2]] and gene_down.stop == segment.start:
-                    trs_down = [tr_cnt for tr_id, tr_cnt in annotation[0][1].items() if
+                    trs_down = [tr_cnt for tr_id, tr_cnt in segmentation[0][1].items() if
                                 tr_id != 'gene_segment' and tr_cnt[0].stop == segment.start]
                     for tr_cnt in trs_down:
                         seg_down = next((seg for seg in tr_cnt if seg.stop == segment.start and
@@ -323,6 +330,8 @@ def _process_read_group(xlink, chrom, strand, read, data, annotation, metrics,
                         options.append([seg_down[2], segment[2], rel_dist_down])
                 else:
                     # Transcript-transscript scenario - not allowed. (no appends to options)
+                    # TODO: Should be error anywax, such cases should be filtered
+                    # before, when checking ``containing_both``
                     pass
 
             # ###################################################
@@ -332,9 +341,9 @@ def _process_read_group(xlink, chrom, strand, read, data, annotation, metrics,
                 stop_type = transcript_content[start_segment_index + 1][2]
                 options.append([segment[2], stop_type, rel_dist_up])
             else:
-                gene_up = annotation[-1][1]['gene_segment']
+                gene_up = segmentation[-1][1]['gene_segment']
                 if 'intergenic' in [gene_up[2], segment[2]] and gene_up.start == segment.stop:
-                    trs_up = [tr_cnt for tr_id, tr_cnt in annotation[-1][1].items() if
+                    trs_up = [tr_cnt for tr_id, tr_cnt in segmentation[-1][1].items() if
                               tr_id != 'gene_segment' and tr_cnt[0].start == segment.stop]
                     for tr_cnt in trs_up:
                         seg_up = next((seg for seg in tr_cnt if seg.start == segment.stop and
@@ -386,7 +395,7 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
     bam : str
         BAM file with alligned reads.
     segmentation : str
-        GTF file with annotation. Should be a file produced by function
+        GTF file with segmentation. Should be a file produced by function
         `get_regions`.
     out_file : str
         Output file with analysis results.
@@ -432,7 +441,7 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
     LOGGER.info('Processing data...')
     # pylint: disable=protected-access
     for (chrom, strand), new_progress, by_pos in iCount.mapping.xlsites._processs_bam_file(
-            bam, metrics, mapq_th, strange, annotation=segmentation, gap_th=holesize_th):
+            bam, metrics, mapq_th, strange, segmentation=segmentation, gap_th=holesize_th):
 
         # pylint: disable=protected-access
         progress = iCount._log_progress(new_progress, progress, LOGGER)
@@ -449,18 +458,20 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
             iCount.mapping.xlsites._merge_similar_randomers(by_bc, mismatches)
             # by_bc is modified in place in _merge_similar_randomers
 
-            for _, hits in by_bc.items():
+            # reads is a list of reads belonging to given barcode in by_bc
+            for reads in by_bc.values():
                 ss_groups = {}
-                for read in hits:
+                for read in reads:
+                    # Define second start groups:
                     ss_groups.setdefault(read[4], []).append(read)
 
-                # Process each group:
+                # Process each second start group:
                 for ss_group in ss_groups.values():
 
-                    # This block extracts just the required genes (& gene_content)
+                    # The following block extracts just the required genes (& gene_content)
                     # without iterating through all genes/content in chromosome.
 
-                    # Sort reads by length and take the longest one!
+                    # Sort reads by length and take the longest one (read_len is 3rd column)!
                     ss_group = sorted(ss_group, key=lambda x: (-x[2]))
                     stop = ss_group[0][1]
                     start = xlink_pos
@@ -494,25 +505,26 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
                         xlink_pos, chrom, strand, ss_group[0], data, segmentation_subset, metrics,
                         implicit_handling=implicit_handling)
 
-    # Write results (``data``) to file:
+    LOGGER.info('Writing output files...')
+
     header = ['RNAmap type', 'position', 'all', 'explicit']
     cross_tr_header = ['chrom', 'strand', 'xlink', 'second-start', 'end-position', 'read_len']
-    LOGGER.info('Writing output files...')
-    with open(out_file, 'wt') as ofile, open(cross_transcript, 'wt') as vfile:
+    with open(out_file, 'wt') as ofile, open(cross_transcript, 'wt') as ctfile:
         ofile.write('\t'.join(header) + '\n')
-        vfile.write('\t'.join(cross_tr_header) + '\n')
+        ctfile.write('\t'.join(cross_tr_header) + '\n')
         for rna_map_type, positions in sorted(data.items()):
             if rna_map_type == 'cross_transcript':
                 for (chrom, strand, xlink), read_list in positions.items():
                     for (_, end, read_len, _, second_start) in read_list:
-                        vfile.write('\t'.join(map(
+                        ctfile.write('\t'.join(map(
                             str, [chrom, strand, xlink, second_start, end, read_len])) + '\n')
             else:
                 for position, [all_, explic] in sorted(positions.items()):
+                    # Round to 4 decimal places with _f2s function:
                     all_, explic = _f2s(all_, dec=4), _f2s(explic, dec=4)
-                    ofile.write('\t'.join(map(str, [rna_map_type, position, all_, explic])) + '\n')
+                    ofile.write('\t'.join([rna_map_type, str(position), all_, explic]) + '\n')
+
     LOGGER.info('RNA-maps output written to: %s', out_file)
-    LOGGER.info(
-        'Reads spanning multiple transcripts annotation written to %s', cross_transcript)
+    LOGGER.info('Reads spanning multiple transcripts written to: %s', cross_transcript)
     LOGGER.info('Done.')
     return metrics
