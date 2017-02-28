@@ -41,21 +41,30 @@ class TestOtherFunctions(unittest.TestCase):
         first = create_interval_from_list(['1', '25', '35', 'Name', '42', '+'])
         self.assertFalse(segment._a_in_b(first, second))
 
-    def test_get_gene_biotype(self):
-        gene_ensembl = create_interval_from_list(
-            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_biotype "G";'])
-        gene_gencode = create_interval_from_list(
-            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_type "G";'])
-        self.assertEqual(segment._get_gene_biotype(gene_ensembl), 'G')
-        self.assertEqual(segment._get_gene_biotype(gene_gencode), 'G')
-
-    def test_get_transcript_biotype(self):
+    def test_get_biotype(self):
         transcript_ensembl = create_interval_from_list(
             ['1', '.', 'gene', '1', '200', '.', '+', '.', 'transcript_biotype "T";'])
         transcript_gencode = create_interval_from_list(
             ['1', '.', 'gene', '1', '200', '.', '+', '.', 'transcript_type "T";'])
-        self.assertEqual(segment._get_transcript_biotype(transcript_ensembl), 'T')
-        self.assertEqual(segment._get_transcript_biotype(transcript_gencode), 'T')
+        self.assertEqual(segment._get_biotype(transcript_ensembl), 'T')
+        self.assertEqual(segment._get_biotype(transcript_gencode), 'T')
+
+        gene_ensembl = create_interval_from_list(
+            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_biotype "G";'])
+        gene_gencode = create_interval_from_list(
+            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_type "G";'])
+        self.assertEqual(segment._get_biotype(gene_ensembl), 'G')
+        self.assertEqual(segment._get_biotype(gene_gencode), 'G')
+
+        gene_ensembl_old = create_interval_from_list(
+            ['1', 'Q', 'gene', '1', '200', '.', '+', '.', 'gene_id "1";'])
+        self.assertEqual(segment._get_biotype(gene_ensembl_old), 'Q')
+
+    def test_add_biotype_value(self):
+        interval = create_interval_from_list(
+            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_id "1";'])
+        interval_new = segment._add_biotype_value(interval, 'my_biotype')
+        self.assertEqual(interval_new.attrs['biotype'], 'my_biotype')
 
     def test_add_biotype_attribute1(self):
         gene_content = {
@@ -81,7 +90,7 @@ class TestOtherFunctions(unittest.TestCase):
         for transcript_id, tr_intervals in sorted(out.items()):
             if transcript_id == 'gene':
                 # I this case tjhi is single interval not a list of intervals:
-                self.assertEqual(tr_intervals.attrs['biotype'], '[A, B, G]')
+                self.assertEqual(tr_intervals.attrs['biotype'], 'A, B, G')
             elif transcript_id == 'transcript1':
                 for interval in tr_intervals:
                     self.assertEqual(interval.attrs['biotype'], 'A')

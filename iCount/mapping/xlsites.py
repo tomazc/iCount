@@ -3,7 +3,7 @@
 Identify and quantify cross-linked sites
 ----------------------------------------
 
-Determine positions and quantity of cross-link events.
+Quantity cross-link events and determine their positions.
 
 The simplest version of this script would oprate on such example::
 

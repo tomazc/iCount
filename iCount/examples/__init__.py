@@ -3,8 +3,7 @@
 Examples
 ========
 
-This module provides a set of example bash scripts that can be run by the user.
-The included script ``tutorial.sh`` replicates all the steps described in the tutorial.
+Provide a set of example bash scripts.
 
 .. autofunction:: iCount.examples.run
 

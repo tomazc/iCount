@@ -3,18 +3,35 @@
 Segmentation
 ------------
 
-Parse genome annotation, segment it and prepare a number of annotations.
+Parse annotation file into internal iCount structure - segmentation.
 
-These annotations are used for mapping and for various analyses:
+Currently, only annotations from ENSEMBl and GENCODE are supported.
+http://www.gencodegenes.org/
+http://www.ensembl.org
 
-- regions of genes (all isoforms and other parts merged into one region)
-- regions of individual region types (segment each gene into exonic, intronic, nc, utr, etc..)
+Segmentation is used in almost all further analyses.
+
+In segmentation, each transcript is partitioned into so called
+regions/intervals. Such regions must span the whole transcript, but should not
+intersect with each other. However, higher hierarchy levels: transcripts and
+genes can of course intersect each other.
+
+Example of possible segmentation::
+
+    Genome level: |---------------------------------------------------|
+
+    Gene level:    |--------------gene1--------------|   |-intergenic-|
+                                 |---------gene2--------|
+
+    Transcript l.: |----------transcript1---------|
+                           |-------transcript2-------|
+                                 |------transcript3-----|
+
+    Region level:  |-CDS-||-intron-||-CDS-||-UTR3-|
+
+For simplicity, only the partition of transcript1 is presented.
 
 """
-# TODO: segmentation should generate a list of landmarks (positions of exon-intron, intron-exon,
-# exon-exon, and other types of genomic regions) that can be used visualized and used in RNAmaps.
-
-
 import os
 import shutil
 import logging
@@ -61,30 +78,54 @@ def _a_in_b(first, second):
     return first.start >= second.start and first.stop <= second.stop
 
 
-def _get_gene_biotype(interval):
-    """Get gene biotype."""
-    if "gene_biotype" in interval.attrs:
-        return interval.attrs['gene_biotype']
-    elif "gene_type" in interval.attrs:
-        return interval.attrs['gene_type']
+def _get_biotype(interval):
+    """
+    Get interval biotype.
 
+    Biotype of interval is equal to transcript biotype value if present,
+    else gene biotype if present else value in column 2 (index 1). The
+    last option can only happen in some of early ENSEMBL releases.
 
-def _get_transcript_biotype(interval):
-    """Get transcript biotype."""
+    Transcript_biotype and gene biotype values are determined from attributes:
+
+        * In ENSEMBL annotations, they are stored in
+          ``transcript_biotype`` and ``transcript_type`` attributes.
+        * In GENCODE annotations, they are stored in
+          ``gene_biotype`` and ``gene_type`` attributes.
+
+    Parameters
+    ----------
+    interval : pybedtools.Interval
+        Interval == line in GTf file.
+
+    Returns
+    -------
+    string
+        Biotype of interval.
+
+    """
     if "transcript_biotype" in interval.attrs:
         return interval.attrs['transcript_biotype']
     elif "transcript_type" in interval.attrs:
         return interval.attrs['transcript_type']
+    elif "gene_biotype" in interval.attrs:
+        return interval.attrs['gene_biotype']
+    elif "gene_type" in interval.attrs:
+        return interval.attrs['gene_type']
+    else:
+        return interval[1]
+
+
+def _add_biotype_value(interval, biotype):
+    """Add biotype value to interval."""
+    col8 = interval[8] if interval[8] != '.' else ''
+    return create_interval_from_list(
+        interval[:8] + [col8 + ' biotype "{}";'.format(biotype)])
 
 
 def _add_biotype_attribute(gene_content):
     """
     Add `biotype` attribute to all intervals in gene_content.
-
-    biotype attribute is equal to transcript_(bio)type value if present,
-    else gene_(bio)type if present else value in column 2 (index 1). The
-    last option can only happen in some of early ensembl releases.
-
 
     Parameters
     ----------
@@ -99,25 +140,20 @@ def _add_biotype_attribute(gene_content):
     gene_content = gene_content.copy()
 
     # Determine gene biotype:
-    gbiotype = _get_gene_biotype(gene_content['gene'])
-
+    gbiotype = _get_biotype(gene_content['gene'])
     # List to keep track of all possible biotypes in gene:
     gene_biotypes = [gbiotype] if gbiotype else []
 
     for transcript_id, transcript_intervals in gene_content.items():
         if transcript_id == 'gene':
             continue
-        new_intervals = []
-
-        exon = [i for i in transcript_intervals if i[2] in ['CDS', 'ncRNA']][0]
-        gbiotype = _get_gene_biotype(exon)
-        tbiotype = _get_transcript_biotype(exon)
-        biotype = tbiotype if tbiotype else (gbiotype if gbiotype else exon[1])
+        first_exon = [i for i in transcript_intervals if i[2] in ['CDS', 'ncRNA']][0]
+        biotype = _get_biotype(first_exon)
         gene_biotypes.append(biotype)
+
+        new_intervals = []
         for interval in transcript_intervals:
-            col8 = interval[8] if interval[8] != '.' else ''
-            new_intervals.append(create_interval_from_list(
-                interval[:8] + [col8 + ' biotype "{}";'.format(biotype)]))
+            new_intervals.append(_add_biotype_value(interval, biotype))
         gene_content[transcript_id] = new_intervals
 
     # Finally, make also gene biotype: a list of all biotypes in gene,
@@ -125,9 +161,7 @@ def _add_biotype_attribute(gene_content):
     # by alphabet if counts are equal.
     biotype = ', '.join([i[0] for i in sorted(
         sorted(Counter(gene_biotypes).items()), key=lambda x: x[1], reverse=True)])
-    interval = gene_content['gene']
-    gene_content['gene'] = create_interval_from_list(
-        interval[:8] + [interval[8] + ' biotype "[{}]";'.format(biotype)])
+    gene_content['gene'] = _add_biotype_value(gene_content['gene'], biotype)
 
     return gene_content
 

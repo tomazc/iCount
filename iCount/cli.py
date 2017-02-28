@@ -346,8 +346,7 @@ def main():
 
     # Demultiplex and mapping:
     make_parser_from_function(iCount.demultiplex.run, subparsers)
-    make_parser_from_function(iCount.demultiplex.remove_adapter, subparsers,
-                              module=iCount.externals.cutadapt)
+    make_parser_from_function(iCount.externals.cutadapt.run, subparsers)
     make_parser_from_function(iCount.mapping.indexstar.run, subparsers,
                               module=iCount.mapping.indexstar)
     make_parser_from_function(iCount.mapping.mapstar.run, subparsers,

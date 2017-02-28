@@ -65,7 +65,10 @@ def convert_legacy(bedgraph_legacy, bed_converted):
 
 def merge_bed(sites_grouped, sites):
     """
-    Merge BED6 files with cross link data.
+    Merge multiple files with crosslinks into one.
+
+    Concatenate files into one file. Also, merge crosslinks from different files
+    that are on same position and sum their scores.
 
     Parameters
     ----------
