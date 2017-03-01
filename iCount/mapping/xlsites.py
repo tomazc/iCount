@@ -387,6 +387,7 @@ def _intersects_with_annotaton(second_start, segmentation, chrom, strand):
     -------
         bool
     Does the read's second_start corresopnd to any known segment in segmentation
+
     """
     for gene_content in segmentation.values():
         for transcript_id, transcript_content in gene_content.items():
@@ -402,7 +403,7 @@ def _intersects_with_annotaton(second_start, segmentation, chrom, strand):
     return False
 
 
-def _second_start(read, poss, strand, chrom, annotation, holesize_th):
+def _second_start(read, poss, strand, chrom, segmentation, holesize_th):
     """
     Return the coordinate of second start.
 
@@ -415,7 +416,7 @@ def _second_start(read, poss, strand, chrom, annotation, holesize_th):
 
     second_start = 0
     is_strange = False
-    if not annotation:
+    if not segmentation:
         # Effectively this means, that read is considered as it has no holes.
         if biggest_hole_size > holesize_th:
             # Still, read is not treated as on with distinct second_start.
@@ -430,16 +431,16 @@ def _second_start(read, poss, strand, chrom, annotation, holesize_th):
             second_start = poss[biggest_hole_size_index]
 
         # Read is strange if:
-        # it is not intersecting with annotation AND
+        # it is not intersecting with segmentation AND
         # if there actually is a hole
-        if not _intersects_with_annotaton(second_start, annotation, chrom, strand) and \
+        if not _intersects_with_annotaton(second_start, segmentation, chrom, strand) and \
                 biggest_hole_size != 0:
             is_strange = True
 
     return second_start, is_strange
 
 
-def _get_read_data(read, metrics, mapq_th, annotation=None, gap_th=4):
+def _get_read_data(read, metrics, mapq_th, segmentation=None, gap_th=4):
     """Extract neccessary data from read."""
     # NH (number of reported alignments) tag is required:
     if not read.has_tag('NH'):
@@ -463,7 +464,7 @@ def _get_read_data(read, metrics, mapq_th, annotation=None, gap_th=4):
         end_pos = poss[-1]
 
     chrom = read.reference_name
-    second_start, is_strange = _second_start(read, poss, strand, chrom, annotation, gap_th)
+    second_start, is_strange = _second_start(read, poss, strand, chrom, segmentation, gap_th)
     if is_strange:
         metrics.strange_recs += 1
 
@@ -532,7 +533,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, 
     metrics.invalidrandomer_recs = 0  # Records with invalid randomer
     metrics.norandomer_recs = 0  # Records with no randomer
     metrics.bc_cn = {}  # Barcode counter
-    metrics.strange_recs = 0  # Strange records (not expected by annotation)
+    metrics.strange_recs = 0  # Strange records (not expected by segmentation)
 
     def finalize(reads_pending_fwd, reads_pending_rev, start, chrom, progress):
         """Yield appropriate data."""
@@ -565,7 +566,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, 
             chrom_len = bamfile.header['SQ'][bamfile.get_tid(chrom)]['LN']
             if segmentation:
                 # pylint: disable=protected-access
-                ann_data = iCount.genomes.segment._prepare_annotation(segmentation, chrom)
+                ann_data = iCount.genomes.segment._prepare_segmentation(segmentation, chrom)
 
             reads_pending_fwd = {}
             reads_pending_rev = {}
@@ -581,7 +582,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, 
                 metrics.used_recs += 1
 
                 rdata = _get_read_data(
-                    read, metrics, mapq_th, annotation=ann_data, gap_th=gap_th)
+                    read, metrics, mapq_th, segmentation=ann_data, gap_th=gap_th)
                 (xlink_pos, barcode, is_strange, strand), read_data = rdata[0:4], rdata[4:]
 
                 if is_strange:

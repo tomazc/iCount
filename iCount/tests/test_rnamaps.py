@@ -1,4 +1,5 @@
 # pylint: disable=missing-docstring, protected-access
+import os
 import unittest
 import warnings
 
@@ -270,6 +271,86 @@ class TestRun(unittest.TestCase):
         rnamaps.run(bam, gtf_neg, self.out, self.strange, self.cross_tr, mismatches=1,
                     implicit_handling='split')
         self.assertEqual(expected, make_list_from_file(self.out))
+
+
+class TestNormalisation(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", (ResourceWarning, ImportWarning))
+        self.gtf_data = list_to_intervals([
+            ['1', '.', 'intergenic', '1', '2', '.', '+', '.',
+             'gene_id "."; transcript_id ".";'],
+            # Gene #1:
+            ['1', '.', 'gene', '3', '7', '.', '+', '.',
+             'gene_id "G1";'],
+            # Transcript #1
+            ['1', '.', 'transcript', '3', '6', '.', '+', '.',
+             'gene_id "G1"; transcript_id "T1";'],
+            ['1', '.', 'CDS', '3', '3', '.', '+', '.',
+             'gene_id "G1"; transcript_id "T1"; exon_number "2";'],
+            ['1', '.', 'intron', '4', '6', '.', '+', '.',
+             'gene_id "G1"; transcript_id "T1";'],
+            ['1', '.', 'UTR3', '5', '6', '.', '+', '.',
+             'gene_id "G1"; transcript_id "T1"; exon_number "3";'],
+
+            # Transcript #2
+            ['1', '.', 'transcript', '4', '7', '.', '+', '.',
+             'gene_id "G1"; transcript_id "T2";'],
+            ['1', '.', 'ncRNA', '4', '5', '.', '+', '.',
+             'gene_id "G1"; transcript_id "T2"; exon_number "1";'],
+            ['1', '.', 'intron', '6', '6', '.', '+', '.',
+             'gene_id "G1"; transcript_id "T2";'],
+            ['1', '.', 'ncRNA', '7', '7', '.', '+', '.',
+             'gene_id "G1"; transcript_id "T2"; exon_number "2";'],
+
+            # intergenic
+            ['1', '.', 'intergenic', '8', '9', '.', '+', '.',
+             'gene_id "."; transcript_id ".";'],
+        ])
+        self.gtf = make_file_from_list(intervals_to_list(self.gtf_data))
+
+    def test_normalisation(self):
+        norm_file = get_temp_file_name(extension='txt')
+        rnamaps.make_normalization(self.gtf, norm_file)
+
+        expected = [
+            ['RNAmap_type', 'distance', 'segments'],
+            ['CDS-UTR3', '-1', '1'],
+            ['CDS-UTR3', '0', '1'],
+            ['CDS-UTR3', '1', '1'],
+            ['CDS-intron', '-1', '1'],
+            ['CDS-intron', '0', '1'],
+            ['CDS-intron', '1', '1'],
+            ['CDS-intron', '2', '1'],
+            ['integrenic-CDS', '-2', '1'],
+            ['integrenic-CDS', '-1', '1'],
+            ['integrenic-CDS', '0', '1'],
+            ['intron-UTR3', '-3', '1'],
+            ['intron-UTR3', '-2', '1'],
+            ['intron-UTR3', '-1', '1'],
+            ['intron-UTR3', '0', '1'],
+            ['intron-UTR3', '1', '1'],
+            ['intron-ncRNA', '-1', '1'],
+            ['intron-ncRNA', '0', '1'],
+            ['ncRNA-integrenic', '-1', '1'],
+            ['ncRNA-integrenic', '0', '1'],
+            ['ncRNA-integrenic', '1', '1'],
+            ['ncRNA-intron', '-2', '1'],
+            ['ncRNA-intron', '-1', '1'],
+            ['ncRNA-intron', '0', '1'],
+            ['ncRNA-ncRNA', '-2', '1'],
+            ['ncRNA-ncRNA', '-1', '1'],
+            ['ncRNA-ncRNA', '0', '1'],
+        ]
+
+        self.assertEqual(expected, make_list_from_file(norm_file))
+
+    def test_plot(self):
+        image_file = get_temp_file_name(extension='png')
+        norm_file = get_temp_file_name(extension='txt')
+        rnamaps.make_normalization(self.gtf, norm_file)
+        rnamaps.plot_rna_map(norm_file, 'CDS-intron', normalization=norm_file, outfile=image_file)
+        self.assertTrue(os.path.isfile(image_file))
 
 
 if __name__ == '__main__':

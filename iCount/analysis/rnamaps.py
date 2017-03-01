@@ -92,7 +92,6 @@ annotation:
 
 Things that still need to be resolved:
 
-    * Normalisation
     * negative strand inspection:
         * for each ss_group, take annotation from reverse strand and check what
           is the situation on other side.
@@ -150,12 +149,18 @@ Wishes and ideas(Jernej, Tomaz):
 """
 import logging
 
-import iCount
-from iCount.files import _f2s
+import pybedtools
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt  # pylint: disable=wrong-import-position
+
+import iCount  # pylint: disable=wrong-import-position
+from iCount.files import _f2s  # pylint: disable=wrong-import-position
 
 LOGGER = logging.getLogger(__name__)
 
 EXON_TYPES = ['CDS', 'ncRNA', 'UTR3', 'UTR5']
+RNA_WINDOW_SIZE = 2000  # TODO: rethink how this constant would affect lengths in RNAmap generation
 
 
 def _add_entry(start_type, stop_type, distance, score, strand, data, metrics, explict=False):
@@ -448,7 +453,7 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
 
         # Sort all genes (and intergenic) by start coordinate.
         segmentation_sorted = sorted(
-            iCount.genomes.segment._prepare_annotation(segmentation, chrom).items(),
+            iCount.genomes.segment._prepare_segmentation(segmentation, chrom).items(),
             key=lambda x: x[1]['gene_segment'].start)
         seg_max_index = len(segmentation_sorted) - 1
         start_gene_index, stop_gene_index = 0, seg_max_index
@@ -528,3 +533,156 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
     LOGGER.info('Reads spanning multiple transcripts written to: %s', cross_transcript)
     LOGGER.info('Done.')
     return metrics
+
+
+def make_normalization(segmentation, normalization):
+    """
+    Make normalization file for RNAmaps (for given segmentation).
+
+    Parameters
+    ----------
+    segmentation : str
+        Segmentation file.
+    normalization : str
+        Output txt file with normalization.
+
+    Returns
+    -------
+    str
+        Path to file with normalizations.
+
+    """
+    iCount.logger.log_inputs(LOGGER)
+
+    data = {}  # Container for normalization data
+
+    def add_entry(start_type, stop_type, start_len, stop_len, strand):
+        """Add normalization entry in ``data``."""
+        if strand == '-':
+            start_type, stop_type = stop_type, start_type
+            start_len, stop_len = stop_len, start_len
+
+        # Cut long segments to some managable size:
+        start_len = start_len if start_len < RNA_WINDOW_SIZE else RNA_WINDOW_SIZE
+        stop_len = stop_len if stop_len < RNA_WINDOW_SIZE else RNA_WINDOW_SIZE
+
+        rna_map_type = '{}-{}'.format(start_type, stop_type)
+        # Left side:
+        segments = data.setdefault(rna_map_type, {}).setdefault(-start_len, 0)
+        data[rna_map_type][-start_len] = segments + 1
+        # Right side:
+        segments = data.setdefault(rna_map_type, {}).setdefault(stop_len - 1, 0)
+        data[rna_map_type][stop_len - 1] = segments + 1
+
+    LOGGER.info('Reading segmentation to internal format...')
+
+    # pylint: disable=protected-access
+    chroms = set()
+    for segment in pybedtools.BedTool(segmentation):
+        chroms.add(segment.chrom)
+    chroms_strands = [(chrom, strand) for chrom in chroms for strand in ('+', '-')]
+
+    for (chrom, strand) in chroms_strands:
+        LOGGER.debug("Processing chromosome %s...", chrom)
+        last_intergenic = None  # Store last intergenic segment.
+        last_segments = []  # Store segments with highest stop coordinate (can be more of them).
+
+        chrom_content = iCount.genomes.segment._prepare_segmentation(
+            segmentation, chrom, strand=strand)
+
+        # Iter through all genes in given chromosome/strand sorted by start position:
+        for gene_content in sorted(chrom_content.values(), key=lambda x: x['gene_segment'].start):
+            gene_segment = gene_content.pop('gene_segment')
+
+            # In case, intergenic region if found, add entries from all
+            # segments that stop where intergenic starts.
+            if gene_segment[2] == 'intergenic':
+                last_intergenic = gene_segment
+                for seg in last_segments:
+                    add_entry(seg[2], 'integrenic', len(seg), len(gene_segment), strand)
+
+            else:
+                # Iterate by ascending transcript coordinate:
+                for transcript_content in sorted(gene_content.values(), key=lambda x: x[0].start):
+                    transcript_segment = transcript_content.pop(0)
+
+                    # Update list "last_segments", if necessary:
+                    if not last_segments or last_segments[0].stop < transcript_segment.stop:
+                        last_segments = [transcript_content[-1]]
+                    elif last_segments[0].stop == transcript_segment.stop:
+                        last_segments.append(transcript_content[-1])
+
+                    # If transcript starts where intergenic ends, add also entry for this:
+                    if last_intergenic.stop == transcript_content[0].start:
+                        add_entry('integrenic', transcript_content[0][2],
+                                  len(last_intergenic), len(transcript_content[0]), strand)
+
+                    # This is the "normal" case - add entries for all segments in transcript:
+                    for seg1, seg2 in zip(transcript_content, transcript_content[1:]):
+                        add_entry(seg1[2], seg2[2], len(seg1), len(seg2), strand)
+
+                    # Consider also exon-exon junctions:
+                    exons = [seg for seg in transcript_content if seg[2] in EXON_TYPES]
+                    if len(exons) > 1:
+                        for exon1, exon2 in zip(exons, exons[1:]):
+                            add_entry(exon1[2], exon2[2], len(exon1), len(exon2), strand)
+
+    # Data must be transformed: Consider all segment length for normalization, not just the last
+    # nucleotide. Example:
+    # data_before = {-10, :1, -5: 1, 10: 2}
+    # data_after = {-10: 1, -9: 1 ... -6: 1, -5: 2, -4: 2 ... -1: 2, 0: 2, 1: 2 ... 9: 2, 10: 2}
+
+    LOGGER.info('Flattening normalization data...')
+    for rna_map_type, distances in data.items():
+        cumulative = 0
+        for i in range(min(distances.keys()), 0):
+            cumulative += data[rna_map_type].get(i, 0)
+            data[rna_map_type][i] = cumulative
+
+        cumulative = 0
+        for i in range(max(distances.keys()) + 1)[::-1]:
+            cumulative += data[rna_map_type].get(i, 0)
+            data[rna_map_type][i] = cumulative
+
+    # Write to file:
+    LOGGER.info('Writing normalization to file')
+    with open(normalization, 'wt') as nfile:
+        print('\t'.join(['RNAmap_type', 'distance', 'segments']), file=nfile)
+        for rna_map_type, distances in sorted(data.items()):
+            for distance, segments in sorted(distances.items()):
+                print('\t'.join(map(str, [rna_map_type, distance, segments])), file=nfile)
+
+
+def plot_rna_map(rnamap_file, map_type, normalization=False, outfile='show'):
+    """Plot simple image of RNAmap."""
+    norm = {}
+    if normalization:
+        with open(normalization) as nfile:
+            next(nfile)  # skip header
+            for line_ in nfile:
+                type_, pos, count = line_.strip().split('\t')
+                if type_ == map_type:
+                    norm[int(pos)] = int(count)
+
+    positions, counts = [], []
+    with open(rnamap_file) as rfile:
+        next(rfile)  # skip header
+        for line_ in rfile:
+            type_, pos, count = line_.strip().split('\t')
+            if type_ == map_type:
+                pos, count = int(pos), int(count)
+                if normalization:
+                    if pos not in norm:
+                        raise ValueError("Position {}, RNAmap type '{}' is not in normalization "
+                                         "file.".format(pos, map_type))
+                    count = count / norm[pos]
+                positions.append(pos)
+                counts.append(count)
+
+    plt.plot(positions, counts, 'b')
+    plt.plot([0, 0], [0, int(plt.ylim()[1] * 1.1)], 'k--')
+
+    if outfile == 'show':
+        plt.show()
+    else:
+        plt.savefig(outfile)
