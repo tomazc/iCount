@@ -570,7 +570,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, annotation=None, ga
     # Write strange behaved reads to a BAM file:
     metrics.strange_recs = len(strange)
     if strange:
-        with AlignmentFile(skipped, "w", header=bamfile.header) as outf:
+        with AlignmentFile(skipped, "wb", header=bamfile.header) as outf:
             for read in strange:
                 outf.write(read)
 
