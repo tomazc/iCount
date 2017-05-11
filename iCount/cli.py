@@ -68,7 +68,7 @@ PARAMETERS = {}
 def remove_comments(description):
     """Remove reStructuredText comment lines."""
     description = description.splitlines()
-    if len(description) > 0:
+    if description:
         if description[0].startswith('..'):
             description = description[1:]
     while description and description[0].strip() == '':

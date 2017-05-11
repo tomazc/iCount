@@ -165,7 +165,7 @@ def _sum_within_window(pos_val, half_window=3):
 
 
 def _sum_within_window_nopos(pos_val, half_window=3):
-    """Same as _sum_within_window but without positions."""
+    """Make same thing as _sum_within_window but without positions."""
     if not pos_val:
         return []
     pos_val = sorted(pos_val)
@@ -261,6 +261,7 @@ def get_avg_rnd_distrib(size, total_hits, half_window, perms=10000):
     numpy.ndarray
         Probability to find CWW score i or more on chosen position is equal to
         i-th element or returned array.
+
     """
     cache_key = (size, total_hits, half_window, perms)
     if cache_key not in PS_CACHE:

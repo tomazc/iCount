@@ -146,9 +146,9 @@ class TestGTFVariation(unittest.TestCase):
                 field_data = {name: [] for name in range(9)}
 
                 print("Processing segments: ")
-                for i, segment in enumerate(gtf):
+                for j, segment in enumerate(gtf):
                     # Display progress in terminal:
-                    sys.stdout.write("\r{0:.1f} %".format(i / number_of_segments * 100))
+                    sys.stdout.write("\r{0:.1f} %".format(j / number_of_segments * 100))
                     sys.stdout.flush()
 
                     for i, container in field_data.items():

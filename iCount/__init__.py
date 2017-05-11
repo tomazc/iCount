@@ -19,6 +19,8 @@ protein-RNA interaction.
 """
 import os
 
+import pybedtools
+
 from iCount.__about__ import __author__, __copyright__, __email__, __license__, __summary__, \
     __title__, __url__, __version__
 from . import analysis
@@ -49,3 +51,6 @@ if not os.path.exists(OUTPUT_ROOT):
 if not os.path.exists(TMP_ROOT):
     print("TMP_ROOT folder does not exist. Creating it at: {}".format(TMP_ROOT))
     os.makedirs(TMP_ROOT)
+
+# Set also tmp dir for pybedtools:
+pybedtools.helpers.set_tempdir(TMP_ROOT)

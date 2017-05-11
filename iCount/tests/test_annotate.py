@@ -2,11 +2,10 @@
 
 import os
 import unittest
-import tempfile
 import warnings
 
 from iCount.analysis import annotate
-from iCount.tests.utils import make_file_from_list, make_list_from_file
+from iCount.tests.utils import make_file_from_list, make_list_from_file, get_temp_file_name
 
 
 def template(cross_links, annotation, subtype='biotype',
@@ -34,9 +33,9 @@ def template(cross_links, annotation, subtype='biotype',
         List representation of output file of analysis.annotate().
 
     """
-    cross_links_file = make_file_from_list(cross_links)
-    annotation_file = make_file_from_list(annotation)
-    out_file = tempfile.NamedTemporaryFile(delete=False).name
+    cross_links_file = make_file_from_list(cross_links, extension='bed.gz')
+    annotation_file = make_file_from_list(annotation, extension='gtf.gz')
+    out_file = get_temp_file_name(extension='bed.gz')
     return make_list_from_file(annotate.annotate_cross_links(
         annotation_file, cross_links_file, out_file, subtype=subtype,
         excluded_types=excluded_types), fields_separator='\t')

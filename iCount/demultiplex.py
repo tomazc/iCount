@@ -140,7 +140,7 @@ def demultiplex(reads, out_fastq_fnames, not_matching_fastq_fname,
 
 def _extract(seqs, barcodes, mismatches=1, minimum_length=15):
     """
-    Iterator returning experiment, randomer, and remaining sequence.
+    Iterate seqs and return experiment, randomer, and remaining sequence.
 
     Parameters
     ----------

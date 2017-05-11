@@ -86,7 +86,7 @@ def merge_bed(sites_grouped, sites):
     iCount.log_inputs(LOGGER, level=logging.INFO)
     LOGGER.info('Merging input files...')
 
-    if len(sites) == 0:
+    if not sites:
         raise ValueError(
             "At least one element expected in files list, but none found.")
 

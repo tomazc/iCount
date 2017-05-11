@@ -74,6 +74,7 @@ def _a_in_b(first, second):
     -------
     bool
         True if a is inside b, false otherwise.
+
     """
     return first.start >= second.start and first.stop <= second.stop
 
@@ -136,6 +137,7 @@ def _add_biotype_attribute(gene_content):
     -------
     dict
         Same gene_content_ object with added `biotype` attributes.
+
     """
     gene_content = gene_content.copy()
 
@@ -420,6 +422,7 @@ def _process_transcript_group(intervals):
     -------
     list
         Modified list of pybedtools interval objects.
+
     """
     # Container for interval objects
     regions = []
@@ -439,7 +442,7 @@ def _process_transcript_group(intervals):
             int1[:2] + ['transcript', start + 1, stop] + int1[5:8] + [col8]))
 
     exons = [i for i in intervals if i[2] == 'exon']
-    assert len(exons) != 0
+    assert exons
 
     # Sort exones by exom number (reverse if strand == '-'):
     exons = sorted(exons, key=lambda x: int(x.attrs['exon_number']),
@@ -540,7 +543,7 @@ def _complement(gtf, genome_file, strand, type_name='intergenic'):
 
 def _get_gene_content(gtf, chromosomes, report_progress=False):
     """
-    Generator giving groups of intervals belonging to one gene.
+    Give groups of intervals belonging to one gene (as generator).
 
     The yielded structure in each iteration is a dictionary that has
     key-value pairs:
@@ -776,6 +779,7 @@ def _prepare_annotation(ann_file):
     dict
         Annotation, wrapped in dict with chrom-strand/gene/transcript levels of
         depth.
+
     """
     annotation = {}
 

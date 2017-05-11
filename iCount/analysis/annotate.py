@@ -96,6 +96,11 @@ def annotate_cross_links(annotation, sites, sites_annotated, subtype='biotype',
 
     # Produce annotated cross-link file:
     LOGGER.info('Writing results to file...')
-    pybedtools.BedTool(line for line in data).saveas(sites_annotated)
+    # To save with .gz compression, file has to first be saved to tmp_dir and
+    # saved to filename with .gz extension later. Otherwise, file has gzip
+    # extension, but it is not actually gzipped.
+    tmp_ann = pybedtools.BedTool(line for line in data).saveas()
+    tmp_ann.saveas(sites_annotated)
+
     LOGGER.info('Done. Output saved to: %s', os.path.abspath(sites_annotated))
     return os.path.abspath(sites_annotated)

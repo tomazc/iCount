@@ -19,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _execute(cmd):
-    """Iterator giving stdout and stderr in realtime when executing the cmd."""
+    """Give stdout and stderr in realtime when executing the cmd as iterator."""
     def readline_output(out, queue, name):  # pylint: disable=missing-docstring
         for line in iter(out.readline, ''):
             queue.put((name, line))
@@ -159,6 +159,7 @@ def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatch
     -------
     int
         Return code
+
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
