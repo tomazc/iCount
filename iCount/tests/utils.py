@@ -246,7 +246,7 @@ def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
         num_sequences = len(genome_data)
         seq_len = len(genome_data[0])
 
-    seq_len_reduced = seq_len - (len(barcodes[0]) if len(barcodes) != 0 else 0) - len(adapter)
+    seq_len_reduced = seq_len - (len(barcodes[0]) if barcodes else 0) - len(adapter)
 
     num_barcodes = len(barcodes)
 

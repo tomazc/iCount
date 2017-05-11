@@ -62,7 +62,7 @@ ROOT_LOGGER.addHandler(logging.NullHandler())
 
 def _configure_handler(handler, is_on=None, level=None):
     """
-    Helper function for configuring handlers binded to ROOT_LOGGER.
+    Configure handlers binded to ROOT_LOGGER.
 
     Parameters
     ----------
@@ -75,6 +75,7 @@ def _configure_handler(handler, is_on=None, level=None):
     Returns
     -------
     None
+
     """
     if is_on is not None:
         if isinstance(is_on, bool):
@@ -108,6 +109,7 @@ def log_to_stdout(is_on=True, level=logging.INFO):
     Returns
     -------
     None
+
     """
     stdout_handler = logging.StreamHandler()
     stdout_handler.setFormatter(logging.Formatter(fmt='%(message)s'))
@@ -133,6 +135,7 @@ def log_to_file(is_on=False, level=logging.WARNING, path=None):
     Returns
     -------
     None
+
     """
     if not path:
         path = os.path.join(iCount.OUTPUT_ROOT, 'iCount.log')
@@ -160,6 +163,7 @@ def log_inputs(logger, level=logging.INFO):
     Returns
     -------
     None
+
     """
     # Get frame of calling function and function object
     function_frame = inspect.currentframe().f_back

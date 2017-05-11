@@ -160,7 +160,7 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
                          'cross-links file (example: "chr1" vs. "1")')
 
     # dict structure = type_: [# of sites, # of events]
-    type_counter = {type_: [0, 0] for type_ in type_lengths.keys()}
+    type_counter = {type_: [0, 0] for type_ in type_lengths}
     site_types = []
     previous_segment = overlaps[0]
 

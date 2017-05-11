@@ -383,6 +383,7 @@ def _intersects_with_annotaton(second_start, annotation, chrom, strand):
     -------
         bool
     Does the read's second_start corresopnd to any known segment in annotation
+
     """
     for gene_content in annotation[(chrom, strand)].values():
         for transcript_id, transcript_content in gene_content.items():
@@ -478,6 +479,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, annotation=None, ga
         Internal structure of BAM file, described in docstring.
     list
         BAM file with
+
     """
     # Process annotation, if given:
     if annotation:

@@ -29,7 +29,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _docstring_parameter(*sub):
-    """Decorator for passing arguments to function docstrings."""
+    """Pass arguments to function docstrings (to be used as decorator)."""
     def dec(obj):  # pylint: disable=missing-docstring
         obj.__doc__ = obj.__doc__.format(*sub)
         return obj
@@ -45,6 +45,7 @@ def get_ftp_instance():
     -------
     ftplib.FTP
         FTP object connected to {0}
+
     """
     try:
         ftp = ftplib.FTP(BASE_URL)
@@ -254,6 +255,7 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
 
     TODO: target_dir & target_fname into one parameter? But the default name is
     a quite useful feature...
+
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
@@ -294,7 +296,7 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
             filtered_files.append(fasta_file)
 
     def sorting_func(name):
-        """Helper function for sorting files named by chromosome."""
+        """Sort names by chromosome order."""
         key = name.split('.')[-3]
         if key == 'MT':
             return 'ZZ'  # this makes mitohondrial "chromosome" the last one
