@@ -350,6 +350,58 @@ class TestGetNonCdsExons(unittest.TestCase):
     def test_merging_stop_codons_3(self):
         """
         Situation:
+            * 1 stop codon given on same exon as CDS, bit inside CDS!
+        """
+        intervals = list_to_intervals([
+            # for this test no more than one interval is needed...
+            ['1', '.', 'transcript', '60', '70', '.', '+', '.', '.'],
+            ['1', '.', 'stop_codon', '63', '65', '.', '+', '.', '.'],
+        ])
+        exons = list_to_intervals([
+            ['1', '.', 'exon', '60', '70', '.', '+', '.', '.'],
+        ])
+        cdses = list_to_intervals([
+            ['1', '.', 'CDS', '60', '65', '.', '+', '.', '.'],
+        ])
+
+        expeted_new_cdses = [
+            ['1', '.', 'CDS', '60', '65', '.', '+', '.', '.'],
+        ]
+        expeted_utrs = [
+            ['1', '.', 'UTR3', '66', '70', '.', '+', '.', '.'],
+        ]
+        new_cdses, utrs = segment._get_non_cds_exons(cdses, exons, intervals)
+        new_cdses, utrs = intervals_to_list(new_cdses), intervals_to_list(utrs)
+        self.assertEqual(expeted_new_cdses, new_cdses)
+        self.assertEqual(expeted_utrs, utrs)
+
+        # Negative strand:
+        intervals = list_to_intervals([
+            # for this test no more than one interval is needed...
+            ['1', '.', 'transcript', '60', '70', '.', '-', '.', '.'],
+            ['1', '.', 'stop_codon', '65', '67', '.', '-', '.', '.'],
+        ])
+        exons = list_to_intervals([
+            ['1', '.', 'exon', '60', '70', '.', '-', '.', '.'],
+        ])
+        cdses = list_to_intervals([
+            ['1', '.', 'CDS', '65', '70', '.', '-', '.', '.'],
+        ])
+
+        expeted_new_cdses = [
+            ['1', '.', 'CDS', '65', '70', '.', '-', '.', '.'],
+        ]
+        expeted_utrs = [
+            ['1', '.', 'UTR3', '60', '64', '.', '-', '.', '.'],
+        ]
+        new_cdses, utrs = segment._get_non_cds_exons(cdses, exons, intervals)
+        new_cdses, utrs = intervals_to_list(new_cdses), intervals_to_list(utrs)
+        self.assertEqual(expeted_new_cdses, new_cdses)
+        self.assertEqual(expeted_utrs, utrs)
+
+    def test_merging_stop_codons_4(self):
+        """
+        Situation:
             * 1 stop codon split in two exons
         """
         intervals = list_to_intervals([

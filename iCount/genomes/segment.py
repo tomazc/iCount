@@ -293,8 +293,9 @@ def _get_non_cds_exons(cdses, exons, intervals):
         # in some GTF files stop_codon is also cds, identify such cases:
         complete_overlap = any(
             cds.start == stop_codon.start and cds.stop == stop_codon.stop for cds in cdses)
-        if complete_overlap:
-            continue  # in this case stop_codon is already turned in cds...
+        stop_inside_cds = any(_a_in_b(stop_codon, cds) for cds in cdses)
+        if complete_overlap or stop_inside_cds:
+            continue  # in this case stop_codon is already turned in cds / inside CDS ...
         elif touching_cds:
             cds_index, cds = touching_cds
             replace_cds_indexes.append(cds_index)

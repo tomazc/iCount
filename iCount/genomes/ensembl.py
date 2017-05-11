@@ -23,7 +23,7 @@ import iCount
 BASE_URL = 'ftp.ensembl.org'
 
 MIN_RELEASE_SUPPORTED = 59
-MAX_RELEASE_SUPPORTED = 84
+MAX_RELEASE_SUPPORTED = 88
 
 LOGGER = logging.getLogger(__name__)
 
