@@ -47,9 +47,6 @@ class TestEnsembl(unittest.TestCase):
         self.assertIsInstance(species[0], str)
         self.assertTrue('homo_sapiens' in species)
 
-        species2 = ensembl.species(84)
-        self.assertEqual(species2, species)
-
     def test_species_bad_release_number(self):
         message = r"Release should be a number between \d+ and \d+"
         with self.assertRaisesRegex(ValueError, message):
