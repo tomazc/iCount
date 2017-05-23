@@ -542,6 +542,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, annotation=None, ga
             strand = '+'
             xlink_pos = poss[0] - 1
             end_pos = poss[-1]
+        xlink_pos = 1 if xlink_pos < 1 else xlink_pos
         chrom = bamfile.references[read.tid]
 
         # middle position is position of middle nucleotide. Because we can have
