@@ -52,7 +52,7 @@ from . import fasta
 from . import fastq
 
 
-def gz_open(fname, omode):
+def gz_open(fname, mode):
     """
     Use :py:mod:`gzip` library to open compressed files ending with .gz.
 
@@ -69,9 +69,13 @@ def gz_open(fname, omode):
         File Object.
 
     """
-    if fname.endswith(".gz"):
-        return gzip.open(fname, omode)
-    return open(fname, omode)
+    if 'r' in mode and not os.path.isfile(fname):
+        raise FileNotFoundError('File not found.')
+
+    if fname.endswith('.gz'):
+        return gzip.open(fname, mode)
+    else:
+        return open(fname, mode)
 
 
 def decompress_to_tempfile(fname, context='misc'):
