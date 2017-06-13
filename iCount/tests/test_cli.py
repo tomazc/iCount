@@ -169,7 +169,6 @@ class TestCLI(unittest.TestCase):
             fastq,
             self.tmp1,
             adapter,
-            '--qual_base', '64',
             '--qual_trim', '20',
             '--minimum_length', '15',
             '-S', '40',  # Supress lower than ERROR messages.

@@ -24,8 +24,8 @@ class TestCutadapt(unittest.TestCase):
         self.assertRegex(version, r'\d\.\d+')
 
     def test_run(self):
-        return_code = cutadapt.run(self.reads, self.tmp, self.adapter, qual_base=64,
-                                   qual_trim=30, minimum_length=70)
+        return_code = cutadapt.run(
+            self.reads, self.tmp, self.adapter, qual_trim=30, minimum_length=70)
         self.assertEqual(return_code, 0)
 
 

@@ -11,12 +11,12 @@ the header line, since it is needed in later steps (removing PCR duplicates
 and counting number of cross-link events).
 
 .. autofunction:: iCount.demultiplex.run
-.. autofunction:: iCount.demultiplex.demultiplex
 
 """
 
 import os
 import logging
+import shutil
 
 import iCount
 
@@ -24,6 +24,8 @@ from iCount.externals.cutadapt import run as remove_adapter
 
 
 LOGGER = logging.getLogger(__name__)
+
+VALID_NUCS = {'A', 'T', 'C', 'G'}
 
 
 def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux', out_dir='.'):
@@ -60,157 +62,108 @@ def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux
 
     if not os.path.isdir(out_dir):
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
-    out_fn_prefix = []
-    for barcode in ['nomatch'] + barcodes:
-        out_fn_prefix.append(os.path.join(out_dir, '{}_{}'.format(prefix, barcode)))
 
-    if adapter:
-        # need to remove adapter
-        out_fns = ['{:s}_raw.fastq.gz'.format(fn) for fn in out_fn_prefix]
-    else:
-        out_fns = ['{:s}.fastq.gz'.format(fn) for fn in out_fn_prefix]
+    out_fnames = [os.path.abspath(os.path.join(out_dir, '{}_{}_tmp.fastq.gz'.format(
+        prefix, barcode))) for barcode in barcodes + ['nomatch']]
 
-    # demultiplex
-    LOGGER.info('Allowing max %d mismatches in barcodes.', mismatches)
-    LOGGER.info('Demultiplexing file: %s', reads)
-    demultiplex(reads, out_fns[1:], out_fns[0], barcodes, mismatches, minimum_length)
-    LOGGER.info('Saving results to:')
-    for fn in out_fns:
-        LOGGER.info('    %s', fn)
+    LOGGER.info('Demultiplexing...')
+    # Make list of file handles - one for each output filename:
+    out_fastqs = [iCount.files.fastq.FastqFile(fname, 'wt') for fname in out_fnames]
 
-    # remove adapter, if requested
-    if adapter:
-        LOGGER.info('Trimming adapters (discarding shorter than %d)...', minimum_length)
-        out_fns_intermediate = out_fns
-        out_fns = ['{:s}.fastq.gz'.format(fn) for fn in out_fn_prefix]
-        for fn_in, fn_out in zip(out_fns_intermediate, out_fns):
-            remove_adapter(fn_in, fn_out, adapter, minimum_length=minimum_length)
-            os.remove(fn_in)
+    # Determine experiment ID and random barcode for each fastq entry:
+    kwargs = {'mismatches': mismatches, 'minimum_length': minimum_length}
+    for fq_entry, exp_id, randomer in _extract(reads, barcodes, **kwargs):
+        if randomer:
+            if fq_entry.id[-2] == '/':
+                # For early versions of Illumina, keep mate info at the end:
+                r_pair = fq_entry.id[-2:]
+                fq_entry.id = '{}:rbc:{}{}'.format(fq_entry.id[:-2], randomer, r_pair)
+            else:
+                fq_entry.id = '{}:rbc:{}'.format(fq_entry.id, randomer)
+        out_fastqs[exp_id].write(fq_entry)
 
-    return out_fns
+    for out_fastq in out_fastqs:
+        out_fastq.close()
+
+    # Finally, remove adapters (if requested) or just rename to final names:
+    out_fnames_final = ['{}.fastq.gz'.format(fname[:-13]) for fname in out_fnames]
+    for fname_in, fname_out in zip(out_fnames, out_fnames_final):
+        if adapter and 'nomatch' not in fname_in:
+            remove_adapter(fname_in, fname_out, adapter, minimum_length=minimum_length)
+            os.remove(fname_in)
+        else:
+            shutil.move(fname_in, fname_out)
+
+    return out_fnames_final
 
 
-def demultiplex(reads, out_fastq_fnames, not_matching_fastq_fname,
-                barcodes, mismatches=1, minimum_length=15):
+def _make_p2n2i(barcodes):
     """
-    Extract reads and save to individual FASTQ files.
+    Create a mapping p2n2i (Position-to-Nucleotide-to-experiment_Id).
 
-    All non-matching reads are stored in FASTQ file not_matching_fastq_fname.
+    * For each position tell which nucleotides are possible,
+    * For each of possible nucletides, tell which experiments are possible
+    * However, do not include positions where all nucleotides are N's
+    """
+    p2n2i = {}
+    for exp_id, barcode in enumerate(barcodes):
+        for pos, nuc in enumerate(barcode):
+            if nuc != 'N':
+                assert nuc in VALID_NUCS
+                p2n2i.setdefault(pos, {}).setdefault(nuc, set()).add(exp_id)
+    return p2n2i
+
+
+def _extract(reads, barcodes, mismatches=1, minimum_length=15):
+    """
+    Get experiment ID, randomer and remaining sequence for each read in FASTQ file.
 
     Parameters
     ----------
     reads : str
-        Filename to read,  must be FASTQ in order to avoid duplicate read records.
-    out_fastq_fnames : list_str
-        List of filenames to store reads as determined by barcodes.
-    not_matching_fastq_fname : str
-        Fastq filename where to store non matching reads.
+        Fastq file name.
     barcodes : list_str
-        Experiment and randomer barcode definition.
+        Barcodes: N's are random, others are experiment positions.
     mismatches : int
-        Number of allowed mismatches in sample barcode.
-    minimum_length : int
-        Discard reads with length less than this.
-
-    Returns
-    -------
-    str
-        List of filenames where reads are stored (should be same as
-        out_fastq_fnames).
-
-    """
-    out_fastq = [iCount.files.fastq.Writer(fn) for fn in
-                 out_fastq_fnames + [not_matching_fastq_fname]]
-    reader = iCount.files.fastq.reader(reads)
-    for r_id, exp_id, r_randomer, r_seq, _, r_qual in \
-            _extract(reader, barcodes, mismatches=mismatches, minimum_length=minimum_length):
-        if r_randomer:
-            if r_id[-2] == '/':
-                r_pair = r_id[-2:]
-                r_id = '%s:rbc:%s%s' % (r_id[:-2], r_randomer, r_pair)
-            else:
-                r_id = '%s:rbc:%s' % (r_id, r_randomer)
-
-        out_fastq[exp_id].write(r_id, r_seq, '+', r_qual)
-    while out_fastq:
-        fastq_file = out_fastq.pop()
-        fastq_file.close()
-    return out_fastq_fnames
-
-
-def _extract(seqs, barcodes, mismatches=1, minimum_length=15):
-    """
-    Iterate seqs and return experiment, randomer, and remaining sequence.
-
-    Parameters
-    ----------
-    seqs : tuple
-        Input sequence of tuples (r_id, r_seq, r_qualL).
-    barcodes : list_str
-        Experiment and randomer barcode definition.
-    mismatches : int
-        Number of allowed mismatches in sample barcode.
+        Number of allowed mismatches in experiment barcode.
     minimum_length : int
         Discard reads with length less than this.
 
     Yields
     ------
-    int
-        TODO
+    tuple
+        FastqEntry, experiment ID, randomer
 
     """
-    valid_nucs = {'A', 'T', 'C', 'G'}
-
     all_barcodes = len(barcodes)
-    # at each barcode position, map nucleotide to corresponding exp_id
-    p2n2i = {}
-    i2start_pos = {}
-    for i, bar5 in enumerate(barcodes):
-        for pos, nuc in enumerate(bar5):
-            if nuc == 'N':
-                nucs = ['A', 'T', 'C', 'G']
-            else:
-                nucs = [nuc]
-            assert set(nucs) & valid_nucs == set(nucs)
-            for nuc2 in nucs:
-                p2n2i.setdefault(pos, {}).setdefault(nuc2, set()).add(i)
-        assert i2start_pos.setdefault(i, len(bar5)) == len(bar5)
+    barcode_len = len(barcodes[0])
+    p2n2i = _make_p2n2i(barcodes)
+    max_votes = len(p2n2i)
+    randomer_pos = [i for i in range(barcode_len) if i not in p2n2i]
 
-    # determine the randomer positions - those that cannot be distinguished
-    # based on barcodes
-    random_pos = []
-    p2i = []
-    max_votes = 0
-    for pos, n2i in sorted(p2n2i.items()):
-        if all(len(i) == all_barcodes for i in n2i.values()):
-            random_pos.append(pos)
-        else:
-            p2i.append((pos, n2i))
-            max_votes += 1
-
-    # process sequences
-    for _, _, read in seqs:
+    # Determine experiment ID and extract random barcode for each FASTQ entry.
+    # Experiment ID si determined by "voting": at each non-randomer position
+    # `pos` there is nucleotide X. Check which experiments (=barcodes) have X
+    # at position `pos`. Increment votes for them. Experiment with max votes is
+    # the winner, but only if votes equal/exceed max_votes - mismatches.
+    for read in iCount.files.fastq.FastqFile(reads).read():
         votes = [0] * all_barcodes
-        for pos, n2i in p2i:
-            bis = n2i.get(read.r_seq[pos], [])
-            for bi_ in bis:
-                votes[bi_] += 1
+        for pos, n2i in p2n2i.items():
+            for exp_id in n2i.get(read.seq[pos], []):
+                votes[exp_id] += 1
         mvotes = max(votes)
-        if mvotes < max_votes - mismatches:  # allowed mismatches
-            # not recognized
-            exp_id = -1
+        if mvotes < max_votes - mismatches:  # not recognized as valid barcode
+            experiment_id = -1
+            randomer = ''
+            seq = read.seq
+            qual = read.qual
+        else:  # recognized as valid barcode
+            experiment_id = votes.index(mvotes)
+            randomer = ''.join(read.seq[p] for p in randomer_pos)
+            # Keep only the remainder of the sequence / quality scores
+            seq = read.seq[barcode_len:]
+            qual = read.qual[barcode_len:]
 
-            r_randomer = ''
-            r_seq = read.r_seq
-            r_qual = read.r_qual
-        else:
-            # recognized as valid barcode
-            exp_id = votes.index(mvotes)
-
-            r_randomer = ''.join(read.r_seq[p] for p in random_pos)
-            positions = i2start_pos[exp_id]
-            r_seq = read.r_seq[positions:]
-            r_qual = read.r_qual[positions:]
-
-        if len(r_seq) >= minimum_length:
-            yield read.r_id, exp_id, r_randomer, r_seq, read.r_plus, r_qual
+        if len(seq) >= minimum_length:
+            new_fq_entry = iCount.files.fastq.FastqEntry(read.id, seq, '+', qual)
+            yield (new_fq_entry, experiment_id, randomer)
