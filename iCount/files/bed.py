@@ -84,17 +84,17 @@ def merge_bed(sites_grouped, sites):
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
-    LOGGER.info('Merging input files...')
 
     if not sites:
         raise ValueError(
             "At least one element expected in files list, but none found.")
 
+    LOGGER.info('Reading input files...')
     joined = tempfile.NamedTemporaryFile(mode='at', delete=False)
     for file_path in sites:
         if not os.path.isfile(file_path):
             raise ValueError("File {} not found.".format(file_path))
-        with open(file_path) as infile:
+        with iCount.files.gz_open(file_path, 'rt') as infile:
             shutil.copyfileobj(infile, joined)
     joined.close()
 
@@ -103,6 +103,7 @@ def merge_bed(sites_grouped, sites):
     # d=-1 - join only intervals with at least one base-pair overlap - default
     # (0) merges also touching intervals
     # c=5, o='sum' - when merging intervals, make operation 'sum' on column 5 (score)
+    LOGGER.info('Merging files...')
     merged = pybedtools.BedTool(joined.name).sort().merge(
         s=True, d=-1, c=5, o='sum').sort().saveas()
 
@@ -110,8 +111,10 @@ def merge_bed(sites_grouped, sites):
     # Reorder to: chrom-start-stop-empty_name-score-strand
     # which corresponds to BED6
 
+    LOGGER.info('Saving results...')
     result = pybedtools.BedTool(pybedtools.create_interval_from_list(
-        i[:3] + ['.', i[4], i[3]]) for i in merged).saveas(sites_grouped)
+        i[:3] + ['.', i[4], i[3]]) for i in merged).saveas()
+    result.saveas(sites_grouped)
 
     LOGGER.info('Done. Results saved to: %s', os.path.abspath(result.fn))
     return os.path.abspath(result.fn)

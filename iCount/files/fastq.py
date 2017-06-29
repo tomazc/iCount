@@ -1,4 +1,3 @@
-# pylint: skip-file
 """.. Line to protect from pydocstyle D205, D400.
 
 FASTQ
@@ -6,208 +5,149 @@ FASTQ
 
 Reading and writting `FASTQ`_ files.
 """
-import gzip
-import math
 import os
+import math
+
+import iCount
 
 
-# precompute, so mapping is faster
-_dX2L = [x - 64 for x in range(59, 105)]
-_dX2L = [10.0 * math.log(math.pow(10.0, x / 10.0) + 1.0, 10.0) for x in _dX2L]
-_dX2L = [chr(math.floor(x) + 33) for x in _dX2L]
+# From here: https://en.wikipedia.org/wiki/FASTQ_format#Quality
+# one can deduce the following equation, connecting Q_solexa with Q_sanger:
+# 10**(Q_solexa/10) = 10**(Q_sanger/10) - 1
+# and therefore:
+# Q_sanger = 10 * log_10(10**(Q_solexa/10) + 1)
+# For all possible Q_solexa values (-5 to 40), here are corresponding Q_sanger values
+X2L_ = [10.0 * math.log(math.pow(10.0, x / 10.0) + 1.0, 10.0) for x in range(-5, 41)]
+# Mapping from Solexa quality encoding to Illumina 1.8+
+X2L = {chr(i): chr(math.floor(v) + 33) for i, v in zip(range(59, 105), X2L_)}
 
-_Dx2l = {chr(ij): v for ij, v in zip(range(59, 105), _dX2L)}
-
-
-def _x2l(s):
-    """TODO."""
-    # Q_solexa = [ord(x) - 64 for x in s]
-    # Q_PHRED = [10.0 * math.log(math.pow(10.0, x / 10.0) + 1.0, 10.0) for x in Q_solexa]
-    # L = [chr(math.floor(x) + 33) for x in Q_PHRED]
-    # L = [_dX2L[ord(x) - 59] for x in x]
-    # return ''.join(L)
-    return ''.join((_Dx2l[ij] for ij in s))
+# Mapping from Illumina 1.3+/1.5+ quality encoding to Illumina 1.8+:
+I2L = {chr(i): chr(i - 31) for i in range(64, 105)}
 
 
-# -31 = -64 + 33
-_Dij2l = {chr(ij): chr(ij - 31) for ij in range(64, 104 + 1 + 1)}
+def _x2l(quals):
+    """Change Solexa quality encoding to Illumina 1.8+."""
+    return ''.join([X2L[qual] for qual in quals])
 
 
-def _ij2l(s):
-    """TODO."""
-    return ''.join((_Dij2l[ij] for ij in s))
+def _i2l(quals):
+    """Change Illumina 1.3+/1.5+ quality encoding to Illumina 1.8+."""
+    return ''.join([I2L[qual] for qual in quals])
 
 
-# 0 = -33 + 33
-_Dsl2l = {chr(ij): chr(ij - 0) for ij in range(64, 104 + 1 + 1)}
+def _l2l(quals):
+    """Change Sanger quality encoding to Illumina 1.8+."""
+    return quals
 
 
-def _sl2l(s):
-    """TODO."""
-    # return ''.join((_Dsl2l[ij] for ij in s))
-    return s
+def _transform_encoding(encoding):
+    """Transform any quality encoding to Illumina 1.8+."""
+    assert(encoding in ['S', 'X', 'I', 'J', 'L'])
+
+    if encoding == 'S':
+        return _l2l
+    elif encoding == 'X':
+        return _x2l
+    elif encoding == 'I':
+        return _i2l
+    elif encoding == 'J':
+        return _i2l
+    elif encoding == 'L':
+        return _l2l
 
 
-def _determine_format(fname):
+def _get_qual_encoding(fname):
     """
     Read first few records and determine quality encoding in FASTQ file.
 
-    Set function for conversion of quality scores to Phred scores
-    in format L. See format description
+    See format description
     `http://en.wikipedia.org/wiki/FASTQ_format`_.
 
     S - Sanger        Phred+33,  raw reads typically (0, 40)   [33..73]
     X - Solexa        Solexa+64, raw reads typically (-5, 40)  [59..104]
     I - Illumina 1.3+ Phred+64,  raw reads typically (0, 40)   [64..104]
     J - Illumina 1.5+ Phred+64,  raw reads typically (3, 40)   [66..104]
-    with 0=unused, 1=unused, 2=Read Segment Quality Control Indicator (bold)
-    (Note: See discussion above).
     L - Illumina 1.8+ Phred+33,  raw reads typically (0, 41)   [33..74]
-
     """
-    # Read a few reads to determine format of quality scores.
+    def get_encoding(quals, count=0, check_count=False):
+        """Determine encoding from quality scores raneg."""
+        minq, maxq = ord(min(quals)), ord(max(quals))
+        if minq < 59:
+            if maxq > 73:
+                return 'L'
+            else:
+                return 'S'
+        elif 59 <= minq < 64 and maxq > 74:
+            return 'X'
+        elif minq >= 64 and maxq > 74:
+            if (check_count and count > 10000) or not check_count:
+                if minq < 66:
+                    return 'I'
+                else:
+                    return 'J'
 
-    r2q = {
-        (33, 73): 'S',
-        (59, 104): 'X',
-        (64, 104): 'I',
-        (66, 104): 'J',
-        (33, 74): 'L',
-    }
-
-    # During scan assume that index is in header line.
-    format = 'L'
     quals = set()
-    for rec_cn, _, r in _reader(fname, _sl2l):
-        quals.update(set(r.r_qual))
+    for count, read in enumerate(FastqFile(fname).read(encoding='L')):
+        quals.update(set(read.qual))
+        if count % 10000 == 0:
+            encoding = get_encoding(quals, count, check_count=True)
+            if encoding:
+                return encoding
 
-        if rec_cn % 10000 == 0:
-            minq = ord(min(quals))
-            maxq = ord(max(quals))
-
-            format = r2q.get((minq, maxq), None)
-            if format is not None:
-                return format
-    return '?'
+    encoding = get_encoding(quals, check_count=False)
+    return encoding
 
 
-def reader(fname, check=False):
-    """TODO."""
-    if check:
-        format = _determine_format(fname)
-    else:
-        format = 'L'
-        qual_xform = _sl2l
+class FastqEntry:
+    """Single FASTQ entry."""
 
-    assert(format in ['L', 'S', 'X', 'I', 'J'])
-    if format == 'L':
-        qual_xform = _sl2l
-    elif format == 'S':
-        qual_xform = _sl2l
-    elif format == 'X':
-        qual_xform = _x2l
-    elif format == 'I':
-        qual_xform = _ij2l
-    elif format == 'J':
-        qual_xform = _ij2l
+    def __init__(self, id, seq, plus, qual):  # pylint: disable=redefined-builtin
+        """Initialize attributes."""
+        self.id = str(id).split(' ')[0]  # pylint: disable=invalid-name
+        self.seq = str(seq)
+        self.plus = str(plus)
+        self.qual = str(qual)
 
-    return _reader(fname, qual_xform)
+    def __repr__(self):
+        """Represent object."""
+        return self.id
 
 
-def is_gzip(fname):
-    """TODO."""
-    try:
-        f = gzip.open(fname, 'r')
-        f.peek(10)
-        return True
-    except (OSError, AttributeError):
-        return False
+class FastqFile:
+    """Write FASTQ files."""
 
+    def __init__(self, fname, mode='rt'):
+        """Open file handle in desired mode."""
+        self.fname = fname
+        if 'r' in mode and not os.path.isfile(fname):
+            self.file = None
+            raise FileNotFoundError('File not found.')
 
-class Read:
-    """TODO."""
-
-    def __init__(self, r_id, r_seq, r_plus, r_qual):
-        """TODO."""
-        self.r_id = r_id
-        self.r_seq = r_seq
-        self.r_plus = r_plus
-        self.r_qual = r_qual
-
-    def __str__(self):
-        """TODO."""
-        return '\n'.join(map(str, [self.r_id, self.r_seq, self.r_plus, self.r_qual])) + '\n'
-
-
-def read_one(fin):
-    """TODO."""
-    # r_id = fin.readline().decode('ascii').rstrip('\n')
-    # r_seq = fin.readline().decode('ascii').rstrip('\n')
-    # r_plus = fin.readline().decode('ascii').rstrip('\n')
-    # r_qual = fin.readline().decode('ascii').rstrip('\n')
-    r_id = str(fin.readline()).rstrip('\n')
-    r_seq = str(fin.readline()).rstrip('\n')
-    r_plus = str(fin.readline()).rstrip('\n')
-    r_qual = str(fin.readline()).rstrip('\n')
-    print("AAAA", r_id, r_seq, r_plus, r_qual)
-    return Read(r_id, r_seq, r_plus, r_qual)
-
-
-def _reader(fname, qual_xform):
-    """TODO."""
-    if is_gzip(fname):
-        f = gzip.open(fname, 'rt')
-    else:
-        f = open(fname, 'rt')
-
-    # get file size
-    f_size = os.path.getsize(fname)
-    if f_size == 0:
-        f_size = 1
-
-    r_id = f.readline()
-    rec_cn = 1
-    per = 0
-
-    while r_id:
-        r_id = r_id.rstrip('\n')
-        r_seq = f.readline().rstrip('\n')
-        r_plus = f.readline().rstrip('\n')
-        r_qual = f.readline().rstrip('\n')
-        r_qualL = qual_xform(r_qual)
-
-        if rec_cn % 1000000 == 0:
-            f_cur_pos = f.tell()
-            per = min(100, round(100 * f_cur_pos / f_size))
-
-        yield rec_cn, per, Read(r_id, r_seq, r_plus, r_qualL)
-        r_id = f.readline()
-        rec_cn += 1
-
-
-class Writer:
-    """TODO."""
-
-    def __init__(self, fname):
-        """TODO."""
-        if not fname:
-            return
-
-        if fname.endswith('.gz'):
-            self.f = gzip.open(fname, 'wt')
-        else:
-            self.f = open(fname, 'wt')
+        self.file = iCount.files.gz_open(fname, mode)
 
     def __del__(self):
-        """TODO."""
+        """Close file."""
         self.close()
 
-    def write(self, r_id, r_seq, r_plus, r_qual):
-        """TODO."""
-        self.f.write('\n'.join(map(str, [r_id, r_seq, r_plus, r_qual])) + '\n')
+    def read(self, encoding=None):
+        """Read FASTQ file."""
+        if not encoding:
+            encoding = _get_qual_encoding(self.fname)
+        # Function used for quality transform:
+        qual_xform = _transform_encoding(encoding)
+
+        for read_id in self.file:
+            read_seq = next(self.file).rstrip('\n')
+            read_plus = next(self.file).rstrip('\n')
+            read_qual = qual_xform(next(self.file).rstrip('\n'))
+            yield FastqEntry(read_id.rstrip('\n'), read_seq, read_plus, read_qual)
+
+    def write(self, fq_entry):
+        """Write single FASTQ entry."""
+        content = [fq_entry.id, fq_entry.seq, fq_entry.plus, fq_entry.qual]
+        self.file.write('\n'.join(map(str, content)) + '\n')
 
     def close(self):
-        """TODO."""
-        if self.f:
-            self.f.close()
-            self.f = None
+        """Close file if it is stil open."""
+        if self.file and not self.file.closed:
+            self.file.close()

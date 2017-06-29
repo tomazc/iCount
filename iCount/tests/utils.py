@@ -88,7 +88,7 @@ def make_sequence(size, include_n=False):
     return ''.join(random.choice(bases, size))  # pylint: disable=no-member
 
 
-def make_quality_scores(size, min_chr=33, max_chr=127):
+def make_quality_scores(size, min_chr=33, max_chr=74):
     """Make random DNA segment of length `size`."""
     scores = [chr(i) for i in range(min_chr, max_chr + 1)]
     return ''.join(random.choice(scores, size))  # pylint: disable=no-member

@@ -434,9 +434,9 @@ class TestRun(unittest.TestCase):
 
     def test_run_simple(self):
         bam_fname = make_bam_file(self.data)
-        unique_fname = get_temp_file_name(extension='.bed.gz')
-        multi_fname = get_temp_file_name(extension='.bed.gz')
-        strange_fname = get_temp_file_name(extension='.bam.gz')
+        unique_fname = get_temp_file_name(extension='bed.gz')
+        multi_fname = get_temp_file_name(extension='bed.gz')
+        strange_fname = get_temp_file_name(extension='bam')
 
         result = xlsites.run(
             bam_fname, unique_fname, multi_fname, strange_fname, mapq_th=5, report_progress=True)
