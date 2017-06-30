@@ -8,6 +8,8 @@ Remove adapter sequences from reads in FASTQ file.
 
 import subprocess
 
+from iCount.files.fastq import get_qual_encoding, ENCODING_TO_OFFSET
+
 
 def get_version():
     """Get cutadapt version."""
@@ -42,11 +44,18 @@ def run(reads, reads_trimmed, adapter, qual_trim=None, minimum_length=None):
         Return code of the `cutadapt` program.
 
     """
-    args = ['cutadapt', '--quiet', '-a', adapter + '$']
+    args = [
+        'cutadapt',
+        '--quiet',
+        '-a', adapter,
+    ]
+    qual_base = ENCODING_TO_OFFSET[get_qual_encoding(reads)]
+    args.extend(['--quality-base={}'.format(qual_base)])
+
     if qual_trim is not None:
-        args.extend(['-q', '{}'.format(qual_trim)])
+        args.extend(['-q', '{:d}'.format(qual_trim)])
     if minimum_length is not None:
-        args.extend(['-m', '{}'.format(minimum_length)])
+        args.extend(['-m', '{:d}'.format(minimum_length)])
     args.extend(['-o', reads_trimmed, reads])
 
     return subprocess.call(args, shell=False)
