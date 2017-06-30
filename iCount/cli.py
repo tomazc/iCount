@@ -324,8 +324,7 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter  # ArgumentDefaultsHelpFormatter,
     )
     # Parser (general) arguments
-    root_parser.add_argument('-v', '--version', action='version',
-                             version='%%(prog)s %s' % iCount.__version__)
+    root_parser.add_argument('-v', '--version', action='version', version=iCount.__version__)
 
     subparsers = root_parser.add_subparsers(title='Commands', metavar=' ')
     ##################
