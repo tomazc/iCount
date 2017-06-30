@@ -18,6 +18,7 @@ protein-RNA interaction.
 
 """
 import os
+import logging
 
 import pybedtools
 
@@ -33,6 +34,8 @@ from . import examples
 from .logger import log_to_stdout, log_to_file, log_inputs, _log_progress
 from .metrics import Metrics
 
+LOGGER = logging.getLogger(__name__)
+
 #: Default output folder for iCount functions/commands. It points to the value
 #: of eviroment variable ``ICOUNT_OUTPUT_ROOT`` if set. Otherwise, current
 #: working directory is used.
@@ -46,10 +49,10 @@ TMP_ROOT = os.environ.get('ICOUNT_TMP_ROOT', '/tmp/iCount')
 
 # Create folders if needed:
 if not os.path.exists(OUTPUT_ROOT):
-    print("OUTPUT_ROOT folder does not exist. Creating it at: {}".format(OUTPUT_ROOT))
+    LOGGER.info("OUTPUT_ROOT folder does not exist. Creating it at: %s", OUTPUT_ROOT)
     os.makedirs(OUTPUT_ROOT)
 if not os.path.exists(TMP_ROOT):
-    print("TMP_ROOT folder does not exist. Creating it at: {}".format(TMP_ROOT))
+    LOGGER.info("TMP_ROOT folder does not exist. Creating it at: %s", TMP_ROOT)
     os.makedirs(TMP_ROOT)
 
 # Set also tmp dir for pybedtools:
