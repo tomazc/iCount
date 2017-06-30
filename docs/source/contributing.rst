@@ -44,6 +44,15 @@ Prepare iCount for development::
     https://virtualenv.pypa.io/en/stable/
 
 
+Building the documentation
+==========================
+
+Issue these commands to build the documentation::
+
+    pip install -e .[docs]
+    sphinx-build -E -W docs/source/ build/sphinx/html
+
+
 Python module and CLI living together
 =====================================
 
@@ -103,8 +112,8 @@ Wrong way::
     def test_something(self):
         """The docstring."""
 
-Commit messages
----------------
+Commit and PR messages
+----------------------
 
 If the core change that commit is introducing originates from module
 ``the_module``, commit message should be::
@@ -115,6 +124,8 @@ If commit is somehow connected with an issue, commit message should reference
 issue number::
 
     the_module: Commit message, relates to #42, resolves #14
+
+References to PR greatly help when preparing a description of changes in the change log ``docs/source/revisions.rst``.
 
 
 Logging logic

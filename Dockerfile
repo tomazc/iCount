@@ -30,6 +30,8 @@ RUN apt-get autoclean -y && \
 ### samtools
 RUN apt-get install -y \
     zlib1g-dev \
+    liblzma-dev \
+    libbz2-dev \
     samtools
 
 

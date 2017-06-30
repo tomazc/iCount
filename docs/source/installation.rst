@@ -34,4 +34,13 @@ Docker
 When working with docker, make sure that the docker-machine has enough memory to run STAR and
 associated programs, *e.g.*, at least 64 GB::
 
-    docker-machine create -d virtualbox --virtualbox-memory 65536 default
+    docker-machine create -d virtualbox --virtualbox-memory 32768 --virtualbox-disk-size "46080" default
+
+.. note::
+    Other options for `VirtualBox`_ are described `here`_.
+
+.. _`VirtualBox`:
+    https://www.virtualbox.org/
+
+.. _`here`:
+    https://docs.docker.com/machine/drivers/virtualbox/
