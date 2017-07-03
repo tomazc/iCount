@@ -34,9 +34,9 @@ def _make_summary_report(annotation, cross_links, chrom_lengths,
     chrom_length_file = make_file_from_list(chrom_lengths, bedtool=False)
     out_file = tempfile.NamedTemporaryFile(delete=False).name
 
-    return make_list_from_file(summary.make_summary_report(
-        annotation_file, cross_links_file, out_file, chrom_length_file,
-        subtype=subtype, excluded_types=excluded_types), fields_separator='\t')
+    summary.make_summary_report(annotation_file, cross_links_file, out_file, chrom_length_file,
+                                subtype=subtype, excluded_types=excluded_types)
+    return make_list_from_file(out_file, fields_separator='\t')
 
 
 class TestMakeTypesLengthFile(unittest.TestCase):

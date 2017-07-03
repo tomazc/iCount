@@ -678,6 +678,8 @@ def get_regions(annotation, segmentation, fai, report_progress=False):
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
+    metrics = iCount.Metrics()
+    metrics.genes = 0
 
     # Container for storing intermediate data
     data = []
@@ -716,6 +718,7 @@ def get_regions(annotation, segmentation, fai, report_progress=False):
     for gene_content in _get_gene_content(annotation, chromosomes, report_progress):
         process_gene(gene_content)
         LOGGER.debug('Just processed gene: %s', gene_content['gene'].attrs['gene_id'])
+        metrics.genes += 1
     # This can be replaced with: multiprocessing.Pool, but it causes huge
     # memory usage. Possible explanation and solution:
     # http://stackoverflow.com/questions/21485319/high-memory-usage-using-python-multiprocessing
@@ -739,7 +742,7 @@ def get_regions(annotation, segmentation, fai, report_progress=False):
 
     file3 = pybedtools.BedTool(file2.name).sort().saveas(segmentation)
     LOGGER.info('Segmentation stored in %s', file3.fn)
-    return file3.fn
+    return metrics
 
 
 def _prepare_annotation(ann_file):

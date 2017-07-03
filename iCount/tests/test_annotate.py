@@ -36,9 +36,9 @@ def template(cross_links, annotation, subtype='biotype',
     cross_links_file = make_file_from_list(cross_links, extension='bed.gz')
     annotation_file = make_file_from_list(annotation, extension='gtf.gz')
     out_file = get_temp_file_name(extension='bed.gz')
-    return make_list_from_file(annotate.annotate_cross_links(
-        annotation_file, cross_links_file, out_file, subtype=subtype,
-        excluded_types=excluded_types), fields_separator='\t')
+    annotate.annotate_cross_links(annotation_file, cross_links_file, out_file, subtype=subtype,
+                                  excluded_types=excluded_types)
+    return make_list_from_file(out_file, fields_separator='\t')
 
 
 class TestAnnotateCrossLinks(unittest.TestCase):

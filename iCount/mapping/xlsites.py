@@ -80,7 +80,7 @@ otherwise, we should think of a more approapriate quantification of (division
 of randomers among) unique mapped sites that overlap with multimapped reads
 
 """
-
+import re
 import logging
 
 import pybedtools
@@ -92,6 +92,7 @@ from iCount.files import _f2s
 
 LOGGER = logging.getLogger(__name__)
 VALID_NUCLEOTIDES = set('ATCGN')
+RANDOM_BARCODE_REGEX = r'.*:rbc:([ATCGN]+).*'
 
 
 def _iter_bed_dict(bed, val_index=None):
@@ -122,8 +123,9 @@ def _save_dict(bed, out_fname, val_index=None):
 
 def _get_random_barcode(query_name, metrics):
     """Extract random barcode from ``query_name``."""
-    if ':rbc:' in query_name:
-        barcode = query_name.rsplit(':rbc:', 1)[1].split(':')[0]
+    match = re.match(RANDOM_BARCODE_REGEX, query_name)
+    if match:
+        barcode = match.group(1)
     elif ':' in query_name:
         barcode = query_name.rsplit(':', 1)[1]
         if set(barcode) - VALID_NUCLEOTIDES:

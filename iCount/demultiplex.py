@@ -59,6 +59,9 @@ def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
+    metrics = iCount.Metrics()
+    metrics.reads_ok = 0
+    metrics.reads_fail = 0
 
     if not os.path.isdir(out_dir):
         raise FileNotFoundError('Output directory does not exist. Make sure it does.')
@@ -74,12 +77,15 @@ def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux
     kwargs = {'mismatches': mismatches, 'minimum_length': minimum_length}
     for fq_entry, exp_id, randomer in _extract(reads, barcodes, **kwargs):
         if randomer:
+            metrics.reads_ok += 1
             if fq_entry.id[-2] == '/':
                 # For early versions of Illumina, keep mate info at the end:
                 r_pair = fq_entry.id[-2:]
                 fq_entry.id = '{}:rbc:{}{}'.format(fq_entry.id[:-2], randomer, r_pair)
             else:
                 fq_entry.id = '{}:rbc:{}'.format(fq_entry.id, randomer)
+        else:
+            metrics.reads_fail += 1
         out_fastqs[exp_id].write(fq_entry)
 
     for out_fastq in out_fastqs:
@@ -94,7 +100,7 @@ def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux
         else:
             shutil.move(fname_in, fname_out)
 
-    return out_fnames_final
+    return metrics
 
 
 def _make_p2n2i(barcodes):

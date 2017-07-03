@@ -54,6 +54,7 @@ def annotate_cross_links(annotation, sites, sites_annotated, subtype='biotype',
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
+    metrics = iCount.Metrics()
 
     excluded_types = excluded_types or []
     cross_links = pybedtools.BedTool(sites).sort().saveas()
@@ -103,4 +104,4 @@ def annotate_cross_links(annotation, sites, sites_annotated, subtype='biotype',
     tmp_ann.saveas(sites_annotated)
 
     LOGGER.info('Done. Output saved to: %s', os.path.abspath(sites_annotated))
-    return os.path.abspath(sites_annotated)
+    return metrics
