@@ -131,6 +131,7 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
+    metrics = iCount.Metrics()
 
     # If not given/present, make file with cumulative length for each type:
     if not types_length_file or not os.path.isfile(types_length_file):
@@ -210,4 +211,4 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
             out.write('\t'.join(map(str, line)) + '\n')
 
     LOGGER.info('Done. Results written in %s.', os.path.abspath(summary))
-    return os.path.abspath(summary)
+    return metrics

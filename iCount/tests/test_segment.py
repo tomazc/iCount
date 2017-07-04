@@ -1,6 +1,4 @@
 # pylint: disable=missing-docstring, protected-access
-
-import tempfile
 import warnings
 import unittest
 from unittest.mock import patch  # pylint: disable=unused-import
@@ -10,7 +8,7 @@ from pybedtools import create_interval_from_list
 import iCount  # pylint: disable=unused-import
 from iCount.genomes import segment
 from iCount.tests.utils import list_to_intervals, intervals_to_list, \
-    reverse_strand, make_file_from_list, make_list_from_file
+    reverse_strand, make_file_from_list, make_list_from_file, get_temp_file_name
 
 
 class TestOtherFunctions(unittest.TestCase):
@@ -680,8 +678,7 @@ class TestGetRegions(unittest.TestCase):
         ])
         gtf_in_file = make_file_from_list(intervals_to_list(gtf_in_data))
 
-        gtf_out = tempfile.NamedTemporaryFile(mode='w+', delete=False)
-        gtf_out.close()
+        gtf_out = get_temp_file_name()
 
         genome_file = make_file_from_list(
             [
@@ -689,8 +686,8 @@ class TestGetRegions(unittest.TestCase):
                 ['MT', '500'],
             ], bedtool=False)
 
-        gtf_out_data = list_to_intervals(make_list_from_file(segment.get_regions(
-            gtf_in_file, gtf_out.name, genome_file), fields_separator='\t'))
+        segment.get_regions(gtf_in_file, gtf_out, genome_file)
+        gtf_out_data = list_to_intervals(make_list_from_file(gtf_out, fields_separator='\t'))
 
         expected = list_to_intervals([
             ['1', '.', 'intergenic', '1', '399', '.', '+', '.',

@@ -1,11 +1,10 @@
 # pylint: disable=missing-docstring, protected-access
 
 import unittest
-import tempfile
 import warnings
 
 from iCount.files.bed import merge_bed
-from iCount.tests.utils import make_file_from_list, make_list_from_file
+from iCount.tests.utils import make_file_from_list, make_list_from_file, get_temp_file_name
 
 
 def merge_bed_wrapper(data):
@@ -15,9 +14,9 @@ def merge_bed_wrapper(data):
     files = []
     for file_ in data:
         files.append(make_file_from_list(file_))
-    out_file = tempfile.NamedTemporaryFile(delete=False).name
-    return make_list_from_file(
-        merge_bed(out_file, files), fields_separator='\t')
+    out_file = get_temp_file_name()
+    merge_bed(out_file, files)
+    return make_list_from_file(out_file, fields_separator='\t')
 
 
 class TestMergeBed(unittest.TestCase):

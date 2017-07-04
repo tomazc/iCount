@@ -32,8 +32,8 @@ class TestClusters(unittest.TestCase):
 
         fout_clusters = get_temp_file_name()
 
-        result = make_list_from_file(clusters.run(
-            fin_sites, fout_clusters, dist=3), fields_separator='\t')
+        clusters.run(fin_sites, fout_clusters, dist=3)
+        result = make_list_from_file(fout_clusters, fields_separator='\t')
 
         expected = [
             ['1', '4', '6', '.', '2', '+'],

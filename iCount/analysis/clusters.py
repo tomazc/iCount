@@ -54,6 +54,7 @@ def run(sites, clusters, dist=20):  # , extend=0):
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
+    metrics = iCount.Metrics()
 
     # It is required to pre-sort your data:
     bt_sites = pybedtools.BedTool(sites).sort().saveas()
@@ -63,4 +64,4 @@ def run(sites, clusters, dist=20):  # , extend=0):
     out = merged.sort().each(_fix_proper_bed6_format).saveas(clusters)
 
     LOGGER.info('Done. Results saved to: %s', os.path.abspath(out.fn))
-    return out.fn
+    return metrics
