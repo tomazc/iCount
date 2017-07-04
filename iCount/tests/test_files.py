@@ -57,47 +57,32 @@ class TestFilesFastq(unittest.TestCase):
     def test_get_qual_encoding_s(self):
         data = [['@header'], ['AAAAA'], ['+'], ['!FFFI']]
         fq_file = make_file_from_list(data, bedtool=False, extension='.fq')
-        self.assertEqual('S', iCount.files.fastq._get_qual_encoding(fq_file))
+        self.assertEqual('S', iCount.files.fastq.get_qual_encoding(fq_file))
 
     def test_get_qual_encoding_x(self):
         data = [['@header'], ['AAAAA'], ['+'], [';FFFh']]
         fq_file = make_file_from_list(data, bedtool=False, extension='.fq')
-        self.assertEqual('X', iCount.files.fastq._get_qual_encoding(fq_file))
+        self.assertEqual('X', iCount.files.fastq.get_qual_encoding(fq_file))
 
     def test_get_qual_encoding_i(self):
         data = [['@header'], ['AAAAA'], ['+'], ['@FFFh']]
         fq_file = make_file_from_list(data, bedtool=False, extension='.fq')
-        self.assertEqual('I', iCount.files.fastq._get_qual_encoding(fq_file))
+        self.assertEqual('I', iCount.files.fastq.get_qual_encoding(fq_file))
 
     def test_get_qual_encoding_j(self):
         data = [['@header'], ['AAAAA'], ['+'], ['BFFFh']]
         fq_file = make_file_from_list(data, bedtool=False, extension='.fq')
-        self.assertEqual('J', iCount.files.fastq._get_qual_encoding(fq_file))
+        self.assertEqual('J', iCount.files.fastq.get_qual_encoding(fq_file))
 
     def test_get_qual_encoding_l(self):
         data = [['@header'], ['AAAAA'], ['+'], ['!FFFJ']]
         fq_file = make_file_from_list(data, bedtool=False, extension='.fq')
-        self.assertEqual('L', iCount.files.fastq._get_qual_encoding(fq_file))
+        self.assertEqual('L', iCount.files.fastq.get_qual_encoding(fq_file))
 
     def test_get_qual_encoding_none(self):
         data = [['@header'], ['AAAAA'], ['+'], ['???']]
         fq_file = make_file_from_list(data, bedtool=False, extension='.fq')
-        self.assertEqual(None, iCount.files.fastq._get_qual_encoding(fq_file))
-
-    def test_transform_encoding_1(self):
-        xform_func = iCount.files.fastq._transform_encoding('X')
-        quals = ';Ah'
-        self.assertEqual('"$I', xform_func(quals))
-
-    def test_transform_encoding_2(self):
-        xform_func = iCount.files.fastq._transform_encoding('I')
-        quals = '@Ah'
-        self.assertEqual('!"I', xform_func(quals))
-
-    def test_transform_encoding_3(self):
-        xform_func = iCount.files.fastq._transform_encoding('J')
-        quals = 'BCh'
-        self.assertEqual('#$I', xform_func(quals))
+        self.assertEqual(None, iCount.files.fastq.get_qual_encoding(fq_file))
 
     def test_fastq_entry(self):
         fq_entry = iCount.files.fastq.FastqEntry('header12345', 'ACTGCTGCAT', '+', 'ABCDEFFBBA')
@@ -146,8 +131,7 @@ class TestFilesFastq(unittest.TestCase):
         self.assertEqual(data[0][0][:39], entry1.id)
         self.assertEqual(data[1][0], entry1.seq)
         self.assertEqual(data[2][0], entry1.plus)
-        # Ensure that quality is transformed to Illumina 1.8+ encoding:
-        self.assertEqual('$%I', entry1.qual)
+        self.assertEqual(data[3][0], entry1.qual)
         self.assertEqual(data[4][0][:39], entry2.id)
         self.assertEqual(data[5][0], entry2.seq)
 
