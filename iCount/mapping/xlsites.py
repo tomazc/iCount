@@ -81,13 +81,15 @@ of randomers among) unique mapped sites that overlap with multimapped reads
 
 """
 import re
+import os
 import logging
 
 import pybedtools
+import pysam
 from pysam import AlignmentFile  # pylint: disable=no-name-in-module
 
 import iCount
-from iCount.files import _f2s
+from iCount.files import _f2s, get_temp_file_name
 
 
 LOGGER = logging.getLogger(__name__)
@@ -387,7 +389,7 @@ def _intersects_with_annotaton(second_start, annotation, chrom, strand):
     Does the read's second_start corresopnd to any known segment in annotation
 
     """
-    for gene_content in annotation[(chrom, strand)].values():
+    for gene_content in annotation.values():
         for transcript_id, transcript_content in gene_content.items():
             if transcript_id == 'gene_segment':
                 continue
@@ -401,7 +403,7 @@ def _intersects_with_annotaton(second_start, annotation, chrom, strand):
     return False
 
 
-def _second_start(read, poss, strange, strand, chrom, annotation, holesize_th):
+def _second_start(read, poss, strand, chrom, annotation, holesize_th):
     """
     Return the coordinate of second start.
 
@@ -413,12 +415,13 @@ def _second_start(read, poss, strange, strand, chrom, annotation, holesize_th):
     biggest_hole_size = max(holes) if holes else 0
 
     second_start = 0
+    is_strange = False
     if not annotation:
         # Effectively this means, that read is considered as it has no holes.
         if biggest_hole_size > holesize_th:
             # Still, read is not treated as on with distinct second_start.
             # However, it is reported as starnge:
-            strange.append(read)
+            is_strange = True
     else:
         biggest_hole_size_index = holes.index(biggest_hole_size)
         # Take right border of hole on "+" and left border on "-" strand:
@@ -427,33 +430,72 @@ def _second_start(read, poss, strange, strand, chrom, annotation, holesize_th):
         else:
             second_start = poss[biggest_hole_size_index]
 
-        if not _intersects_with_annotaton(second_start, annotation, chrom, strand):
-            strange.append(read)
-            second_start = 0
+        # Read is strange if:
+        # it is not intersecting with annotation AND
+        # if there actually is a hole
+        if not _intersects_with_annotaton(second_start, annotation, chrom, strand) and \
+                biggest_hole_size != 0:
+            is_strange = True
 
-    return second_start
+    return second_start, is_strange
+
+
+def _get_read_data(read, metrics, mapq_th, annotation=None, gap_th=4):
+    """Extract neccessary data from read."""
+    # NH (number of reported alignments) tag is required:
+    if not read.has_tag('NH'):
+        raise ValueError('"NH" tag not set for record: {}'.format(read.query_name))
+    num_mapped = read.get_tag('NH')
+
+    # Extract randomer sequence (barcode) from querry name (= read name)
+    barcode = _get_random_barcode(read.query_name, metrics)
+    metrics.bc_cn[barcode] = metrics.bc_cn.get(barcode, 0) + 1
+
+    # position of cross-link is one nucleotide before start of read
+    poss = read.get_reference_positions()
+    if read.is_reverse:
+        strand = '-'
+        xlink_pos = poss[-1] + 1
+        end_pos = poss[0]
+    else:
+        strand = '+'
+        xlink_pos = poss[0] - 1
+        xlink_pos = 1 if xlink_pos < 1 else xlink_pos  # Case of neg. pos on circular MT
+        end_pos = poss[-1]
+
+    chrom = read.reference_name
+    second_start, is_strange = _second_start(read, poss, strand, chrom, annotation, gap_th)
+    if is_strange:
+        metrics.strange_recs += 1
+
+    # Position of middle nucleotide. Because we can have spliced reads, middle position is
+    # not necessarily the middle of region the read maps to. Take one nucleotide upstream
+    # of center in case length is even, happens by default on + strand
+    idx = read.query_length // 2 - 1 if (strand == '-' and read.query_length % 2 == 0) \
+        else read.query_length // 2
+    middle_pos = poss[idx]
+
+    return (xlink_pos, barcode, is_strange, strand, middle_pos, end_pos, read.query_length,
+            num_mapped, second_start)
 
 
 def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, annotation=None, gap_th=4):
     """
-    Extract data from BAM file into dictionary.
+    Extract data from BAM file dicts, represnting chunks of genome.
 
     The structire of dictionary is the following::
 
-        grouped = {
-            ('chr1', '+'): (
-                xlink_pos1: {
-                    (barcode1, [
-                        (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
-                        ...
-                    ]),
-                    (barcode2, [
-                        (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
-                        ...
-                    ]),
-                    ....
-                }),
-            ),
+        reads_to_process = {
+            xlink_pos1: {
+                barcode1: [
+                    (strand, middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
+                    ...
+                ],
+                barcode2: [
+                    (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
+                    ...
+                ],
+            },
         }
 
     Parameters
@@ -483,17 +525,6 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, annotation=None, ga
         BAM file with
 
     """
-    # Process annotation, if given:
-    if annotation:
-        # pylint: disable=protected-access
-        annotation = iCount.genomes.segment._prepare_annotation(annotation)
-
-    try:
-        bamfile = AlignmentFile(bam_fname, 'rb')
-    except OSError:
-        raise ValueError('Error opening BAM file: {:s}'.format(bam_fname))
-
-    # counters
     metrics.all_recs = 0  # All records
     metrics.notmapped_recs = 0  # Not mapped records
     metrics.mapped_recs = 0  # Mapped records
@@ -502,84 +533,83 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, annotation=None, ga
     metrics.invalidrandomer_recs = 0  # Records with invalid randomer
     metrics.norandomer_recs = 0  # Records with no randomer
     metrics.bc_cn = {}  # Barcode counter
+    metrics.strange_recs = 0  # Strange records (not expected by annotation)
 
-    # root container for reads (grouped by chromosome, strand, position and random barcode)
-    grouped = {}
-    # Container for reads with strange properties:
-    strange = []
+    def finalize(reads_pending_fwd, reads_pending_rev, start, chrom, progress):
+        """Yield appropriate data."""
+        reads_to_process_fwd = {}
+        for pos in list(reads_pending_fwd):
+            if pos < start:
+                reads_to_process_fwd[pos] = reads_pending_fwd.pop(pos)
+        if reads_to_process_fwd:
+            yield ((chrom, '+'), progress, reads_to_process_fwd)
 
-    _cache_bcs = {}
-    for read in bamfile:
-        metrics.all_recs += 1
-        if read.is_unmapped:
-            metrics.notmapped_recs += 1
-            continue
+        reads_to_process_rev = {}
+        for pos in list(reads_pending_rev):
+            if pos < start:
+                reads_to_process_rev[pos] = reads_pending_rev.pop(pos)
+        if reads_to_process_rev:
+            yield ((chrom, '-'), progress, reads_to_process_rev)
 
-        metrics.mapped_recs += 1
+    # Ensure sorted and and indexed input BAM file:
+    LOGGER.info('Ensuring that bam file is sorted and indexed...')
+    tmp_file = get_temp_file_name()
+    pysam.sort('-o', tmp_file, bam_fname)  # pylint: disable=no-member
+    pysam.index(tmp_file)  # pylint: disable=no-member
+    genome_done = 0
+    ann_data = None
+    LOGGER.info('Detecting cross-links...')
+    with AlignmentFile(tmp_file, 'rb') as bamfile:
+        strange_bam = AlignmentFile(skipped, 'wb', header=bamfile.header)
+        genome_size = sum([contig['LN'] for contig in bamfile.header['SQ']])
+        for chrom in bamfile.references:
+            chrom_len = bamfile.header['SQ'][bamfile.get_tid(chrom)]['LN']
+            if annotation:
+                # pylint: disable=protected-access
+                ann_data = iCount.genomes.segment._prepare_annotation(annotation, chrom)
 
-        if read.mapq < mapq_th:
-            metrics.lowmapq_recs += 1
-            continue
+            reads_pending_fwd = {}
+            reads_pending_rev = {}
+            for read in bamfile.fetch(chrom):
+                metrics.all_recs += 1
+                if read.is_unmapped:
+                    metrics.notmapped_recs += 1
+                    continue
+                metrics.mapped_recs += 1
+                if read.mapping_quality < mapq_th:
+                    metrics.lowmapq_recs += 1
+                    continue
+                metrics.used_recs += 1
 
-        metrics.used_recs += 1
+                rdata = _get_read_data(
+                    read, metrics, mapq_th, annotation=ann_data, gap_th=gap_th)
+                (xlink_pos, barcode, is_strange, strand), read_data = rdata[0:4], rdata[4:]
 
-        # NH (number of reported alignments) tag is required:
-        if read.has_tag('NH'):
-            num_mapped = read.get_tag('NH')
-        else:
-            raise ValueError('"NH" tag not set for record: {}'.format(read.query_name))
+                if is_strange:
+                    strange_bam.write(read)
+                else:
+                    if strand == '+':
+                        reads_pending_fwd.setdefault(
+                            xlink_pos, {}).setdefault(barcode, []).append(read_data)
+                    else:
+                        reads_pending_rev.setdefault(
+                            xlink_pos, {}).setdefault(barcode, []).append(read_data)
 
-        # Extract randomer sequence (``bc``) from querry name (= read name)
-        barcode = _get_random_barcode(read.query_name, metrics)
-        barcode = _cache_bcs.setdefault(barcode, barcode)  # reduce memory consumption
-        metrics.bc_cn[barcode] = metrics.bc_cn.get(barcode, 0) + 1
+                start = read.positions[0]  # Sliding window start (smaller coordinate)
+                progress = round(min((genome_done + start) / genome_size, 1.0), 4)
 
-        # position of cross-link is one nucleotide before start of read
-        poss = sorted(read.positions)
-        if read.is_reverse:
-            strand = '-'
-            xlink_pos = poss[-1] + 1
-            end_pos = poss[0]
-        else:
-            strand = '+'
-            xlink_pos = poss[0] - 1
-            end_pos = poss[-1]
-        xlink_pos = 1 if xlink_pos < 1 else xlink_pos
-        chrom = bamfile.references[read.tid]
+                for data in finalize(reads_pending_fwd, reads_pending_rev, start, chrom, progress):
+                    yield data
 
-        # middle position is position of middle nucleotide. Because we can have
-        # spliced reads, middle position is not necessarily the middle of
-        # region the read maps to.
-        i = len(poss)
-        if i % 2 == 0:
-            i = i // 2
-            if strand == '-':
-                # take one nucleotide upstream of center, happens by default
-                # on + strand
-                i = i - 1
-        else:
-            i = i // 2
-        middle_pos = poss[i]
-        read_len = len(read.seq)
+            start = chrom_len
+            progress = round(min((genome_done + start) / genome_size, 1.0), 4)
+            for data in finalize(reads_pending_fwd, reads_pending_rev, start, chrom, progress):
+                yield data
 
-        second_start = _second_start(read, poss, strange, strand, chrom, annotation, gap_th)
+            genome_done += chrom_len
 
-        read_data = (middle_pos, end_pos, read_len, num_mapped, second_start)
-
-        # store hit data in a "grouped" contianer:
-        grouped.setdefault((chrom, strand), {}).\
-            setdefault(xlink_pos, {}).\
-            setdefault(barcode, []).\
-            append(read_data)
-
-    # Write strange behaved reads to a BAM file:
-    metrics.strange_recs = len(strange)
-    if strange:
-        with AlignmentFile(skipped, "wb", header=bamfile.header) as outf:
-            for read in strange:
-                outf.write(read)
-
-    bamfile.close()
+    # Clean up:
+    os.remove(tmp_file)
 
     # Report:
     LOGGER.info('All records in BAM file: %d', metrics.all_recs)
@@ -596,8 +626,6 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, annotation=None, ga
         LOGGER.info('    %s: %d', barcode, count)
     LOGGER.info('There are %d reads with second-start not falling on annotation. They are '
                 'reported in file: %s', metrics.strange_recs, skipped)
-
-    return grouped
 
 
 def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
@@ -662,16 +690,12 @@ def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
     assert group_by in ['start', 'middle', 'end']
 
     metrics = iCount.Metrics()
-    LOGGER.info('Processing BAM file to internal structure...')
-    grouped = _processs_bam_file(bam, metrics, mapq_th, skipped, segmentation, gap_th)
 
-    LOGGER.info('Detecting cross-links...')
     unique, multi = {}, {}
-    length = len(grouped)
     progress = 0
-    for (chrom, strand), by_pos in grouped.items():
+    for (chrom, strand), new_progress, by_pos in _processs_bam_file(
+            bam, metrics, mapq_th, skipped, segmentation, gap_th):
         if report_progress:
-            new_progress = 1 - len(grouped) / length
             # pylint: disable=protected-access
             progress = iCount._log_progress(new_progress, progress, LOGGER)
 
@@ -686,8 +710,8 @@ def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
             # count all reads mapped les than multimax times
             _update(multi_by_pos, _collapse(xlink_pos, by_bc, group_by, multimax=multimax))
 
-        unique[(chrom, strand)] = unique_by_pos
-        multi[(chrom, strand)] = multi_by_pos
+        unique.setdefault((chrom, strand), {}).update(unique_by_pos)
+        multi.setdefault((chrom, strand), {}).update(multi_by_pos)
 
     # Write output
     val_index = ['cDNA', 'reads'].index(quant)

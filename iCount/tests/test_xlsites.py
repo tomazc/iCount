@@ -229,35 +229,34 @@ class TestCollapse(unittest.TestCase):
 class TestIntersectsWithAnnotaton(unittest.TestCase):
 
     def setUp(self):
-        self.annotation = {
-            (1, '+'): {
-                'gene_id_001': {
-                    'tr_id_0001': [
-                        mock.MagicMock(start=100),
-                    ],
-                    'gene_segment': [],
-                }
-            },
-            (2, '-'): {
-                'gene_id_002': {
-                    'tr_id_0003': [
-                        mock.MagicMock(stop=100),
-                    ]
-                }
-            }
-        }
+        warnings.simplefilter("ignore", ResourceWarning)
 
     def test_pos_strand(self):
+        annotation = {
+            'gene_id_001': {
+                'tr_id_0001': [
+                    mock.MagicMock(start=100),
+                ],
+                'gene_segment': [],
+            }
+        }
         self.assertTrue(
-            xlsites._intersects_with_annotaton(100, self.annotation, 1, '+'))
+            xlsites._intersects_with_annotaton(100, annotation, 1, '+'))
         self.assertFalse(
-            xlsites._intersects_with_annotaton(101, self.annotation, 1, '+'))
+            xlsites._intersects_with_annotaton(101, annotation, 1, '+'))
 
     def test_neg_strand(self):
+        annotation = {
+            'gene_id_002': {
+                'tr_id_0003': [
+                    mock.MagicMock(stop=100),
+                ]
+            },
+        }
         self.assertTrue(
-            xlsites._intersects_with_annotaton(100, self.annotation, 2, '-'))
+            xlsites._intersects_with_annotaton(100, annotation, 2, '-'))
         self.assertFalse(
-            xlsites._intersects_with_annotaton(101, self.annotation, 2, '-'))
+            xlsites._intersects_with_annotaton(101, annotation, 2, '-'))
 
 
 class TestSecondStart(unittest.TestCase):
@@ -269,57 +268,51 @@ class TestSecondStart(unittest.TestCase):
 
     def test_second_start_annotation(self):
         annotation = {
-            (1, '+'): {
-                'G001': {
-                    'gene_segment': [],
-                    'T0001': [
-                        pybedtools.create_interval_from_list(
-                            ['1', '.', 'exon', '100', '200', '.', '+', '.',
-                             'gene_id: "G001"', 'transcript_id: "T0001"']),
-                    ],
-                },
+            'G001': {
+                'gene_segment': [],
+                'T0001': [
+                    pybedtools.create_interval_from_list(
+                        ['1', '.', 'exon', '100', '200', '.', '+', '.',
+                         'gene_id: "G001"', 'transcript_id: "T0001"']),
+                ],
             },
-            (1, '-'): {
-                'G002': {
-                    'gene_segment': [],
-                    'T0002': [
-                        pybedtools.create_interval_from_list(
-                            ['1', '.', 'exon', '50', '100', '.', '-', '.',
-                             'gene_id: "G001"', 'transcript_id: "T0001"']),
-                    ],
-                },
+            'G002': {
+                'gene_segment': [],
+                'T0002': [
+                    pybedtools.create_interval_from_list(
+                        ['1', '.', 'exon', '50', '100', '.', '-', '.',
+                         'gene_id: "G001"', 'transcript_id: "T0001"']),
+                ],
             },
         }
 
-        second_start = xlsites._second_start(
-            read=0, poss=(1, 2, 99, 100), strange=[], strand='+', chrom=1,
+        second_start, _ = xlsites._second_start(
+            read=0, poss=(1, 2, 99, 100), strand='+', chrom=1,
             annotation=annotation, holesize_th=4)
         self.assertEqual(second_start, 99)
 
-        second_start = xlsites._second_start(
-            read=0, poss=(99, 100, 199, 200), strange=[], strand='-', chrom=1,
+        second_start, _ = xlsites._second_start(
+            read=0, poss=(99, 100, 199, 200), strand='-', chrom=1,
             annotation=annotation, holesize_th=4)
         self.assertEqual(second_start, 100)
 
-        second_start = xlsites._second_start(
-            read=0, poss=(1, 2, 4, 5), strange=[], strand='-', chrom=1,
+        second_start, _ = xlsites._second_start(
+            read=0, poss=(1, 2, 4, 5), strand='-', chrom=1,
             annotation=annotation, holesize_th=4)
-        self.assertEqual(second_start, 0)
+        self.assertEqual(second_start, 2)
 
     def test_second_start_no_annotation(self):
         # If hole size is lower than holesize_th, strange should be empty:
-        strange = []
-        xlsites._second_start(
-            read='the_read', poss=(1, 2, 5, 6), strange=strange, strand='+', chrom=1,
+        _, is_strange = xlsites._second_start(
+            read='the_read', poss=(1, 2, 5, 6), strand='+', chrom=1,
             annotation=None, holesize_th=1)
-        self.assertEqual(strange, ['the_read'])
+        self.assertTrue(is_strange)
 
         # If hole size is lower than holesize_th, strange should be empty:
-        strange = []
-        xlsites._second_start(
-            read='the_read', poss=(1, 2, 5, 6), strange=strange, strand='+', chrom=1,
+        _, is_strange = xlsites._second_start(
+            read='the_read', poss=(1, 2, 5, 6), strand='+', chrom=1,
             annotation=None, holesize_th=2)
-        self.assertEqual(strange, [])
+        self.assertFalse(is_strange)
 
 
 class TestProcessBamFile(unittest.TestCase):
@@ -328,16 +321,6 @@ class TestProcessBamFile(unittest.TestCase):
         self.metrics = mock.MagicMock()
         self.tmp = get_temp_file_name(extension='bam.gz')
         warnings.simplefilter("ignore", ResourceWarning)
-
-    def test_error_open_bamfile(self):
-        """
-        Provide onyl file with no content - error shoud be raised.
-        """
-        bam_fname = get_temp_file_name()
-
-        message = r"Error opening BAM file: .*"
-        with self.assertRaisesRegex(ValueError, message):
-            xlsites._processs_bam_file(bam_fname, self.metrics, 50, self.tmp)
 
     def test_unmapped(self):
         """
@@ -350,7 +333,7 @@ class TestProcessBamFile(unittest.TestCase):
         self.metrics.all_recs = 0
         self.metrics.notmapped_recs = 0
         self.metrics.used_recs = 0
-        xlsites._processs_bam_file(bam_fname, self.metrics, 0, self.tmp)
+        list(xlsites._processs_bam_file(bam_fname, self.metrics, 0, self.tmp))
         self.assertEqual(self.metrics.notmapped_recs, 1)
         self.assertEqual(self.metrics.all_recs, 1)
         self.assertEqual(self.metrics.used_recs, 0)
@@ -361,11 +344,11 @@ class TestProcessBamFile(unittest.TestCase):
         """
         bam_fname = make_bam_file({
             'chromosomes': [('chr1', 3000)],
-            'segments': [('name1', 0, 0, 0, 3, [(0, 0)], {})],
+            'segments': [('name1', 0, 0, 0, 3, [(0, 100)], {})],
         })
         self.metrics.lowmapq_recs = 0
         self.metrics.used_recs = 0
-        xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp)
+        list(xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp))
         self.assertEqual(self.metrics.lowmapq_recs, 1)
         self.assertEqual(self.metrics.used_recs, 0)
 
@@ -374,12 +357,12 @@ class TestProcessBamFile(unittest.TestCase):
             'chromosomes': [('chr1', 3000)],
             'segments': [
                 # No NH tag is set
-                ('name5', 0, 0, 0, 50, [(0, 0)], {})]}
+                ('name5', 0, 0, 0, 50, [(0, 100)], {})]}
         bam_fname = make_bam_file(data_no_nh)
 
         message = r'"NH" tag not set for record: .*'
         with self.assertRaisesRegex(ValueError, message):
-            xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp)
+            list(xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp))
 
     def test_pos_neg_strand(self):
         """
@@ -395,12 +378,12 @@ class TestProcessBamFile(unittest.TestCase):
                 ('_:rbc:CCC', 0, 0, 50, 255, [(0, 101)], {'NH': 1}),
             ],
         })
-        grouped = xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp)
+        grouped = list(xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp))
 
-        expected = {
-            ('chr1', '-'): {150: {'AAA': [(99, 50, 100, 1, 0)]}},
-            ('chr1', '+'): {49: {'CCC': [(100, 150, 101, 1, 0)]}},
-        }
+        expected = [
+            (('chr1', '+'), 0.0167, {49: {'CCC': [(100, 150, 101, 1, 0)]}}),
+            (('chr1', '-'), 1.0, {150: {'AAA': [(99, 50, 100, 1, 0)]}}),
+        ]
         self.assertEqual(grouped, expected)
 
 

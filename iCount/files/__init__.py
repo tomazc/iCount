@@ -113,6 +113,20 @@ def decompress_to_tempfile(fname, context='misc'):
     return fname
 
 
+def get_temp_file_name(tmp_dir=None, extension=''):
+    """Return an availiable name for temporary file."""
+    if tmp_dir is None:
+        tmp_dir = iCount.TMP_ROOT
+    # pylint: disable=protected-access
+    tmp_name = next(tempfile._get_candidate_names())
+    if not tmp_dir:
+        # pylint: disable=protected-access
+        tmp_dir = tempfile._get_default_tempdir()
+    if extension is not None:
+        tmp_name = tmp_name + '.' + extension
+    return os.path.join(tmp_dir, tmp_name)
+
+
 def _f2s(number, dec=4):
     """
     Return string representation of ``number``.
