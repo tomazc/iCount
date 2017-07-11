@@ -428,22 +428,19 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
     # The root container:
     data = {}
 
-    LOGGER.info('Parsing BAM file to internal structure...')
-    grouped = iCount.mapping.xlsites._processs_bam_file(  # pylint: disable=protected-access
-        bam, metrics, mapq_th, strange, annotation=segmentation, gap_th=holesize_th)
-
-    LOGGER.info('Parsing segmentation to internal structure...')
-    # pylint: disable=protected-access
-    segmentation = iCount.genomes.segment._prepare_annotation(segmentation)
-
+    progress = 0
     LOGGER.info('Processing data...')
-    for (chrom, strand), by_pos in grouped.items():
+    # pylint: disable=protected-access
+    for (chrom, strand), new_progress, by_pos in iCount.mapping.xlsites._processs_bam_file(
+            bam, metrics, mapq_th, strange, annotation=segmentation, gap_th=holesize_th):
 
-        LOGGER.debug("Processing chromosome %s, strand %s", chrom, strand)
+        # pylint: disable=protected-access
+        progress = iCount._log_progress(new_progress, progress, LOGGER)
 
         # Sort all genes (and intergenic) by start coordinate.
         segmentation_sorted = sorted(
-            segmentation[(chrom, strand)].items(), key=lambda x: x[1]['gene_segment'].start)
+            iCount.genomes.segment._prepare_annotation(segmentation, chrom).items(),
+            key=lambda x: x[1]['gene_segment'].start)
         seg_max_index = len(segmentation_sorted) - 1
         start_gene_index, stop_gene_index = 0, seg_max_index
 

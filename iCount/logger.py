@@ -190,7 +190,8 @@ def _log_progress(new_ratio, old_ratio, logger, decimals=2):
     """
     new_ratio = round(new_ratio, decimals)
     if new_ratio != old_ratio:
-        logger.info('%s', '{}%'.format(new_ratio * 100))
+        # pylint: disable=protected-access
+        logger.info('%s', '{}%'.format(iCount.files._f2s(new_ratio * 100, dec=decimals)))
         return new_ratio
     else:
         return old_ratio

@@ -144,7 +144,7 @@ class TestRun(unittest.TestCase):
 
         expected = [
             ['chrom', 'strand', 'xlink', 'second-start', 'end-position', 'read_len'],
-            ['1', '+', '234', '0', '284', '50'],
+            ['1', '+', '234', '236', '284', '50'],
         ]
 
         rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1)
