@@ -20,7 +20,8 @@ RUN apt-get update && apt-get upgrade -y && \
     python3-setuptools \
     python-virtualenv \
     python-pip \
-    git
+    git && \
+    apt-get build-dep -y python3-matplotlib
 
 RUN apt-get autoclean -y && \
     apt-get autoremove -y
@@ -67,6 +68,9 @@ WORKDIR /home/icuser
 RUN virtualenv -p python3 /home/icuser/.icountenv
 
 USER root
+# to speed-up building of Docker images
+RUN /home/icuser/.icountenv/bin/pip install numpy pandas pysam pybedtools numpydoc matplotlib
+
 ADD . /home/icuser/iCount_src
 RUN chown -R icuser.icuser /home/icuser
 
@@ -83,5 +87,7 @@ USER icuser
 RUN mkdir /home/icuser/storage
 
 ENV PATH /home/icuser/bin:$PATH
+
+WORKDIR /home/icuser
 
 CMD ["/bin/bash"]

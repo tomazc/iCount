@@ -2,6 +2,8 @@
 Tutorial
 ********
 
+You will need to install iCount first. Please, follow :doc:`these instructions <installation>`.
+
 **iCount** provides all commands needed to process FASTQ files with iCLIP sequencing data and
 generate BED files listing identified and quantified cross-linked sites.
 
@@ -24,15 +26,15 @@ get a list of available releases supported by **iCount**::
 
     $ iCount releases
 
-    There are 26 releases available: 84,83,82,81,80,79,78,77,76,75,74,73,72,
-    71,70,69,68,67,66,65,64,63,62,61,60,59
+    There are 30 releases available: 88,87,86,85,84,83,82,81,80,79,78,77,76,75,74,73,
+    72,71,70,69,68,67,66,65,64,63,62,61,60,59
 
 
 You can then use the command ``species`` to get a list of species available in a release::
 
-    $ iCount species -r 84
+    $ iCount species -r 88
 
-    There are 70 species available: ailuropoda_melanoleuca,anas_platyrhynchos,
+    There are 87 species available: ailuropoda_melanoleuca,anas_platyrhynchos,
     ancestral_alleles,anolis_carolinensis,astyanax_mexicanus,bos_taurus,
     ...
     gorilla_gorilla,homo_sapiens,ictidomys_tridecemlineatus,latimeria_chalumnae,
@@ -44,31 +46,31 @@ You can then use the command ``species`` to get a list of species available in a
 
 Let's download the human genome sequence from release 84::
 
-    $ iCount genome homo_sapiens -r 84 --chromosomes 21 MT
+    $ iCount genome homo_sapiens -r 88 --chromosomes 21 MT
 
-    Downloading FASTA file into: /..././homo_sapiens.84.chr21_MT.fa.gz
-    Fai file saved to : /..././iCount/homo_sapiens.84.chr21_MT.fa.gz.fai
+    Downloading FASTA file into: /..././homo_sapiens.88.chr21_MT.fa.gz
+    Fai file saved to : /..././iCount/homo_sapiens.88.chr21_MT.fa.gz.fai
     Done.
 
 .. note::
     Processing the entire genome is computationally very expensive. For this reason, we are
     limiting the tutorial example to chromosomes 21 and MT.
 
-And the annotation of the human genome from release 84::
+And the annotation of the human genome from release 88::
 
-    $ iCount annotation homo_sapiens -r 84
+    $ iCount annotation homo_sapiens -r 88
 
-    Downloading GTF to: /..././homo_sapiens.84.gtf.gz
+    Downloading GTF to: /..././homo_sapiens.88.gtf.gz
     Done.
 
 The next step is to generate a genome index that is used by `STAR`_ mapper. Let's call the index
-``hs84`` and use ensembl's GTF annotation on genes::
+``hs88`` and use ensembl's GTF annotation on genes::
 
-    $ mkdir hs84  # folder should be empty
-    $ iCount indexstar homo_sapiens.84.chr21_MT.fa.gz hs84 \
-    --annotation homo_sapiens.84.gtf.gz
+    $ mkdir hs88  # folder should be empty
+    $ iCount indexstar homo_sapiens.88.chr21_MT.fa.gz hs88 \
+    --annotation homo_sapiens.88.gtf.gz
 
-    Building genome index with STAR for genome homo_sapiens.84.fa.gz
+    Building genome index with STAR for genome homo_sapiens.88.fa.gz
     <timestamp> ..... Started STAR run
     <timestamp> ... Starting to generate Genome files
     <timestamp> ... starting to sort  Suffix Array. This may take a long time...
@@ -85,8 +87,8 @@ The next step is to generate a genome index that is used by `STAR`_ mapper. Let'
     Done.
 
 .. note::
-    A subfolder ``hs84`` will be created in current working directory. You can specify
-    alternative relative or absolute paths, e.g., ``indexes/hs84``.
+    A subfolder ``hs88`` will be created in current working directory. You can specify
+    alternative relative or absolute paths, e.g., ``indexes/hs88``.
 
 We are now ready to start mapping iCLIP data to the human genome!
 
@@ -103,7 +105,13 @@ Preparing iCLIP data for mapping
 Let's process one of the *hnRNP C* sequencing data files from the original `iCLIP publication`_::
 
     $ wget http://icount.fri.uni-lj.si/data/20101116_LUjh03/\
-    SLX-2605.CRIRUN_501.s_4.sequence.txt.gz -O hnRNPC.fq.gz
+    SLX-2605.CRIRUN_501.s_4.sequence.reduced.txt.gz -O hnRNPC.fq.gz
+
+.. note::
+    In the tutorial, we are using a subset of the file [23 MB]. If you want to use the entire file, then download it::
+
+        $ wget http://icount.fri.uni-lj.si/data/20101116_LUjh03/\
+        SLX-2605.CRIRUN_501.s_4.sequence.txt.gz -O hnRNPC.fq.gz
 
 This is a single file that contains five iCLIP experiments. Each experiment is marked with a
 unique barcode sequence at the very beginning of the sequencing reads. Part of the barcode are
@@ -167,8 +175,8 @@ First, create a folder to store the mapping results::
 Then, map the reads in the selected FASTQ file using STAR and the genome index we have generated
 at the very beginning of this tutorial::
 
-    $ iCount mapstar demultiplexed/demux_NNNACCTNN.fastq.gz hs84 mapping_NNNACCTNN \
-    --annotation homo_sapiens.84.gtf.gz
+    $ iCount mapstar demultiplexed/demux_NNNACCTNN.fastq.gz hs88 mapping_NNNACCTNN \
+    --annotation homo_sapiens.88.gtf.gz
 
     Mapping reads from demultiplexed/demux_NNNACCTNN.fastq.gz
     <timestamp> ..... Started STAR run
@@ -225,16 +233,16 @@ regions.
 Command ``segment`` can read the annotation obtained from `ensembl`_ and generate a new
 annotation file with genome segmentation::
 
-    $ iCount segment homo_sapiens.84.gtf.gz hs84seg.gtf.gz \
-    homo_sapiens.84.chr21_MT.fa.gz.fai
+    $ iCount segment homo_sapiens.88.gtf.gz hs88seg.gtf.gz \
+    homo_sapiens.88.chr21_MT.fa.gz.fai
 
     Calculating intergenic regions...
-    Segmentation stored in hs84seg.gtf.gz
+    Segmentation stored in hs88seg.gtf.gz
 
 Command ``peaks`` reads a genome segmentation GTF file, a BED file with cross-linked sites and
 generates a BED file with subset of significantly cross-linked sites::
 
-    $ iCount peaks hs84seg.gtf.gz NNNACCTNN_cDNA_unique.bed peaks.bed \
+    $ iCount peaks hs88seg.gtf.gz NNNACCTNN_cDNA_unique.bed peaks.bed \
     --scores scores.tsv
 
     Loading annotation file...

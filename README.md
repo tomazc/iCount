@@ -30,11 +30,13 @@ You may start with the [tutorial](http://icount.readthedocs.io/en/latest/tutoria
 iCount is developed and supported by [Tomaž Curk](http://curk.info) from the 
 [Bioinformatics Laboratory](http://biolab.si) at the [University of Ljubljana](http://www.uni-lj.si), 
 [Faculty of Computer and Information Science](http://www.fri.uni-lj.si) and in collaboration with 
-the laboratory of [Jernej Ule](http://ulelab.info). Starting in mid-2016, 
-[Jure Zmrzlikar](https://github.com/JureZmrzlikar) from [Genialis](http://www.genialis.com) helped in
-refactoring and improving the code. For details, see the 
-[how to cite](http://icount.readthedocs.io/en/latest/cite.html) section in the documentation.
+the laboratory of [Jernej Ule](http://ulelab.info).
 
+The development started in late 2008 when Tomaž Curk and Gregor Rot wrote a first prototype of iCount.
+In mid-2016, [Jure Zmrzlikar](https://github.com/JureZmrzlikar) from [Genialis](http://www.genialis.com) 
+helped refactoring and improving the code, which is now available here.
+For details and full acknowledgments, see the 
+[how to cite](http://icount.readthedocs.io/en/latest/cite.html) section in the documentation.
 
 
 ## Contributing
