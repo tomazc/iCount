@@ -14,7 +14,7 @@ __author__ = 'University of Ljubljana, Bioinformatics Laboratory'
 __email__ = 'tomazc@gmail.com'
 
 __license__ = 'MIT'
-__copyright__ = '2016, ' + __author__
+__copyright__ = '2016-2017, ' + __author__
 
 __all__ = (
     '__title__', '__summary__', '__url__', '__version__', '__author__',

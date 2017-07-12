@@ -6,40 +6,45 @@ cd tutorial_example
 
 iCount releases
 
-iCount species -r 84
+iCount species -r 88
 
-iCount genome homo_sapiens -r 84 --chromosomes 21 MT
+iCount genome homo_sapiens -r 88 --chromosomes 21 MT
 
-iCount annotation homo_sapiens -r 84
+iCount annotation homo_sapiens -r 88
 
-mkdir hs84
-iCount indexstar homo_sapiens.84.chr21_MT.fa.gz hs84 --annotation homo_sapiens.84.gtf.gz
+mkdir hs88
+iCount indexstar homo_sapiens.88.chr21_MT.fa.gz hs88 --annotation homo_sapiens.88.gtf.gz
 
-wget http://icount.fri.uni-lj.si/data/20101116_LUjh03/\
-SLX-2605.CRIRUN_501.s_4.sequence.txt.gz -O hnRNPC.fq.gz
+# the whole data set [880 MB] is available here:
+#wget http://icount.fri.uni-lj.si/data/20101116_LUjh03/\
+#SLX-2605.CRIRUN_501.s_4.sequence.txt.gz -O hnRNPC.fq.gz
+
+# in this tutorial, we are using a subset of reads [23 MB]
+wget http://icount.fri.uni-lj.si/data/20101116_LUjh03/SLX-2605\
+.CRIRUN_501.s_4.sequence.reduced.txt.gz -O hnRNPC.fq.gz
 
 mkdir demultiplexed
 iCount demultiplex hnRNPC.fq.gz AGATCGGAAGAGCGGTTCAG NNNGGTTNN NNNTTGTNN \
-NNNCAATNN NNNACCTNN NNNGGCGNN --out_dir "demultiplexed"
+NNNCAATNN NNNACCTNN NNNGGCGNN --out_dir demultiplexed
 
 ls -lh demultiplexed
 
-mkdir mapping_NNNACCTNN
-iCount map demultiplexed/demux_NNNACCTNN.fastq.gz hs84 mapping_NNNACCTNN \
---annotation homo_sapiens.84.gtf.gz
+mkdir mapping_NNNGGCGNN
+iCount mapstar demultiplexed/demux_NNNGGCGNN.fastq.gz hs88 mapping_NNNGGCGNN \
+--annotation homo_sapiens.88.gtf.gz
 
-ls -lh mapping_NNNACCTNN
+ls -lh mapping_NNNGGCGNN
 
-iCount xlsites mapping_NNNACCTNN/Aligned.sortedByCoord.out.bam \
-NNNACCTNN_cDNA_unique.bed  NNNACCTNN_cDNA_multiple.bed NNNACCTNN_cDNA_skipped.bam \
+iCount xlsites mapping_NNNGGCGNN/Aligned.sortedByCoord.out.bam \
+NNNGGCGNN_cDNA_unique.bed  NNNGGCGNN_cDNA_multiple.bed NNNGGCGNN_cDNA_skipped.bam \
 --group_by start --quant cDNA
 
-iCount xlsites mapping_NNNACCTNN/Aligned.sortedByCoord.out.bam \
-NNNACCTNN_reads_unique.bed  NNNACCTNN_reads_multiple.bed NNNACCTNN_reads_skipped.bam \
+iCount xlsites mapping_NNNGGCGNN/Aligned.sortedByCoord.out.bam \
+NNNGGCGNN_reads_unique.bed  NNNGGCGNN_reads_multiple.bed NNNGGCGNN_reads_skipped.bam \
 --group_by start --quant reads
 
-iCount segment homo_sapiens.84.gtf.gz hs84seg.gtf.gz \
-homo_sapiens.84.chr21_MT.fa.gz.fai
+iCount segment homo_sapiens.88.gtf.gz hs88seg.gtf.gz \
+homo_sapiens.88.chr21_MT.fa.gz.fai
 
-iCount peaks hs84seg.gtf.gz NNNACCTNN_cDNA_unique.bed peaks.bed \
+iCount peaks hs88seg.gtf.gz NNNGGCGNN_cDNA_unique.bed peaks.bed \
 --scores scores.tsv

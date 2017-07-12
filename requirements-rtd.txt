@@ -5,6 +5,7 @@ pysam
 pybedtools
 numpydoc
 sphinx>=1.4
+matplotlib
 docutils
 sphinx_rtd_theme
 releases

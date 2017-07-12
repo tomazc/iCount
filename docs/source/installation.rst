@@ -3,16 +3,75 @@ Installation
 ************
 
 
-Installing from pypi
-====================
+Running with Docker
+===================
 
-The simplest way to install **iCount** is from `PyPI`_. Installing is done with
-one-line command::
+`Docker`_ provides an easy way to run iCount in a working environment that is completely separated
+from your host machine.
 
-    pip install iCount
+A ready-to-use image of iCount is available at `Docker Hub`_. After
+:ref:`Installing Docker <installing-docker>` on your machine, you can run iCount by issuing the
+following command::
 
-We recommend installing the package in `virtualenv`_. If installing the package
-globally, you may need root priviliges (prefix upper command with ``sudo``)
+    docker run -i -t tomazc/icount
+
+
+If you want to build an image from source, then change to the source folder and issue the
+following command::
+
+    docker build -t icountsrc .
+
+
+You can then run the freshly built image::
+
+    docker run -i -t icountsrc
+
+
+.. _`Docker`:
+    https://www.docker.com
+
+.. _`Docker Hub`:
+    https://hub.docker.com/r/tomazc/icount/
+
+
+Installing from the Python Package Index (PyPI)
+===============================================
+
+The simplest way to install **iCount** is from `PyPI`_, by issuing the following command::
+
+    pip install icount
+
+
+If installing the package globally, you may need root priviliges (prefix upper command with
+``sudo``).
+
+
+Running within virtualenv
+=========================
+
+We recommend installing the package in `virtualenv`_. First, install the virtualenv tool and
+create a virtual environment, stored in ``~/envs/icount_env``::
+
+    pip3 install virtualenv
+    virtualenv ~/envs/icount_env
+
+Then activate the environment and install iCount into it using pip::
+
+    source ~/envs/icount_env/bin/activate
+    pip install icount
+
+To use iCount, make sure that the proper virtualenv is loaded::
+
+    source ~/envs/icount_env/bin/activate
+
+Afterwards you can import iCount::
+
+    python
+    >>> import iCount
+
+Or use its command line interface::
+
+    iCount -h
 
 .. _`virtualenv`:
     https://virtualenv.pypa.io/en/stable/
@@ -28,19 +87,3 @@ If you wish to install form source, follow instructions in section
 :doc:`Contributing <contributing>`.
 
 
-Docker
-======
-
-When working with docker, make sure that the docker-machine has enough memory to run STAR and
-associated programs, *e.g.*, at least 64 GB::
-
-    docker-machine create -d virtualbox --virtualbox-memory 32768 --virtualbox-disk-size "46080" default
-
-.. note::
-    Other options for `VirtualBox`_ are described `here`_.
-
-.. _`VirtualBox`:
-    https://www.virtualbox.org/
-
-.. _`here`:
-    https://docs.docker.com/machine/drivers/virtualbox/

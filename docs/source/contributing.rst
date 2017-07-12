@@ -44,6 +44,27 @@ Prepare iCount for development::
     https://virtualenv.pypa.io/en/stable/
 
 
+
+.. _`installing-docker`:
+
+Installing Docker
+=================
+
+When working with docker, make sure that the docker-machine has enough memory to run STAR and
+associated programs, *e.g.*, at least 32 GB RAM and 45 GB disk::
+
+    docker-machine create -d virtualbox --virtualbox-memory 32768 --virtualbox-disk-size "46080" default
+
+.. note::
+    Other options for `VirtualBox`_ are described `here`_.
+
+.. _`VirtualBox`:
+    https://www.virtualbox.org/
+
+.. _`here`:
+    https://docs.docker.com/machine/drivers/virtualbox/
+
+
 Building the documentation
 ==========================
 
@@ -51,6 +72,7 @@ Issue these commands to build the documentation::
 
     pip install -e .[docs]
     sphinx-build -E -W docs/source/ build/sphinx/html
+    open build/sphinx/html/index.html
 
 
 Python module and CLI living together
