@@ -52,6 +52,7 @@ setup(
         'pybedtools',
         'numpydoc',
         'sphinx>=1.4',
+        'matplotlib',
     },
     extras_require={
         'docs': [

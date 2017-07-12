@@ -232,7 +232,7 @@ class TestIntersectsWithAnnotaton(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_pos_strand(self):
-        annotation = {
+        segmentation = {
             'gene_id_001': {
                 'tr_id_0001': [
                     mock.MagicMock(start=100),
@@ -241,12 +241,12 @@ class TestIntersectsWithAnnotaton(unittest.TestCase):
             }
         }
         self.assertTrue(
-            xlsites._intersects_with_annotaton(100, annotation, 1, '+'))
+            xlsites._intersects_with_annotaton(100, segmentation, 1, '+'))
         self.assertFalse(
-            xlsites._intersects_with_annotaton(101, annotation, 1, '+'))
+            xlsites._intersects_with_annotaton(101, segmentation, 1, '+'))
 
     def test_neg_strand(self):
-        annotation = {
+        segmentation = {
             'gene_id_002': {
                 'tr_id_0003': [
                     mock.MagicMock(stop=100),
@@ -254,9 +254,9 @@ class TestIntersectsWithAnnotaton(unittest.TestCase):
             },
         }
         self.assertTrue(
-            xlsites._intersects_with_annotaton(100, annotation, 2, '-'))
+            xlsites._intersects_with_annotaton(100, segmentation, 2, '-'))
         self.assertFalse(
-            xlsites._intersects_with_annotaton(101, annotation, 2, '-'))
+            xlsites._intersects_with_annotaton(101, segmentation, 2, '-'))
 
 
 class TestSecondStart(unittest.TestCase):
@@ -266,8 +266,8 @@ class TestSecondStart(unittest.TestCase):
         self.tmp = get_temp_file_name(extension='bam.gz')
         warnings.simplefilter("ignore", ResourceWarning)
 
-    def test_second_start_annotation(self):
-        annotation = {
+    def test_second_start_segmentation(self):
+        segmentation = {
             'G001': {
                 'gene_segment': [],
                 'T0001': [
@@ -288,30 +288,30 @@ class TestSecondStart(unittest.TestCase):
 
         second_start, _ = xlsites._second_start(
             read=0, poss=(1, 2, 99, 100), strand='+', chrom=1,
-            annotation=annotation, holesize_th=4)
+            segmentation=segmentation, holesize_th=4)
         self.assertEqual(second_start, 99)
 
         second_start, _ = xlsites._second_start(
             read=0, poss=(99, 100, 199, 200), strand='-', chrom=1,
-            annotation=annotation, holesize_th=4)
+            segmentation=segmentation, holesize_th=4)
         self.assertEqual(second_start, 100)
 
         second_start, _ = xlsites._second_start(
             read=0, poss=(1, 2, 4, 5), strand='-', chrom=1,
-            annotation=annotation, holesize_th=4)
+            segmentation=segmentation, holesize_th=4)
         self.assertEqual(second_start, 2)
 
-    def test_second_start_no_annotation(self):
+    def test_second_start_no_seg(self):
         # If hole size is lower than holesize_th, strange should be empty:
         _, is_strange = xlsites._second_start(
             read='the_read', poss=(1, 2, 5, 6), strand='+', chrom=1,
-            annotation=None, holesize_th=1)
+            segmentation=None, holesize_th=1)
         self.assertTrue(is_strange)
 
         # If hole size is lower than holesize_th, strange should be empty:
         _, is_strange = xlsites._second_start(
             read='the_read', poss=(1, 2, 5, 6), strand='+', chrom=1,
-            annotation=None, holesize_th=2)
+            segmentation=None, holesize_th=2)
         self.assertFalse(is_strange)
 
 
