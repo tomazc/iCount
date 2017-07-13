@@ -78,7 +78,7 @@ def annotate_cross_links(annotation, sites, sites_annotated, subtype='biotype',
     def finalize(types, site):
         """Make annotated (with all intersecting types) cross link interval."""
         data.append(create_interval_from_list(
-            site[0:3] + [', '.join(map(str, sorted(set(types))))] + site[4:6]))
+            site[0:3] + ['; '.join(map(str, sorted(set(types))))] + site[4:6]))
 
     for interval in overlaps:
         # Detect new cross link:

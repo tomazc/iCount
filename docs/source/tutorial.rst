@@ -44,7 +44,7 @@ You can then use the command ``species`` to get a list of species available in a
 .. note::
     Current version of iCount is tested to work with human and rat genomes only.
 
-Let's download the human genome sequence from release 84::
+Let's download the human genome sequence from release 88::
 
     $ iCount genome homo_sapiens -r 88 --chromosomes 21 MT
 
@@ -259,13 +259,47 @@ generates a BED file with subset of significantly cross-linked sites::
     P-value and FDR scores of all cross-linked sites can be stored by providing the parameter ``--scores``.
 
 
-Generating RNA maps
-===================
+Identifying clusters of significantly cross-linked sites
+========================================================
 
-TODO
+Command ``clusters`` reads a BED file with cross-linked sites and
+generates a BED file with clusters of cross-linked sites::
+
+    $ iCount clusters peaks.bed clusters.bed
 
 
-Identifying enriched k-mers
-===========================
+    Merging cross links form file peaks.bed
+    Done. Results saved to: clusters.bed
 
-TODO
+
+Annotating sites and summary statistics
+=======================================
+
+Command ``clusters`` reads genome segmentation GTF file, a BED file with cross-linked sites and
+generates a file, where each site is annotated. By default it will annotate according to the
+biotype::
+
+    $ iCount annotate hs88seg.gtf.gz NNNGGCGNN_cDNA_unique.bed annotated_sites_biotype.tab
+
+    Calculating overlaps between cross-link and annotation_file...
+    Writing results to file...
+    Done. Output saved to: annotated_sites_biotype.tab
+
+You can specify other attributes from annotation to use. For example, we can determine, which genes
+are annotated to each site::
+
+    $ iCount annotate --subtype gene_id hs88seg.gtf.gz NNNGGCGNN_cDNA_unique.bed \
+    annotated_sites_genes.tab
+
+    Calculating overlaps between cross-link and annotation_file...
+    Writing results to file...
+    Done. Output saved to: annotated_sites_genes.tab
+
+A summary of annotations can be generated with the command ``summary``::
+
+    $ iCount summary hs88seg.gtf.gz NNNGGCGNN_cDNA_unique.bed summary.tab \
+    homo_sapiens.88.chr21_MT.fa.gz.fai
+
+    Calculating intersection between cross-link and annotation...
+    Extracting summary from data...
+    Done. Results saved to: summary.tab

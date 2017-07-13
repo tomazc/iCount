@@ -13,7 +13,7 @@ import pybedtools
 from pybedtools import create_interval_from_list
 
 import iCount
-from iCount.genomes.segment import _complement
+from iCount.genomes.segment import _complement, _first_two_columns
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +46,8 @@ def make_types_length_file(annotation, fai, out_file=None, subtype='biotype', ex
     excluded_types = excluded_types or []
     ann_filtered = pybedtools.BedTool(annotation).filter(
         lambda x: x[2] not in excluded_types).sort().saveas()
+
+    fai = _first_two_columns(fai)
 
     if out_file is None:
         match = re.match(r'([\w_]+\.\d+.).*', os.path.basename(annotation))
@@ -89,7 +91,7 @@ def make_types_length_file(annotation, fai, out_file=None, subtype='biotype', ex
 
 
 def make_summary_report(annotation, sites, summary, fai, types_length_file=None, digits='8',
-                        subtype='biotype', excluded_types=None):
+                        subtype=None, excluded_types=None):
     """
     Make summary report from cross-link and annotation data.
 
@@ -210,5 +212,5 @@ def make_summary_report(annotation, sites, summary, fai, types_length_file=None,
             line = line[:1] + [round(i, int(digits)) for i in line[1:]]
             out.write('\t'.join(map(str, line)) + '\n')
 
-    LOGGER.info('Done. Results written in %s.', os.path.abspath(summary))
+    LOGGER.info('Done. Results saved to: %s', os.path.abspath(summary))
     return metrics
