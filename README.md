@@ -32,11 +32,11 @@ iCount is developed and supported by [Tomaž Curk](http://curk.info) from the
 [Faculty of Computer and Information Science](http://www.fri.uni-lj.si) and in collaboration with 
 the laboratory of [Jernej Ule](http://ulelab.info).
 
-The development started in late 2008 when Tomaž Curk and Gregor Rot wrote a first prototype of iCount.
-In mid-2016, [Jure Zmrzlikar](https://github.com/JureZmrzlikar) from [Genialis](http://www.genialis.com) 
-helped refactoring and improving the code, which is now available here.
-For details and full acknowledgments, see the 
-[how to cite](http://icount.readthedocs.io/en/latest/cite.html) section in the documentation.
+The development started in late 2008 when Tomaž Curk and Gregor Rot
+wrote a first prototype of iCount. In mid-2016, [Jure Zmrzlikar](https://github.com/JureZmrzlikar)
+from [Genialis](http://www.genialis.com) helped refactoring and improving the code, 
+which is now available here. For details and full acknowledgments,
+see the [how to cite](http://icount.readthedocs.io/en/latest/cite.html) section in the documentation.
 
 
 ## Contributing

@@ -27,11 +27,36 @@ You can then run the freshly built image::
     docker run -i -t icountsrc
 
 
+To make all the files and results persistent, even after the container stops, create a folder
+and mount it as a `data volume`_::
+
+    mkdir `pwd`/storage_docker
+    docker run -i -t -v `pwd`/storage_docker:/home/icuser/storage icountsrc
+
+.. note::
+    Make sure to create a local folder and provide the path to it. The example above uses a path
+    that may not be applicable to your computer. Both, path to the folder on the host machine and
+    path within the container (``/home/icuser/storage``), must be absolute.
+
+If you are developing iCount, then it makes sense to mount the source folder as a volume into the
+docker container. Make sure to change into the source folder and then issue::
+
+    docker run -i -t -v `pwd`:/home/icuser/iCount_src \
+    -v `pwd`/storage_docker:/home/icuser/storage icountsrc
+
+This setup will behave similarly to the :doc:`Installing from source <contributing>` setup.
+All changes to the source made on your host computer, will be immediately available in the
+running container.
+
+
 .. _`Docker`:
     https://www.docker.com
 
 .. _`Docker Hub`:
     https://hub.docker.com/r/tomazc/icount/
+
+.. _`data volume`:
+    https://docs.docker.com/engine/tutorials/dockervolumes/
 
 
 Installing from the Python Package Index (PyPI)
