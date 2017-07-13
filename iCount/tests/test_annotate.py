@@ -97,7 +97,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "A";'],
         ]
         expected = [
-            ['1', '15', '16', 'CDS A, CDS B, ncRNA A', '5', '+'],
+            ['1', '15', '16', 'CDS A; CDS B; ncRNA A', '5', '+'],
         ]
         self.assertEqual(template(cross_links, annotation), expected)
 
@@ -135,7 +135,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             ['1', '.', 'ncRNA', '10', '20', '.', '-', '.', 'biotype "B";'],
         ]
         expected = [
-            ['1', '15', '16', 'intron A, intron B, ncRNA A', '5', '+'],
+            ['1', '15', '16', 'intron A; intron B; ncRNA A', '5', '+'],
             ['1', '15', '16', 'ncRNA B', '5', '-'],
         ]
         self.assertEqual(template(cross_links, annotation), expected)
@@ -153,7 +153,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'biotype "C";'],
         ]
         expected = [
-            ['1', '5', '6', 'intron, ncRNA', '1', '+'],
+            ['1', '5', '6', 'intron; ncRNA', '1', '+'],
         ]
 
         self.assertEqual(template(
@@ -172,7 +172,7 @@ class TestAnnotateCrossLinks(unittest.TestCase):
             ['1', '.', 'ncRNA', '3', '10', '.', '+', '.', 'attr42 "C";'],
         ]
         expected = [
-            ['1', '5', '6', 'intron A, intron B, ncRNA C', '1', '+'],
+            ['1', '5', '6', 'intron A; intron B; ncRNA C', '1', '+'],
         ]
 
         self.assertEqual(template(
