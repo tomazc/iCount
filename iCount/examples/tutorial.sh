@@ -30,8 +30,7 @@ NNNCAATNN NNNACCTNN NNNGGCGNN --out_dir demultiplexed
 ls -lh demultiplexed
 
 mkdir mapping_NNNGGCGNN
-iCount mapstar demultiplexed/demux_NNNGGCGNN.fastq.gz hs88 mapping_NNNGGCGNN \
---annotation homo_sapiens.88.gtf.gz
+iCount mapstar demultiplexed/demux_NNNGGCGNN.fastq.gz hs88 mapping_NNNGGCGNN
 
 ls -lh mapping_NNNGGCGNN
 
