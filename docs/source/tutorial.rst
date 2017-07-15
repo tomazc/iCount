@@ -13,6 +13,15 @@ folder::
     $ mkdir tutorial_example
     $ cd tutorial_example
 
+.. note::
+    All steps provided in this tutorial are included in the ``tutorial.sh`` script, which you
+    can obtain by running::
+
+        $ iCount examples
+        $ ls examples
+
+        hnRNPC.sh  hnRNPC_reduced.sh  tutorial.sh
+
 
 Preparing a genome index
 ========================
@@ -144,13 +153,14 @@ This should have generated six files in subfolder demultiplexed::
 
     $ ls -lh demultiplexed
 
-    total 704M
-    -rw-r--r-- 1 <user> <group>  30M <timestamp> demux_NNNACCTNN.fastq.gz
-    -rw-r--r-- 1 <user> <group> 110M <timestamp> demux_NNNCAATNN.fastq.gz
-    -rw-r--r-- 1 <user> <group> 311M <timestamp> demux_NNNGGCGNN.fastq.gz
-    -rw-r--r-- 1 <user> <group>  16M <timestamp> demux_NNNGGTTNN.fastq.gz
-    -rw-r--r-- 1 <user> <group> 188M <timestamp> demux_NNNTTGTNN.fastq.gz
-    -rw-r--r-- 1 <user> <group>  52M <timestamp> demux_nomatch.fastq.gz
+    total 37424
+    -rw-r--r-- 1 <user> <group>  758K <timestamp> demux_NNNACCTNN.fastq.gz
+    -rw-r--r-- 1 <user> <group>  2.9M <timestamp> demux_NNNCAATNN.fastq.gz
+    -rw-r--r-- 1 <user> <group>  8.0M <timestamp> demux_NNNGGCGNN.fastq.gz
+    -rw-r--r-- 1 <user> <group>  421K <timestamp> demux_NNNGGTTNN.fastq.gz
+    -rw-r--r-- 1 <user> <group>  4.8M <timestamp> demux_NNNTTGTNN.fastq.gz
+    -rw-r--r-- 1 <user> <group>  1.4M <timestamp> demux_nomatch.fastq.gz
+
 
 .. note::
     Reads that cannot be assigned to any of the specified sample barcodes (for the given number of
@@ -165,20 +175,20 @@ This should have generated six files in subfolder demultiplexed::
 Mapping sample reads to the genome
 ==================================
 
-Let's focus on iCLIP experiment with barcode **NNNACCTNN** and process it further. Same steps
+Let's focus on iCLIP experiment with barcode **NNNGGCGNN** and process it further. Same steps
 should be taken to process each experiment.
 
 First, create a folder to store the mapping results::
 
-    $ mkdir mapping_NNNACCTNN
+    $ mkdir mapping_NNNGGCGNN
 
 Then, map the reads in the selected FASTQ file using STAR and the genome index we have generated
 at the very beginning of this tutorial::
 
-    $ iCount mapstar demultiplexed/demux_NNNACCTNN.fastq.gz hs88 mapping_NNNACCTNN \
+    $ iCount mapstar demultiplexed/demux_NNNGGCGNN.fastq.gz hs88 mapping_NNNGGCGNN \
     --annotation homo_sapiens.88.gtf.gz
 
-    Mapping reads from demultiplexed/demux_NNNACCTNN.fastq.gz
+    Mapping reads from demultiplexed/demux_NNNGGCGNN.fastq.gz
     <timestamp> ..... Started STAR run
     <timestamp> ..... Loading genome
     <timestamp> ..... Processing annotations GTF
@@ -188,17 +198,17 @@ at the very beginning of this tutorial::
     <timestamp> ..... Finished successfully
     Done.
 
-This should have generated a file ``Aligned.sortedByCoord.out.bam`` in folder ``map_NNNNACCTNN``::
+This should have generated a file ``Aligned.sortedByCoord.out.bam`` in folder ``mapping_NNNGGCGNN``::
 
-    $ ls -lh map_NNNNACCTNN
+    $ ls -lh mapping_NNNGGCGNN
 
     total 842M
-    -rw-r--r-- 1 <user> <group>  50M Nov 15 05:28 Aligned.sortedByCoord.out.bam
-    -rw-r--r-- 1 <user> <group> 1.7K Nov 15 05:28 Log.final.out
-    -rw-r--r-- 1 <user> <group> 792M Nov 15 05:28 Log.out
-    -rw-r--r-- 1 <user> <group>  718 Nov 15 05:28 Log.progress.out
-    -rw-r--r-- 1 <user> <group> 165K Nov 15 05:28 SJ.out.tab
-    drwxr-xr-x 1 <user> <group>  306 Nov 15 05:18 _STARgenome
+    -rw-r--r-- 1 <user> <group>   15M Nov 15 05:28 Aligned.sortedByCoord.out.bam
+    -rw-r--r-- 1 <user> <group>  1.6K Nov 15 05:28 Log.final.out
+    -rw-r--r-- 1 <user> <group>   15K Nov 15 05:28 Log.out
+    -rw-r--r-- 1 <user> <group>  364B Nov 15 05:28 Log.progress.out
+    -rw-r--r-- 1 <user> <group>   51K Nov 15 05:28 SJ.out.tab
+
 
 Quantifying cross-linked sites
 ==============================
@@ -206,8 +216,8 @@ Quantifying cross-linked sites
 Command ``xlsites`` reads a BAM file and generates a BED file with identified and quantified
 cross-linked sites::
 
-    $ iCount xlsites mapping_NNNACCTNN/Aligned.sortedByCoord.out.bam \
-    NNNACCTNN_cDNA_unique.bed  NNNACCTNN_cDNA_multiple.bed NNNACCTNN_cDNA_skipped.bam \
+    $ iCount xlsites mapping_NNNGGCGNN/Aligned.sortedByCoord.out.bam \
+    NNNGGCGNN_cDNA_unique.bed  NNNGGCGNN_cDNA_multiple.bed NNNGGCGNN_cDNA_skipped.bam \
     --group_by start --quant cDNA
 
 This will generate a BED file where interaction strength is measured by the number of unique
@@ -215,8 +225,8 @@ cDNA molecules (randomer barcodes are used for this quantification).
 
 You may generate a BED files where interaction strength is determined by the number of reads::
 
-    $ iCount xlsites mapping_NNNACCTNN/Aligned.sortedByCoord.out.bam \
-    NNNACCTNN_reads_unique.bed  NNNACCTNN_reads_multiple.bed NNNACCTNN_reads_skipped.bam \
+    $ iCount xlsites mapping_NNNGGCGNN/Aligned.sortedByCoord.out.bam \
+    NNNGGCGNN_reads_unique.bed  NNNGGCGNN_reads_multiple.bed NNNGGCGNN_reads_skipped.bam \
     --group_by start --quant reads
 
 By comparing the ration of cDNA vs reads counts we can estimate the level of over-amplification.
@@ -242,11 +252,11 @@ annotation file with genome segmentation::
 Command ``peaks`` reads a genome segmentation GTF file, a BED file with cross-linked sites and
 generates a BED file with subset of significantly cross-linked sites::
 
-    $ iCount peaks hs88seg.gtf.gz NNNACCTNN_cDNA_unique.bed peaks.bed \
+    $ iCount peaks hs88seg.gtf.gz NNNGGCGNN_cDNA_unique.bed peaks.bed \
     --scores scores.tsv
 
     Loading annotation file...
-    918 out of 31271 annotation records will be used (30353 skipped).
+    874 out of 31150 annotation records will be used (30276 skipped).
     Loading cross-links file...
     Calculating intersection between annotation and cross-link file...
     Processing intersections...
@@ -266,7 +276,6 @@ Command ``clusters`` reads a BED file with cross-linked sites and
 generates a BED file with clusters of cross-linked sites::
 
     $ iCount clusters peaks.bed clusters.bed
-
 
     Merging cross links form file peaks.bed
     Done. Results saved to: clusters.bed

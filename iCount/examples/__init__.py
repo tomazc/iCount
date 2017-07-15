@@ -48,7 +48,7 @@ def run(out_dir='.'):
         raise OSError('Error creating examples folder.')
 
     cur_folder = os.path.dirname(os.path.abspath(__file__))
-    for script in ['hnRNPC.sh', 'hnRNPC_reduced.sh']:
+    for script in ['hnRNPC.sh', 'hnRNPC_reduced.sh', 'tutorial.sh']:
         src_fn = os.path.join(cur_folder, script)
         dst_fn = os.path.join(examples_folder, script)
         LOGGER.info('   copying example script %s', script)
