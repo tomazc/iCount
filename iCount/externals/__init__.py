@@ -16,4 +16,4 @@ A number of external software is needed for iCount to work.
 from . import cutadapt
 from . import star
 
-EXPECTED_CUTADAPT_VERSION = '1.10'
+EXPECTED_CUTADAPT_VERSION = '1.14'

@@ -20,6 +20,7 @@ RUN apt-get update && apt-get upgrade -y && \
     python3-setuptools \
     python-virtualenv \
     python-pip \
+    pandoc \
     git && \
     apt-get build-dep -y python3-matplotlib
 

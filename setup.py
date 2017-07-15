@@ -14,8 +14,19 @@ from setuptools import setup, find_packages
 base_dir = path.dirname(path.realpath(__file__))
 
 # Get the long description from the README file
-with open(path.join(base_dir, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+# with open(path.join(base_dir, 'README.md'), encoding='utf-8') as f:
+#    long_description = f.read()
+
+try:
+    import pypandoc
+    LONG_DESC = pypandoc.convert_file('README.md', 'rst')
+    LONG_DESC = LONG_DESC.replace('\r', '')
+except(IOError, ImportError):
+    with open(path.join(base_dir, 'README.md'), encoding='utf-8') as f:
+        LONG_DESC = f.read()
+    # Skip header with badges
+    LONG_DESC = LONG_DESC.split('\n')[8:]
+    LONG_DESC = '\n'.join(LONG_DESC)
 
 # Get package metadata from 'iCount/__about__.py' file
 about = {}
@@ -28,7 +39,7 @@ setup(
     version=about['__version__'],
 
     description=about['__summary__'],
-    long_description=long_description,
+    long_description=LONG_DESC,
 
     url=about['__url__'],
 
@@ -48,7 +59,7 @@ setup(
     install_requires={
         'numpy',
         'pandas',
-        'cutadapt==1.10',
+        'cutadapt>=1.10',
         'pysam',
         'pybedtools',
         'numpydoc',
@@ -62,6 +73,7 @@ setup(
             'sphinx_rtd_theme',
         ],
         'package': [
+            'pypandoc'
             'twine',
             'wheel',
         ],

@@ -2,16 +2,16 @@
 include README.md
 include LICENSE
 include CLA
+include Dockerfile
+include Dockerfile_test
 # include documentation and files needed by documentation
 recursive-include docs/source *.py *.rst *.txt
-include docs/changelog.sh docs/Makefile
+include docs/changelog.sh docs/Makefile docs/pack_testupload.sh docs/testdownload_install.sh
 include requirements-rtd.txt
 # include tests and files needed by tests
 include .pylintrc tox.ini
 recursive-include iCount/tests *.py
 include iCount/tests/functional/*.txt
-# exclude Dockerfile
-exclude Dockerfile
 recursive-exclude docs presentations
 recursive-exclude docs/presentations *
 recursive-exclude docs/presentations/images *
