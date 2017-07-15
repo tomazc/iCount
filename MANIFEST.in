@@ -12,3 +12,6 @@ recursive-include iCount/tests *.py
 include iCount/tests/functional/*.txt
 # exclude Dockerfile
 exclude Dockerfile
+recursive-exclude docs presentations
+recursive-exclude docs/presentations *
+recursive-exclude docs/presentations/images *

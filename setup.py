@@ -38,7 +38,8 @@ setup(
     license=about['__license__'],
 
     # exclude tests from built/installed package
-    packages=find_packages(exclude=['*.tests', '*.tests.*']),
+    packages=find_packages(exclude=['*.tests', '*.tests.*', 'docs/presentations',
+                                    'docs/presentations/*']),
     package_data={
         'iCount': [
             'examples/*.sh',
