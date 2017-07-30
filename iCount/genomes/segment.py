@@ -531,12 +531,17 @@ def _complement(gtf, genome_file, strand, type_name='intergenic'):
     # This effectively means:
     # gtf_start = bed_start + 1
     # gtf_stop = bed_stop
-    col8 = 'gene_id "."; transcript_id ".";'
+    if strand == '+':
+        col8 = 'ID "interP%5.5d"; gene_id "."; transcript_id ".";'
+    elif strand == '-':
+        col8 = 'ID "interN%5.5d"; gene_id "."; transcript_id ".";'
+    else:
+        col8 = 'ID "interB%5.5d"; gene_id "."; transcript_id ".";'
     gtf = pybedtools.BedTool(
         create_interval_from_list(
-            [i[0], '.', type_name, str(int(i[1]) + 1), i[2], '.', strand, '.', col8]
+            [i[0], '.', type_name, str(int(i[1]) + 1), i[2], '.', strand, '.', col8 % n]
         )
-        for i in intergenic_bed
+        for n, i in enumerate(intergenic_bed)
     ).saveas()
 
     return os.path.abspath(gtf.fn)
