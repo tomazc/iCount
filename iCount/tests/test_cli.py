@@ -28,6 +28,10 @@ class TestCLI(unittest.TestCase):
             ['1', '15', '16', '.', '5', '+'],
         ])
 
+        self.peaks = make_file_from_list([
+            ['1', '15', '16', '.', '15', '+'],
+        ])
+
         self.annotation = make_file_from_list([
             ['1', '.', 'CDS', '10', '20', '.', '+', '.', 'biotype "A";'],
             ['1', '.', 'ncRNA', '10', '20', '.', '+', '.', 'biotype "A";'],
@@ -270,13 +274,13 @@ class TestCLI(unittest.TestCase):
 
     def test_clusters(self):
         command_basic = [
-            'iCount', 'clusters', self.cross_links,
+            'iCount', 'clusters', self.cross_links, self.peaks,
             self.tmp1,
             '-S', '40',  # Supress lower than ERROR messages.
         ]
 
         command_full = [
-            'iCount', 'clusters', self.cross_links,
+            'iCount', 'clusters', self.cross_links, self.peaks,
             self.tmp1, '--dist', '20',
             '-S', '40',  # Supress lower than ERROR messages.
         ]

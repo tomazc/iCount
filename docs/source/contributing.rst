@@ -71,9 +71,15 @@ Building the documentation
 Issue these commands to build the documentation::
 
     pip install -e .[docs]
-    sphinx-build -E -W docs/source/ build/sphinx/html
-    open build/sphinx/html/index.html
+    cd docs
+    make html
+    open build/html/index.html
 
+.. note::
+    Calling makefile ensures that the reference manual for the CLI is updated. It will envoke
+    this command when needed::
+
+        iCount man > source/ref_CLI.txt
 
 Python module and CLI living together
 =====================================
