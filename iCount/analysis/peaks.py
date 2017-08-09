@@ -59,7 +59,7 @@ FDR < FDR cutoff are considered as significant.
 
 One must also know that when considering only scores on single positions
 significant *clusters* of cross-links can be missed. In the upper example, it is
-obviuous, that something more significantly is happening on position b than on
+obvious, that something more significantly is happening on position b than on
 position e, despite having the same score. To account for this, algorithm
 considers not only the score of single cross-link, but also scores of
 cross-links some nucleotides before and after. This behaviour in controlled by
@@ -408,7 +408,8 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
         independent from their FDR score It should have .tsv, .csv, .txt or .gz
         extension.
     features : list_str
-        Features from annotation to consider. If None, 'gene' is used.
+        Features from annotation to consider. If None, ['gene'] is used.
+        Sometimes, it is advised to use ['gene', 'intergenic'].
     group_by : str
         Attribute by which cross-link positions are grouped.
     merge_features : bool
@@ -473,8 +474,17 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
         end = feature.stop
         name = feature.name
         strand = feature.strand
+        site_chrom = feature.fields[9]
         site_pos = int(feature.fields[10])
+        site_end = int(feature.fields[11])
+        site_dot = feature.fields[12]
         site_score = float(feature.fields[13])
+        site_strand = feature.fields[14]
+        assert site_chrom == chrom
+        assert site_strand == strand
+        assert site_dot == '.'
+        assert site_pos == site_end - 1
+
         # Determine group_id depending on multi_mode...
         group_id = feature.attrs[group_by]
         if multi_mode:
@@ -516,7 +526,26 @@ def run(annotation, sites, peaks, scores=None, features=None, group_by='gene_id'
         for (pos, val, val_extended, fdr_score) in processed:
             results.setdefault((chrom, pos, strand), []).\
                 append((fdr_score, name, group_id, val, val_extended))
+    metrics.positions_annotated = len(results)
 
+    # cross-linked sites outside annotated regions
+    LOGGER.info('Determining cross-links not intersecting with annotation...')
+    skipped = sites.intersect(annotation, sorted=True, s=True, v=True).saveas()
+    for feature in skipped:
+        site_chrom = feature.chrom
+        site_start = feature.start
+        site_end = feature.stop
+        # site_name = feature.name
+        site_score = feature.score
+        site_strand = feature.strand
+        assert site_start == site_end - 1
+        k = (site_chrom, site_start, site_strand)
+        assert k not in results
+        results.setdefault(k, []).\
+            append((1.0, 'not_annotated', 'not_annotated', site_score, 'not_calculated'))
+
+    metrics.positions_all = len(results)
+    metrics.positions_not_annotated = metrics.positions_all - metrics.positions_annotated
     LOGGER.info('Peaks calculation finished. Writing results to files...')
 
     # Make peaks: a BED6 file, with only the most significant cross-links:

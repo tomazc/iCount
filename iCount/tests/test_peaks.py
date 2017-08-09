@@ -110,6 +110,7 @@ class TestPeaks(unittest.TestCase):
         expected_scores = [
             ['1', '14', '+', 'A', '1', '3', '8', '0.036198'],
             ['1', '16', '+', 'A', '1', '5', '8', '0.036198'],
+            ['2', '16', '+', 'not_annotated', 'not_annotated', '5', 'not_calculated', '1'],
         ]
 
         self.assertEqual(out_peaks, expected_peaks)

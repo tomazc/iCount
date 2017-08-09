@@ -45,7 +45,8 @@ RUN tar -zxvf bedtools-2.26.0.tar.gz
 WORKDIR /tmp/bedtools/bedtools2
 RUN make
 RUN make install
-
+WORKDIR /tmp
+RUN rm -rfv bedtools
 
 #################
 ### RNA-star

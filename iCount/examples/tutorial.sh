@@ -48,7 +48,7 @@ homo_sapiens.88.chr21_MT.fa.gz.fai
 iCount peaks hs88seg.gtf.gz NNNGGCGNN_cDNA_unique.bed peaks.bed \
 --scores scores.tsv
 
-iCount clusters peaks.bed clusters.bed
+iCount clusters NNNGGCGNN_cDNA_unique.bed peaks.bed clusters.bed
 
 iCount annotate hs88seg.gtf.gz NNNGGCGNN_cDNA_unique.bed annotated_sites_biotype.tab
 iCount annotate --subtype gene_id hs88seg.gtf.gz NNNGGCGNN_cDNA_unique.bed \

@@ -537,13 +537,13 @@ class TestComplement(unittest.TestCase):
         complement = make_list_from_file(
             segment._complement(genes, genome_file, '+'), fields_separator='\t')
 
-        empty_col8 = 'gene_id "."; transcript_id ".";'
+        empty_col8 = 'ID "inter%s"; gene_id "."; transcript_id ".";'
         expected = [
-            ['1', '.', 'intergenic', '1', '199', '.', '+', '.', empty_col8],
-            ['1', '.', 'intergenic', '601', '2000', '.', '+', '.', empty_col8],
-            ['2', '.', 'intergenic', '1', '99', '.', '+', '.', empty_col8],
-            ['2', '.', 'intergenic', '201', '1000', '.', '+', '.', empty_col8],
-            ['MT', '.', 'intergenic', '1', '500', '.', '+', '.', empty_col8],
+            ['1', '.', 'intergenic', '1', '199', '.', '+', '.', empty_col8 % "P00000"],
+            ['1', '.', 'intergenic', '601', '2000', '.', '+', '.', empty_col8 % "P00001"],
+            ['2', '.', 'intergenic', '1', '99', '.', '+', '.', empty_col8 % "P00002"],
+            ['2', '.', 'intergenic', '201', '1000', '.', '+', '.', empty_col8 % "P00003"],
+            ['MT', '.', 'intergenic', '1', '500', '.', '+', '.', empty_col8 % "P00004"],
         ]
 
         self.assertEqual(complement, expected)
