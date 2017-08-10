@@ -1,6 +1,6 @@
 numpy
 pandas
-cutadapt==1.10
+cutadapt>=1.10
 pysam
 pybedtools
 numpydoc

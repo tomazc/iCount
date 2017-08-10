@@ -275,6 +275,12 @@ The elements appearing in it are files and analysis:
 Preparing a release
 ===================
 
+First check that ``twine`` is installed::
+
+    pip install twine
+
+    Requirement already satisfied: twine in ...
+
 Pull the latest master to be released::
 
     git checkout master
@@ -291,7 +297,7 @@ Use syntax from `releases`_ package.
 .. _`releases`:
     http://releases.readthedocs.io/en/latest/concepts.html#issue-and-release-types
 
-Remove ``-dev`` from project's version in ``iCount/__about__.py`` file.
+Remove ``.dev`` from project's version in ``iCount/__about__.py`` file.
 
 Clean ``build`` directory::
 
@@ -326,18 +332,31 @@ Upload distribution to PyPI_::
 
     twine upload dist/*
 
+.. note::
+    It is advisable to test upload onto the test server https://test.pypi.org/legacy/ first::
+
+        twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+    Afterwards, test the installation in a clean python environment::
+
+        docker build -t icounttestinstall -f Dockerfile_test .
+        docker run -t -i icounttestinstall
+
+        pip install -i https://test.pypi.org/pypi \
+        --extra-index-url https://pypi.python.org/pypi iCount
+
 Tag the new version::
 
     git tag <version>
 
 Push changes to main repository::
 
-    git push <iCount-upstream-name> master <version>
+    git push upstream master --tags
 
 Decide how to bump version (to some new value <new-version>) and modify 
-``iCount/__about__.py`` and don't forget to add ``-dev``::
+``iCount/__about__.py``. Don't forget to add suffix ``.dev``::
 
-    __version__=<new-version>-dev
+    __version__=<new-version>.dev
 
 .. note::
 

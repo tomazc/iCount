@@ -8,7 +8,7 @@ __url__ = 'https://github.com/tomazc/iCount'
 
 # Semantic versioning is used. For more information see:
 # https://packaging.python.org/en/latest/distributing/#semantic-versioning-preferred
-__version__ = '2.0.0-dev'
+__version__ = '2.0.0'
 
 __author__ = 'University of Ljubljana, Bioinformatics Laboratory'
 __email__ = 'tomazc@gmail.com'
