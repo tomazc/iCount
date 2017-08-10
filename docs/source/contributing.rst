@@ -351,7 +351,7 @@ Tag the new version::
 
 Push changes to main repository::
 
-    git push upstream master --tags
+    git push origin master <version>
 
 Decide how to bump version (to some new value <new-version>) and modify 
 ``iCount/__about__.py``. Don't forget to add suffix ``.dev``::
