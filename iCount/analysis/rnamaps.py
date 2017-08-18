@@ -453,7 +453,7 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
 
         # Sort all genes (and intergenic) by start coordinate.
         segmentation_sorted = sorted(
-            iCount.genomes.segment._prepare_segmentation(segmentation, chrom).items(),
+            iCount.genomes.segment._prepare_segmentation(segmentation, chrom, strand).items(),
             key=lambda x: x[1]['gene_segment'].start)
         seg_max_index = len(segmentation_sorted) - 1
         start_gene_index, stop_gene_index = 0, seg_max_index

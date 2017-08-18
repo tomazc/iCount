@@ -5,66 +5,64 @@ import warnings
 
 from iCount.analysis import rnamaps
 from iCount.tests.utils import get_temp_file_name, make_bam_file, make_file_from_list, \
-    list_to_intervals, intervals_to_list, make_list_from_file
+    list_to_intervals, intervals_to_list, make_list_from_file, attrs
 
 
 class TestRun(unittest.TestCase):
 
     def setUp(self):
         warnings.simplefilter("ignore", (ResourceWarning, ImportWarning))
+
         self.gtf_data = list_to_intervals([
-            ['1', '.', 'intergenic', '1', '99', '.', '+', '.',
-             'gene_id "."; transcript_id ".";'],
+            ['1', '.', 'intergenic', '1', '799', '.', '-', '.', attrs(tid='.', iid='interN00000')],
+            ['1', '.', 'intergenic', '1', '99', '.', '+', '.', attrs(tid='.', iid='interP00000')],
             # Gene #1:
-            ['1', '.', 'gene', '100', '499', '.', '+', '.',
-             'gene_id "G1";'],
+            ['1', '.', 'gene', '100', '499', '.', '+', '.', attrs('G1', bio='.')],
             # Transcript #1
-            ['1', '.', 'transcript', '100', '249', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1";'],
-            ['1', '.', 'UTR5', '100', '149', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1"; exon_number "1";'],
-            ['1', '.', 'intron', '150', '199', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1";'],
-            ['1', '.', 'CDS', '200', '229', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1"; exon_number "2";'],
-            ['1', '.', 'intron', '230', '239', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1";'],
-            ['1', '.', 'UTR3', '240', '249', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1"; exon_number "3";'],
+            ['1', '.', 'transcript', '100', '249', '.', '+', '.', attrs('G1', 'T1', bio='.')],
+            ['1', '.', 'UTR5', '100', '149', '.', '+', '.', attrs('G1', 'T1', 1, bio='.')],
+            ['1', '.', 'intron', '150', '199', '.', '+', '.', attrs('G1', 'T1', bio='.')],
+            ['1', '.', 'CDS', '200', '229', '.', '+', '.', attrs('G1', 'T1', 2, bio='.')],
+            ['1', '.', 'intron', '230', '239', '.', '+', '.', attrs('G1', 'T1', bio='.')],
+            ['1', '.', 'UTR3', '240', '249', '.', '+', '.', attrs('G1', 'T1', 3, bio='.')],
 
             # Transcript #2
-            ['1', '.', 'transcript', '240', '499', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2";'],
-            ['1', '.', 'CDS', '240', '299', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2"; exon_number "1";'],
-            ['1', '.', 'intron', '300', '399', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2";'],
-            ['1', '.', 'CDS', '400', '499', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2"; exon_number "2";'],
+            ['1', '.', 'transcript', '240', '499', '.', '+', '.', attrs('G1', 'T2', bio='.')],
+            ['1', '.', 'CDS', '240', '299', '.', '+', '.', attrs('G1', 'T2', 1, bio='.')],
+            ['1', '.', 'intron', '300', '399', '.', '+', '.', attrs('G1', 'T1', bio='.')],
+            ['1', '.', 'CDS', '400', '499', '.', '+', '.', attrs('G1', 'T2', 2, bio='.')],
 
             # intergenic
             ['1', '.', 'intergenic', '500', '599', '.', '+', '.',
-             'gene_id "."; transcript_id ".";'],
+             attrs(tid='.', iid='interP00001')],
 
             # Gene #1:
-            ['1', '.', 'gene', '600', '999', '.', '+', '.',
-             'gene_id "G2";'],
+            ['1', '.', 'gene', '600', '799', '.', '+', '.', attrs('G2', bio='.')],
 
             # Transcript #3
-            ['1', '.', 'transcript', '600', '799', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3";'],
-            ['1', '.', 'CDS', '600', '649', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3"; exon_number "1";'],
-            ['1', '.', 'intron', '650', '749', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3";'],
-            ['1', '.', 'CDS', '750', '799', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3"; exon_number "2";'],
+            ['1', '.', 'transcript', '600', '799', '.', '+', '.', attrs('G2', 'T3', bio='.')],
+            ['1', '.', 'CDS', '600', '649', '.', '+', '.', attrs('G2', 'T3', 1, bio='.')],
+            ['1', '.', 'intron', '650', '749', '.', '+', '.', attrs('G2', 'T3', bio='.')],
+            ['1', '.', 'CDS', '750', '799', '.', '+', '.', attrs('G2', 'T3', 2, bio='.')],
 
+            ['1', '.', 'intergenic', '800', '999', '.', '+', '.',
+             attrs(tid='.', iid='interP00002')],
+
+            # Gene #3:
+            ['1', '.', 'gene', '800', '899', '.', '-', '.', attrs('G3', bio='.')],
+
+            # Transcript #3
+            ['1', '.', 'transcript', '800', '899', '.', '-', '.', attrs('G3', 'T4', bio='.')],
+            ['1', '.', 'CDS', '800', '899', '.', '-', '.', attrs('G3', 'T4', 1, bio='.')],
+
+            ['1', '.', 'intergenic', '900', '999', '.', '-', '.',
+             attrs(tid='.', iid='interN00001')],
         ])
-        self.gtf = make_file_from_list(intervals_to_list(self.gtf_data))
-        self.strange = get_temp_file_name()
-        self.cross_tr = get_temp_file_name()
-        self.out = get_temp_file_name()
+
+        self.gtf = make_file_from_list(intervals_to_list(self.gtf_data), extension='gtf')
+        self.strange = get_temp_file_name(extension='bam')
+        self.cross_tr = get_temp_file_name(extension='tsv')
+        self.out = get_temp_file_name(extension='tsv')
 
     def test_explicit_whole_in(self):
         """
@@ -252,23 +250,21 @@ class TestRun(unittest.TestCase):
         Whole read is in single transcript, single segment. But the segment
         borders on intergenic (downstream).
         """
-        gtf_neg_data = [i[:6] + ['-'] + i[7:] for i in intervals_to_list(self.gtf_data)]
-        gtf_neg = make_file_from_list(gtf_neg_data)
         bam = make_bam_file({
             'chromosomes': [('1', 1000)],
             'segments': [
                 # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 16, 0, 549, 255, [(0, 30)], {'NH': 1}),
+                ('name2:rbc:CCCC', 16, 0, 819, 255, [(0, 30)], {'NH': 1}),
             ]
         })
 
         expected = [
             ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['CDS-intergenic', '20', '0.5', '0'],
-            ['intergenic-CDS', '-80', '0.5', '0'],
+            ['CDS-intergenic', '-50', '0.5', '0'],
+            ['intergenic-CDS', '50', '0.5', '0'],
         ]
 
-        rnamaps.run(bam, gtf_neg, self.out, self.strange, self.cross_tr, mismatches=1,
+        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1,
                     implicit_handling='split')
         self.assertEqual(expected, make_list_from_file(self.out))
 

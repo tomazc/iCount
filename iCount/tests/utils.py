@@ -154,7 +154,7 @@ def make_aligned_segment(data):
     segment.next_reference_start = 0
     segment.template_length = 0
 
-    length = sum([n2 for (n1, n2) in segment.cigar])
+    length = sum([n2 for (n1, n2) in segment.cigar if n1 in [0, 2, 3, 7, 8]])
     segment.query_sequence = make_sequence(size=length, include_n=True)
     segment.query_qualities = pysam.qualitystring_to_array(
         make_quality_scores(size=length))
@@ -200,7 +200,7 @@ def make_bam_file(data):
         Absoulte path to bamfile.
 
     """
-    fname = get_temp_file_name(extension='.bam')
+    fname = get_temp_file_name(extension='bam')
 
     # Make header:
     chromosomes = [dict(
@@ -214,19 +214,22 @@ def make_bam_file(data):
     return os.path.abspath(fname)
 
 
-def make_fasta_file(headers=None, out_file=None, num_sequences=10, seq_len=80):
+def make_fasta_file(sequences=None, headers=None, out_file=None, num_sequences=10, seq_len=80):
     """Make artificial FASTA file."""
-    if headers is None:
+    if sequences is None and headers is None:
         headers = ['{}'.format(i + 1) for i in range(num_sequences)]
-    else:
-        num_sequences = len(headers)
+        sequences = [make_sequence(seq_len) for i in range(num_sequences)]
+    elif sequences is None:
+        sequences = [make_sequence(seq_len) for i in range(len(headers))]
+    elif headers is None:
+        headers = ['{}'.format(i + 1) for i in range(len(sequences))]
 
     if out_file is None:
-        out_file = get_temp_file_name()
+        out_file = get_temp_file_name(extension='fasta')
     with open(out_file, 'wt') as ofile:
-        for header in headers:
+        for header, seq in zip(headers, sequences):
             ofile.write('>' + header + '\n')
-            ofile.write(make_sequence(seq_len) + '\n')
+            ofile.write(seq + '\n')
 
     return os.path.abspath(out_file)
 
@@ -284,3 +287,21 @@ def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
             make_fastq_entry(ofile)
 
     return os.path.abspath(out_file)
+
+
+def attrs(gid='.', tid=None, exn=None, gbio=None, tbio=None, iid=None, bio=None):
+    """Make gtf attributes (to shorten line)."""
+    attrs_ = ['gene_id "{}"'.format(gid)]
+    if tid:  # transcript_id
+        attrs_.append('transcript_id "{}"'.format(tid))
+    if exn:  # exon number
+        attrs_.append('exon_number "{}"'.format(exn))
+    if gbio:  # gene biotype
+        attrs_.append('gene_type "{}"'.format(gbio))
+    if tbio:  # transcript biotype
+        attrs_.append('transcript_type "{}"'.format(tbio))
+    if iid:  # intergenic ID number
+        attrs_.append('ID "{}"'.format(iid))
+    if bio:  # intergenic ID number
+        attrs_.append('biotype "{}"'.format(bio))
+    return '; '.join(sorted(attrs_)) + ';'
