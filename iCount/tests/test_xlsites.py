@@ -386,6 +386,33 @@ class TestProcessBamFile(unittest.TestCase):
         ]
         self.assertEqual(grouped, expected)
 
+    def test_diff_barcodes(self):
+        """
+        Different barcodes on same position.
+        """
+        bam_fname = make_bam_file({
+            'chromosomes': [('chr1', 3000)],
+            'segments': [
+                # (qname, flag, refname, pos, mapq, cigar, tags)
+                ('_:rbc:AAA', 0, 0, 50, 255, [(0, 101)], {'NH': 1}),
+                ('_:rbc:CCC', 0, 0, 50, 255, [(0, 101)], {'NH': 1}),
+                ('_:rbc:CCC', 0, 0, 50, 255, [(0, 101)], {'NH': 1}),
+                ('_:rbc:GGG', 0, 0, 50, 255, [(0, 101)], {'NH': 1}),
+            ],
+        })
+        grouped = list(xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp))
+
+        expected = [
+            (('chr1', '+'), 0.0167, {
+                49: {
+                    'AAA': [(100, 150, 101, 1, 0)],
+                    'CCC': [(100, 150, 101, 1, 0), (100, 150, 101, 1, 0)],
+                    'GGG': [(100, 150, 101, 1, 0)],
+                }
+            }),
+        ]
+        self.assertEqual(grouped, expected)
+
 
 class TestRun(unittest.TestCase):
 
