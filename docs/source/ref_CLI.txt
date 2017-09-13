@@ -19,10 +19,10 @@ optional arguments:
 
 Commands:
    
-    releases     Get list of available ENSEMBL releases.
-    species      Get list of available species for given ENSEMBL release.
-    annotation   Download ENSEMBL annotation for given release/species.
-    genome       Download ENSEMBL genome for given release/species.
+    releases     Get list of available releases.
+    species      Get list of available species.
+    annotation   Download annotation for given release/species/source.
+    genome       Download genome for given release/species/source.
     segment      Parse annotation file into internal iCount structure - segmentation.
     demultiplex  Split FASTQ file into separate files, one for each sample barcode.
     cutadapt     Remove adapter sequences from reads in FASTQ file.
@@ -43,14 +43,14 @@ Commands:
 releases
 ========
 
-usage: iCount releases [-h] [-S] [-F] [-P] [-M]
+usage: iCount releases [-h] [--source] [--species] [-S] [-F] [-P] [-M]
 
-Get list of available ENSEMBL releases.
-
-Only allows ENSEMBL releases 59-88.
+Get list of available releases.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --source              Source of data. Only ENSEMBL or GENCODE are available (default: gencode)
+  --species             Species name. Only relevant if source is GENCODE (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -60,13 +60,14 @@ optional arguments:
 species
 =======
 
-usage: iCount species [-h] [-r] [-S] [-F] [-P] [-M]
+usage: iCount species [-h] [--source] [-r] [-S] [-F] [-P] [-M]
 
-Get list of available species for given ENSEMBL release.
+Get list of available species.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -r , --release        Release number. Only ENSEMBL releases 59-88 are available (default: 88)
+  --source              Source of data. Only ENSEMBL or GENCODE are available (default: gencode)
+  -r , --release        Release number. Only relevant if source is ENSEMBL (default: None)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -76,21 +77,23 @@ optional arguments:
 annotation
 ==========
 
-usage: iCount annotation [-h] [-r] [-od] [-a] [-S] [-F] [-P] [-M] species
+usage: iCount annotation [-h] [-od] [-a] [--source] [-S] [-F] [-P] [-M]
+                         species release
 
-Download ENSEMBL annotation for given release/species.
+Download annotation for given release/species/source.
 
 positional arguments:
-  species               Species latin name
+  species               Species name
+  release               Release number
 
 optional arguments:
   -h, --help            show this help message and exit
-  -r , --release        Release number. Only ENSEMBL releases 59-88 are available (default: 88)
   -od , --out_dir       Download to this directory (if not given, current working directory) (default: None)
   -a , --annotation     Annotation filename (must have .gz file extension). If not given,
                         species.release.gtf.gz is used. If annotation is provided as absolute
                         path, value of out_dir parameter is ignored and file is saved to given
                         absolute path (default: None)
+  --source              Source of data. Only ENSEMBL or GENCODE are available (default: gencode)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
@@ -100,18 +103,18 @@ optional arguments:
 genome
 ======
 
-usage: iCount genome [-h] [-r] [-od] [--genome] [--chromosomes  [...]] [-S]
-                     [-F] [-P] [-M]
-                     species
+usage: iCount genome [-h] [-od] [--genome] [--chromosomes  [...]] [--source]
+                     [-S] [-F] [-P] [-M]
+                     species release
 
-Download ENSEMBL genome for given release/species.
+Download genome for given release/species/source.
 
 positional arguments:
-  species               Species latin name
+  species               Species name
+  release               Release number
 
 optional arguments:
   -h, --help            show this help message and exit
-  -r , --release        Release number. Only ENSEMBL releases 59-88 are available (default: 88)
   -od , --out_dir       Download to this directory (if not given, current working directory) (default: None)
   --genome              Genome filename (must have .gz file extension). If not given,
                         species.release.fa.gz is used. If genome is provided as absolute path,
@@ -119,7 +122,8 @@ optional arguments:
                         absolute path (default: None)
   --chromosomes  [ ...]
                         If given, do not download the whole genome, but listed
-                        chromosomes only. Chromosomes can be given as strings or integers (default: None)
+                        chromosomes only. Only relevant if source is ENSEMBL (default: None)
+  --source              Source of data. Only ENSEMBL or GENCODE are available (default: gencode)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.
