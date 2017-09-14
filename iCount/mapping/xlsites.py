@@ -481,22 +481,7 @@ def _get_read_data(read, metrics, mapq_th, segmentation=None, gap_th=4):
 
 def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, gap_th=4):
     """
-    Extract data from BAM file dicts, represnting chunks of genome.
-
-    The structire of dictionary is the following::
-
-        reads_to_process = {
-            xlink_pos1: {
-                barcode1: [
-                    (strand, middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
-                    ...
-                ],
-                barcode2: [
-                    (middle_pos, end_pos, read_len, num_mapped, cigar, second_start)
-                    ...
-                ],
-            },
-        }
+    Extract data from BAM file into chunks of genome.
 
     Parameters
     ----------
@@ -570,6 +555,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, 
 
             reads_pending_fwd = {}
             reads_pending_rev = {}
+            read = None
             for read in bamfile.fetch(chrom):
                 metrics.all_recs += 1
                 if read.is_unmapped:
@@ -595,11 +581,12 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, 
                         reads_pending_rev.setdefault(
                             xlink_pos, {}).setdefault(barcode, []).append(read_data)
 
-                start = read.positions[0]  # Sliding window start (smaller coordinate)
-                progress = round(min((genome_done + start) / genome_size, 1.0), 4)
+            # Sliding window start (smaller coordinate)
+            start = 0 if read is None else (0 if not read.positions else read.positions[0])
+            progress = round(min((genome_done + start) / genome_size, 1.0), 4)
 
-                for data in finalize(reads_pending_fwd, reads_pending_rev, start, chrom, progress):
-                    yield data
+            for data in finalize(reads_pending_fwd, reads_pending_rev, start, chrom, progress):
+                yield data
 
             start = chrom_len
             progress = round(min((genome_done + start) / genome_size, 1.0), 4)
@@ -685,7 +672,7 @@ def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
 
     assert sites_unique.endswith(('.bed', '.bed.gz'))
     assert sites_multi.endswith(('.bed', '.bed.gz'))
-    assert skipped.endswith(('.bam', '.bam.gz'))
+    assert skipped.endswith(('.bam'))
     assert quant in ['cDNA', 'reads']
     assert group_by in ['start', 'middle', 'end']
 
