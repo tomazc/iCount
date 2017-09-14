@@ -10,13 +10,14 @@ Functions to query and download data from the `Ensembl`_ FTP site.
 
 """
 
-import os
-import re
 import ftplib
 import gzip
-import shutil
 import logging
-import subprocess
+import os
+import re
+import shutil
+
+import pysam
 
 import iCount
 
@@ -36,19 +37,18 @@ def _docstring_parameter(*sub):
     return dec
 
 
-@_docstring_parameter(BASE_URL)
-def get_ftp_instance():
+def get_ftp_instance(base_url):
     """
-    Get ftplib.FTP object that is connected to {0}.
+    Get ftplib.FTP object that is connected to base_url.
 
     Returns
     -------
     ftplib.FTP
-        FTP object connected to {0}
+        FTP object connected to base_url.
 
     """
     try:
-        ftp = ftplib.FTP(BASE_URL)
+        ftp = ftplib.FTP(base_url)
         ftp.login()
         return ftp
     except Exception:
@@ -68,7 +68,7 @@ def releases():
         List of available releases
 
     """
-    ftp = get_ftp_instance()
+    ftp = get_ftp_instance(BASE_URL)
     # set current working directory
     ftp.cwd('pub')
 
@@ -77,7 +77,7 @@ def releases():
     out = [i for i in fetch if i >= MIN_RELEASE_SUPPORTED and i <= MAX_RELEASE_SUPPORTED]
     out = sorted(out, reverse=True)
 
-    LOGGER.info('There are %d releases available: %s', len(out), ','.join(map(str, (out))))
+    LOGGER.info('There are %d ENSEMBL releases available: %s', len(out), ','.join(map(str, (out))))
     return out
 
 
@@ -97,13 +97,15 @@ def species(release=MAX_RELEASE_SUPPORTED):
         List of species.
 
     """
+    if release is None:
+        release = MAX_RELEASE_SUPPORTED
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
     if not MIN_RELEASE_SUPPORTED <= release <= MAX_RELEASE_SUPPORTED:
         raise ValueError('Release should be a number between {} and {}.'.format(
             MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED))
 
-    ftp = get_ftp_instance()
+    ftp = get_ftp_instance(BASE_URL)
     ftp.cwd('pub/' + 'release-' + str(release) + '/fasta/')
     spec_list = sorted([item for item in ftp.nlst()])
     ftp.quit()
@@ -140,12 +142,12 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    if species not in iCount.genomes.ensembl.species():
-        raise ValueError('Invalid species name.')
-
     if not MIN_RELEASE_SUPPORTED <= release <= MAX_RELEASE_SUPPORTED:
         raise ValueError('Release should be a number between {} and {}.'.format(
             MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED))
+
+    if species not in iCount.genomes.ensembl.species(release):
+        raise ValueError('Invalid species name.')
 
     if annotation:
         assert annotation.endswith(('.gtf', '.gtf.gz'))
@@ -162,9 +164,9 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=
     if not out_dir:
         out_dir = os.getcwd()
     if not os.path.isdir(out_dir):
-        raise ValueError('Directory "{}" does not exist'.format(out_dir))
+        raise ValueError('Directory "{}" does not exist.'.format(out_dir))
 
-    ftp = get_ftp_instance()
+    ftp = get_ftp_instance(BASE_URL)
     server_dir = '/pub/release-{}/gtf/{}/'.format(release, species)
     ftp.cwd(server_dir)
     server_files = ftp.nlst()
@@ -194,7 +196,7 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=
 
 def chrom_length(fasta_in):
     """
-    Compute chromosome lengths to a file by using samtools faidx.
+    Compute chromosome lengths of fasta file and store them into a file.
 
     More about the .fai file format can be found here:
     http://www.htslib.org/doc/faidx.html
@@ -213,15 +215,12 @@ def chrom_length(fasta_in):
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
     temp = iCount.files.decompress_to_tempfile(fasta_in)
-    command = ['samtools', 'faidx', temp]
-    subprocess.check_call(command)
+    pysam.faidx(temp)  # pylint: disable=no-member
 
-    # This command makes fai file. Move & rename this file to fasta_in.fai:
-    fai_file_temp = temp + '.fai'
-    fai_file = fasta_in + '.fai'
-    subprocess.check_call(['mv', fai_file_temp, fai_file])
-    LOGGER.info('Fai file saved to : %s', os.path.abspath(fai_file))
-    return os.path.abspath(fai_file)
+    fai_file = os.path.abspath(fasta_in + '.fai')
+    shutil.move(temp + '.fai', fai_file)
+    LOGGER.info('Fai file saved to : %s', fai_file)
+    return fai_file
 
 
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
@@ -253,9 +252,6 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     str
         Downloaded genome/sequnce filename.
 
-    TODO: target_dir & target_fname into one parameter? But the default name is
-    a quite useful feature...
-
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
@@ -279,9 +275,9 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     if not out_dir:
         out_dir = os.getcwd()
     if not os.path.isdir(out_dir):
-        raise ValueError('Directory "{}" does not exist'.format(out_dir))
+        raise ValueError('Directory "{}" does not exist.'.format(out_dir))
 
-    ftp = get_ftp_instance()
+    ftp = get_ftp_instance(BASE_URL)
     server_dir = '/pub/release-{}/fasta/{}/dna'.format(release, species)
     ftp.cwd(server_dir)
     all_fasta_files = ftp.nlst()

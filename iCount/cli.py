@@ -333,13 +333,13 @@ def main():
 
     # Genomes:
     make_parser_from_function(
-        iCount.genomes.ensembl.releases, subparsers, only_func=True)
+        iCount.genomes.releases, subparsers, only_func=True)
     make_parser_from_function(
-        iCount.genomes.ensembl.species, subparsers, only_func=True)
+        iCount.genomes.species, subparsers, only_func=True)
     make_parser_from_function(
-        iCount.genomes.ensembl.annotation, subparsers, only_func=True)
+        iCount.genomes.annotation, subparsers, only_func=True)
     make_parser_from_function(
-        iCount.genomes.ensembl.genome, subparsers, only_func=True)
+        iCount.genomes.genome, subparsers, only_func=True)
     make_parser_from_function(
         iCount.genomes.segment.get_regions, subparsers)
 

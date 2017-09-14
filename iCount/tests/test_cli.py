@@ -62,16 +62,41 @@ class TestCLI(unittest.TestCase):
             ]
         })
 
-    def test_releases(self):
+    def test_releases1(self):
         command_basic = [
             'iCount', 'releases',
             '-S', '40',  # Supress lower than ERROR messages.
         ]
         self.assertEqual(subprocess.call(command_basic), 0)
 
-    def test_species(self):
+    def test_releases2(self):
+        command_basic = [
+            'iCount', 'releases',
+            '--source', 'ensembl',
+            '-S', '40',  # Supress lower than ERROR messages.
+        ]
+        self.assertEqual(subprocess.call(command_basic), 0)
+
+    def test_species1(self):
         command_basic = [
             'iCount', 'species',
+            '-S', '40',  # Supress lower than ERROR messages.
+        ]
+        self.assertEqual(subprocess.call(command_basic), 0)
+
+    def test_species2(self):
+        command_basic = [
+            'iCount', 'species',
+            '--source', 'ensembl',
+            '-S', '40',  # Supress lower than ERROR messages.
+        ]
+        self.assertEqual(subprocess.call(command_basic), 0)
+
+    def test_species3(self):
+        command_basic = [
+            'iCount', 'species',
+            '--source', 'ensembl',
+            '--release', '59',
             '-S', '40',  # Supress lower than ERROR messages.
         ]
         self.assertEqual(subprocess.call(command_basic), 0)
@@ -79,8 +104,19 @@ class TestCLI(unittest.TestCase):
     def test_annotation(self):
         # Execute only full command (with --target_dir), to avoid downloading to cwd.
         command_full = [
-            'iCount', 'annotation', 'homo_sapiens',
-            '--release', '84',
+            'iCount', 'annotation', 'human', '27',
+            '--out_dir', self.dir,
+            '--annotation', get_temp_file_name(extension='gtf.gz'),
+            '-S', '40',  # Supress lower than ERROR messages.
+        ]
+
+        self.assertEqual(subprocess.call(command_full), 0)
+
+    def test_annotation2(self):
+        # Execute only full command (with --target_dir), to avoid downloading to cwd.
+        command_full = [
+            'iCount', 'annotation', 'homo_sapiens', '84',
+            '--source', 'ensembl',
             '--out_dir', self.dir,
             '--annotation', get_temp_file_name(extension='gtf.gz'),
             '-S', '40',  # Supress lower than ERROR messages.
@@ -90,9 +126,10 @@ class TestCLI(unittest.TestCase):
 
     def test_genome(self):
         # Download just MT and Y chromosome, or test can last too long...
+        # Only test ENSEMBL, since GENCODE does not allow download of single chromosome.
         command_full = [
-            'iCount', 'genome', 'homo_sapiens',
-            '--release', '84',
+            'iCount', 'genome', 'homo_sapiens', '84',
+            '--source', 'ensembl',
             '--out_dir', self.dir,
             '--genome', get_temp_file_name(extension='fa.gz'),
             '--chromosomes', 'MT', 'Y',
