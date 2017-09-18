@@ -329,7 +329,7 @@ class TestProcessBamFile(unittest.TestCase):
         bam_fname = make_bam_file({
             'chromosomes': [('chr1', 3000)],
             'segments': [('name1', 4, 0, 0, 0, [(0, 0)], {})],
-        })
+        }, rnd_seed=0)
         self.metrics.all_recs = 0
         self.metrics.notmapped_recs = 0
         self.metrics.used_recs = 0
@@ -345,7 +345,7 @@ class TestProcessBamFile(unittest.TestCase):
         bam_fname = make_bam_file({
             'chromosomes': [('chr1', 3000)],
             'segments': [('name1', 0, 0, 0, 3, [(0, 100)], {})],
-        })
+        }, rnd_seed=0)
         self.metrics.lowmapq_recs = 0
         self.metrics.used_recs = 0
         list(xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp))
@@ -358,7 +358,7 @@ class TestProcessBamFile(unittest.TestCase):
             'segments': [
                 # No NH tag is set
                 ('name5', 0, 0, 0, 50, [(0, 100)], {})]}
-        bam_fname = make_bam_file(data_no_nh)
+        bam_fname = make_bam_file(data_no_nh, rnd_seed=0)
 
         message = r'"NH" tag not set for record: .*'
         with self.assertRaisesRegex(ValueError, message):
@@ -377,7 +377,7 @@ class TestProcessBamFile(unittest.TestCase):
                 ('_:rbc:AAA', 16, 0, 50, 255, [(0, 100)], {'NH': 1}),
                 ('_:rbc:CCC', 0, 0, 50, 255, [(0, 101)], {'NH': 1}),
             ],
-        })
+        }, rnd_seed=0)
         grouped = list(xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp))
 
         expected = [
@@ -399,7 +399,7 @@ class TestProcessBamFile(unittest.TestCase):
                 ('_:rbc:CCC', 0, 0, 50, 255, [(0, 101)], {'NH': 1}),
                 ('_:rbc:GGG', 0, 0, 50, 255, [(0, 101)], {'NH': 1}),
             ],
-        })
+        }, rnd_seed=0)
         grouped = list(xlsites._processs_bam_file(bam_fname, self.metrics, 10, self.tmp))
 
         expected = [
@@ -443,7 +443,7 @@ class TestRun(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_run_simple(self):
-        bam_fname = make_bam_file(self.data)
+        bam_fname = make_bam_file(self.data, rnd_seed=0)
         unique_fname = get_temp_file_name(extension='bed.gz')
         multi_fname = get_temp_file_name(extension='bed.gz')
         strange_fname = get_temp_file_name(extension='bam')

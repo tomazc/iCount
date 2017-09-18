@@ -15,7 +15,7 @@ class TestCutadapt(unittest.TestCase):
     def setUp(self):
         self.adapter = 'AAAATTTTCCCCGGGG'
         self.reads = make_fastq_file(adapter=self.adapter, num_sequences=100,
-                                     out_file=get_temp_file_name(extension='fastq'))
+                                     out_file=get_temp_file_name(extension='fastq'), rnd_seed=0)
         self.tmp = get_temp_file_name(extension='fastq')
         warnings.simplefilter("ignore", ResourceWarning)
 
@@ -34,8 +34,8 @@ class TestStar(unittest.TestCase):
     def setUp(self):
         self.dir = get_temp_dir()
         self.index_dir = get_temp_dir()
-        self.genome = make_fasta_file(num_sequences=2, seq_len=1000)
-        self.reads = make_fastq_file(genome=self.genome)
+        self.genome = make_fasta_file(num_sequences=2, seq_len=1000, rnd_seed=0)
+        self.reads = make_fastq_file(genome=self.genome, rnd_seed=0)
         self.annotation = make_file_from_list([
             ['1', '.', 'gene', '10', '20', '.', '+', '.',
              'gene_id "A";'],

@@ -23,12 +23,12 @@ class TestDemultiplex(unittest.TestCase):
         adapter = 'GGAACC'
         barcodes = ['NNAAAN', 'NNACTN']
         data = [
-            ['@header/1', 'GGAAAG' + make_sequence(40) + adapter, '+',
-             make_quality_scores(50, min_chr=33, max_chr=74) + '!J'],
-            ['@header2 blah', 'TTCCTT' + make_sequence(40) + adapter, '+',
-             make_quality_scores(50, min_chr=33, max_chr=74) + '!J'],
-            ['@header3', 'TTGGGT' + make_sequence(40) + adapter, '+',
-             make_quality_scores(50, min_chr=33, max_chr=74) + '!J'],
+            ['@header/1', 'GGAAAG' + make_sequence(40, rnd_seed=0) + adapter, '+',
+             make_quality_scores(50, min_chr=33, max_chr=74, rnd_seed=1) + '!J'],
+            ['@header2 blah', 'TTCCTT' + make_sequence(40, rnd_seed=2) + adapter, '+',
+             make_quality_scores(50, min_chr=33, max_chr=74, rnd_seed=3) + '!J'],
+            ['@header3', 'TTGGGT' + make_sequence(40, rnd_seed=4) + adapter, '+',
+             make_quality_scores(50, min_chr=33, max_chr=74, rnd_seed=5) + '!J'],
         ]
         fq_fname = get_temp_file_name(extension='fq')
         fq_file = iCount.files.fastq.FastqFile(fq_fname, 'wt')
@@ -68,12 +68,12 @@ class TestDemultiplex(unittest.TestCase):
     def test_run_ok_no_adapter(self):
         barcodes = ['NNAAAN', 'NNACTN']
         data = [
-            ['@header/1', 'GGAAAG' + make_sequence(40), '+',
-             make_quality_scores(50, min_chr=65, max_chr=73) + '!J'],
-            ['@header2 blah', 'TTCCTT' + make_sequence(40), '+',
-             make_quality_scores(50, min_chr=65, max_chr=73) + '!J'],
-            ['@header3', 'TTGGGT' + make_sequence(40), '+',
-             make_quality_scores(50, min_chr=65, max_chr=73) + '!J'],
+            ['@header/1', 'GGAAAG' + make_sequence(40, rnd_seed=99), '+',
+             make_quality_scores(50, min_chr=65, max_chr=73, rnd_seed=76) + '!J'],
+            ['@header2 blah', 'TTCCTT' + make_sequence(40, rnd_seed=47), '+',
+             make_quality_scores(50, min_chr=65, max_chr=73, rnd_seed=71) + '!J'],
+            ['@header3', 'TTGGGT' + make_sequence(40, rnd_seed=13), '+',
+             make_quality_scores(50, min_chr=65, max_chr=73, rnd_seed=12) + '!J'],
         ]
         fq_fname = get_temp_file_name(extension='fq')
         fq_file = iCount.files.fastq.FastqFile(fq_fname, 'wt')
@@ -120,8 +120,8 @@ class TestExtract(unittest.TestCase):
         # No mismatch, first barcode.
         barcodes = ['NNAAAN', 'NNACTN', 'NNACGN']
         adapter = 'CCCCCC'
-        data = ['@header1', 'GGAAAG' + adapter + make_sequence(40), '+',
-                make_quality_scores(50) + '!J']
+        data = ['@header1', 'GGAAAG' + adapter + make_sequence(40, rnd_seed=0), '+',
+                make_quality_scores(50, rnd_seed=0) + '!J']
         fq_fname = get_temp_file_name(extension='fq')
         fq_file = iCount.files.fastq.FastqFile(fq_fname, 'wt')
         fq_file.write(iCount.files.fastq.FastqEntry(*data))
@@ -139,8 +139,8 @@ class TestExtract(unittest.TestCase):
         # One mismatch, second barcode.
         barcodes = ['NNAAAN', 'NNCCTN', 'NNACGN']
         adapter = 'CCCCCC'
-        data = ['@header1', 'TTACTT' + adapter + make_sequence(40), '+',
-                make_quality_scores(50) + '!J']
+        data = ['@header1', 'TTACTT' + adapter + make_sequence(40, rnd_seed=0), '+',
+                make_quality_scores(50, rnd_seed=0) + '!J']
         fq_fname = get_temp_file_name(extension='fq')
         fq_file = iCount.files.fastq.FastqFile(fq_fname, 'wt')
         fq_file.write(iCount.files.fastq.FastqEntry(*data))
@@ -158,8 +158,8 @@ class TestExtract(unittest.TestCase):
         # To many mismatches
         barcodes = ['NNAAAN', 'NNCCTN', 'NNACGN']
         adapter = 'CCCCCC'
-        data = ['@header1', 'TTACTT' + adapter + make_sequence(40), '+',
-                make_quality_scores(50) + '!J']
+        data = ['@header1', 'TTACTT' + adapter + make_sequence(40, rnd_seed=0), '+',
+                make_quality_scores(50, rnd_seed=0) + '!J']
         fq_fname = get_temp_file_name(extension='fq')
         fq_file = iCount.files.fastq.FastqFile(fq_fname, 'wt')
         fq_file.write(iCount.files.fastq.FastqEntry(*data))

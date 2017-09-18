@@ -60,7 +60,7 @@ class TestCLI(unittest.TestCase):
                 ('name3:rbc:CCCC:', 0, 0, 100, 20, [(0, 100)], {'NH': 1}),
                 ('name4:ABC', 0, 0, 300, 20, [(0, 200)], {'NH': 11}),
             ]
-        })
+        }, rnd_seed=0)
 
     def test_releases1(self):
         command_basic = [
@@ -168,7 +168,7 @@ class TestCLI(unittest.TestCase):
         ]
         bar1, bar2, bar3 = barcodes
         adapter = 'CCCCCCCCC'
-        fastq = make_fastq_file(barcodes=barcodes, adapter=adapter)
+        fastq = make_fastq_file(barcodes=barcodes, adapter=adapter, rnd_seed=0)
 
         command_basic = [
             'iCount', 'demultiplex',
@@ -196,7 +196,8 @@ class TestCLI(unittest.TestCase):
 
     def test_cutadapt(self):
         adapter = 'CCCCCCCCC'
-        fastq = make_fastq_file(adapter=adapter, out_file=get_temp_file_name(extension='fastq'))
+        fastq = make_fastq_file(
+            adapter=adapter, out_file=get_temp_file_name(extension='fastq'), rnd_seed=0)
 
         command_basic = [
             'iCount', 'cutadapt',
@@ -219,8 +220,8 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(subprocess.call(command_full), 0)
 
     def test_indexstar_and_mapstar(self):
-        genome = make_fasta_file(num_sequences=2, seq_len=1000)
-        fastq = make_fastq_file(genome=genome)
+        genome = make_fasta_file(num_sequences=2, seq_len=1000, rnd_seed=0)
+        fastq = make_fastq_file(genome=genome, rnd_seed=0)
 
         command_basic = [
             'iCount', 'indexstar', genome, self.dir,
@@ -239,8 +240,8 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(subprocess.call(command_basic), 0)
 
     def test_indexstar_and_mapstar_full(self):
-        genome = make_fasta_file(num_sequences=2, seq_len=1000)
-        fastq = make_fastq_file(genome=genome)
+        genome = make_fasta_file(num_sequences=2, seq_len=1000, rnd_seed=0)
+        fastq = make_fastq_file(genome=genome, rnd_seed=0)
 
         command_full = [
             'iCount', 'indexstar', genome, self.dir,
