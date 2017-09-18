@@ -4,6 +4,7 @@ import unittest
 import warnings
 
 import pysam
+from numpy import random
 
 import iCount
 from iCount.tests.utils import get_temp_file_name, get_temp_dir, make_file_from_list, \
@@ -19,9 +20,11 @@ class TestEndToEnd(unittest.TestCase):
         self.fai_data = {'1': 1000}
         self.fai = make_file_from_list(list(self.fai_data.items()), bedtool=False, extension='fai')
 
-        self.seqs = {name: make_sequence(size) for name, size in self.fai_data.items()}
-        self.fasta = make_fasta_file(sequences=self.seqs.values(),
-                                     headers=self.seqs.keys())
+        random.seed(0)  # pylint:disable=no-member
+        random_seeds = random.randint(10**5, size=len(self.fai))  # pylint:disable=no-member
+        self.seqs = {name: make_sequence(size, rnd_seed=rseed) for (name, size), rseed in
+                     zip(self.fai_data.items(), random_seeds)}
+        self.fasta = make_fasta_file(sequences=self.seqs.values(), headers=self.seqs.keys())
 
         # Make annotation:
         self.gtf = make_file_from_list(extension='gtf', data=[
@@ -75,9 +78,10 @@ class TestEndToEnd(unittest.TestCase):
             ('name13:rbc:CCCC', '1', 30, 549, '-'),
         ]
         # Make reads from genome, pointing to specific pre-detemrined cross-link positions:
+        random_seeds = random.randint(10**5, size=len(self.read_data))  # pylint:disable=no-member
         self.reads = get_temp_file_name(extension='fastq')
         with open(self.reads, 'wt') as ofile:
-            for name, chrom, length, xlink, strand in self.read_data:
+            for (name, chrom, length, xlink, strand), rseed in zip(self.read_data, random_seeds):
                 seq = self.seqs[chrom][xlink: xlink + length]
                 if strand == '-':
                     seq = self.seqs[chrom][xlink - length: xlink]
@@ -87,7 +91,8 @@ class TestEndToEnd(unittest.TestCase):
                 ofile.write('@' + name + '\n')
                 ofile.write(seq + '\n')
                 ofile.write('+' + '\n')
-                ofile.write(make_quality_scores(len(seq), min_chr=65, max_chr=73) + '\n')
+                ofile.write(
+                    make_quality_scores(len(seq), min_chr=65, max_chr=73, rnd_seed=rseed) + '\n')
 
             # Make a "strange" read:
             # pylint: disable=undefined-loop-variable
@@ -95,7 +100,8 @@ class TestEndToEnd(unittest.TestCase):
             ofile.write('@' + 'name_strange:rbc:GGGG' + '\n')
             ofile.write(seq + '\n')
             ofile.write('+' + '\n')
-            ofile.write(make_quality_scores(len(seq), min_chr=70, max_chr=73) + '\n')
+            ofile.write(
+                make_quality_scores(len(seq), min_chr=70, max_chr=73, rnd_seed=rseed) + '\n')
 
     def test_e2e(self):
         """

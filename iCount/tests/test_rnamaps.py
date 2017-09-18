@@ -78,7 +78,7 @@ class TestRun(unittest.TestCase):
                 ('name2:rbc:AAAA', 0, 0, 142, 255, [(0, 50)], {'NH': 1}),
                 ('name2:rbc:CCCC', 0, 0, 142, 255, [(0, 50)], {'NH': 1}),
             ]
-        })
+        }, rnd_seed=0)
 
         expected = [
             ['RNAmap', 'type', 'position', 'all', 'explicit'],
@@ -99,7 +99,7 @@ class TestRun(unittest.TestCase):
                 # (qname, flag, refname, pos, mapq, cigar, tags)
                 ('name2:rbc:CCCC', 0, 0, 80, 255, [(0, 50)], {'NH': 1}),
             ]
-        })
+        }, rnd_seed=0)
 
         expected = [
             ['RNAmap', 'type', 'position', 'all', 'explicit'],
@@ -119,7 +119,7 @@ class TestRun(unittest.TestCase):
                 # (qname, flag, refname, pos, mapq, cigar, tags)
                 ('name2:rbc:CCCC', 0, 0, 480, 255, [(0, 50)], {'NH': 1}),
             ]
-        })
+        }, rnd_seed=0)
 
         expected = [
             ['RNAmap', 'type', 'position', 'all', 'explicit'],
@@ -139,7 +139,7 @@ class TestRun(unittest.TestCase):
                 # (qname, flag, refname, pos, mapq, cigar, tags)
                 ('name2:rbc:CCCC', 0, 0, 235, 255, [(0, 50)], {'NH': 1}),
             ]
-        })
+        }, rnd_seed=0)
 
         expected = [
             ['chrom', 'strand', 'xlink', 'second-start', 'end-position', 'read_len'],
@@ -163,7 +163,7 @@ class TestRun(unittest.TestCase):
                 ('name2:rbc:CCCC', 0, 0, 163, 255, [(0, 30)], {'NH': 1}),
                 ('name2:rbc:GGGG', 0, 0, 163, 255, [(0, 30)], {'NH': 1}),
             ]
-        })
+        }, rnd_seed=0)
 
         expected = [
             ['RNAmap', 'type', 'position', 'all', 'explicit'],
@@ -185,7 +185,7 @@ class TestRun(unittest.TestCase):
                 # (qname, flag, refname, pos, mapq, cigar, tags)
                 ('name2:rbc:CCCC', 0, 0, 205, 255, [(0, 20)], {'NH': 1}),
             ]
-        })
+        }, rnd_seed=0)
 
         expected = [
             ['RNAmap', 'type', 'position', 'all', 'explicit'],
@@ -210,7 +210,7 @@ class TestRun(unittest.TestCase):
                 # (qname, flag, refname, pos, mapq, cigar, tags)
                 ('name2:rbc:CCCC', 0, 0, 610, 255, [(0, 30)], {'NH': 1}),
             ]
-        })
+        }, rnd_seed=0)
 
         expected = [
             ['RNAmap', 'type', 'position', 'all', 'explicit'],
@@ -233,7 +233,7 @@ class TestRun(unittest.TestCase):
                 # (qname, flag, refname, pos, mapq, cigar, tags)
                 ('name2:rbc:CCCC', 0, 0, 530, 255, [(0, 30)], {'NH': 1}),
             ]
-        })
+        }, rnd_seed=0)
 
         expected = [
             ['RNAmap', 'type', 'position', 'all', 'explicit'],
@@ -256,7 +256,7 @@ class TestRun(unittest.TestCase):
                 # (qname, flag, refname, pos, mapq, cigar, tags)
                 ('name2:rbc:CCCC', 16, 0, 819, 255, [(0, 30)], {'NH': 1}),
             ]
-        })
+        }, rnd_seed=0)
 
         expected = [
             ['RNAmap', 'type', 'position', 'all', 'explicit'],

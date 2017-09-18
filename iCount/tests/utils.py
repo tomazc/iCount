@@ -4,7 +4,6 @@ import os
 import tempfile
 
 import pysam
-
 from numpy import random
 
 import pybedtools
@@ -79,8 +78,9 @@ def reverse_strand(data):
             data[i][:6] + [rstrands[i]] + data[i][7:] for i in range(len(data))]
 
 
-def make_sequence(size, include_n=False):
+def make_sequence(size, include_n=False, rnd_seed=None):
     """Make random DNA segment of length `size`."""
+    random.seed(rnd_seed)  # pylint:disable=no-member
     if include_n:
         bases = ['A', 'C', 'G', 'T', 'N']
     else:
@@ -88,13 +88,14 @@ def make_sequence(size, include_n=False):
     return ''.join(random.choice(bases, size))  # pylint: disable=no-member
 
 
-def make_quality_scores(size, min_chr=33, max_chr=74):
+def make_quality_scores(size, min_chr=33, max_chr=74, rnd_seed=None):
     """Make random DNA segment of length `size`."""
+    random.seed(rnd_seed)  # pylint:disable=no-member
     scores = [chr(i) for i in range(min_chr, max_chr + 1)]
     return ''.join(random.choice(scores, size))  # pylint: disable=no-member
 
 
-def make_aligned_segment(data):
+def make_aligned_segment(data, rnd_seed=None):
     """
     Return pysam.AlignedSegment() object with the data in `data`.
 
@@ -155,16 +156,16 @@ def make_aligned_segment(data):
     segment.template_length = 0
 
     length = sum([n2 for (n1, n2) in segment.cigar if n1 in [0, 2, 3, 7, 8]])
-    segment.query_sequence = make_sequence(size=length, include_n=True)
+    segment.query_sequence = make_sequence(size=length, include_n=True, rnd_seed=rnd_seed)
     segment.query_qualities = pysam.qualitystring_to_array(
-        make_quality_scores(size=length))
+        make_quality_scores(size=length, rnd_seed=rnd_seed))
 
     segment.tags = data[6].items()
 
     return segment
 
 
-def make_bam_file(data):
+def make_bam_file(data, rnd_seed=None):
     """
     Make a BAM file and fill it with content of `data`.
 
@@ -200,6 +201,7 @@ def make_bam_file(data):
         Absoulte path to bamfile.
 
     """
+    random.seed(rnd_seed)  # pylint:disable=no-member
     fname = get_temp_file_name(extension='bam')
 
     # Make header:
@@ -207,20 +209,25 @@ def make_bam_file(data):
         [('SN', chrom), ('LN', size)]) for chrom, size in data['chromosomes']]
     header = {'HD': {'VN': '1.0'}, 'SQ': chromosomes}
 
+    random_seeds = random.randint(10**5, size=len(data['segments']))  # pylint:disable=no-member
     with pysam.AlignmentFile(fname, "wb", header=header) as outf:  # pylint: disable=no-member
-        for segment_data in data['segments']:
-            outf.write(make_aligned_segment(segment_data))
+        for segment_data, rseed in zip(data['segments'], random_seeds):
+            outf.write(make_aligned_segment(segment_data, rnd_seed=rseed))
 
     return os.path.abspath(fname)
 
 
-def make_fasta_file(sequences=None, headers=None, out_file=None, num_sequences=10, seq_len=80):
+def make_fasta_file(sequences=None, headers=None, out_file=None, num_sequences=10, seq_len=80,
+                    rnd_seed=None):
     """Make artificial FASTA file."""
+    random.seed(rnd_seed)  # pylint:disable=no-member
     if sequences is None and headers is None:
         headers = ['{}'.format(i + 1) for i in range(num_sequences)]
-        sequences = [make_sequence(seq_len) for i in range(num_sequences)]
+        random_seeds = random.randint(10**5, size=num_sequences)  # pylint:disable=no-member
+        sequences = [make_sequence(seq_len, rnd_seed=rnd) for rnd in random_seeds]
     elif sequences is None:
-        sequences = [make_sequence(seq_len) for i in range(len(headers))]
+        random_seeds = random.randint(10**5, size=len(headers))  # pylint:disable=no-member
+        sequences = [make_sequence(seq_len, rnd_seed=rnd) for rnd in random_seeds]
     elif headers is None:
         headers = ['{}'.format(i + 1) for i in range(len(sequences))]
 
@@ -235,12 +242,13 @@ def make_fasta_file(sequences=None, headers=None, out_file=None, num_sequences=1
 
 
 def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
-                    num_sequences=10, seq_len=80):
+                    num_sequences=10, seq_len=80, rnd_seed=None):
     """
     Make artificial FASTQ file.
 
     TODO: refactor and write more descriptive doscrting.
     """
+    random.seed(rnd_seed)  # pylint:disable=no-member
     if barcodes is None:
         barcodes = ['NNN']
 
@@ -253,7 +261,7 @@ def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
 
     num_barcodes = len(barcodes)
 
-    def make_fastq_entry(ofile):  # pylint: disable=missing-docstring
+    def make_fastq_entry(ofile, rseed):  # pylint: disable=missing-docstring
         description = 'artificial header {}'.format(random.random())
 
         # Select random barcode and transform 'N'-s to nucleotids:
@@ -272,8 +280,8 @@ def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
             random_piece = genome_data[int1][1][int2:int2 + seq_len_reduced]
             seq = barcode + random_piece + adapter
         else:
-            seq = barcode + make_sequence(seq_len_reduced) + adapter
-        quality_scores = make_quality_scores(len(seq))
+            seq = barcode + make_sequence(seq_len_reduced, rnd_seed=rseed) + adapter
+        quality_scores = make_quality_scores(len(seq), rnd_seed=rseed)
 
         ofile.write('@' + description + '\n')
         ofile.write(seq + '\n')
@@ -282,9 +290,11 @@ def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
 
     if out_file is None:
         out_file = get_temp_file_name()
+
+    random_seeds = random.randint(10**5, size=num_sequences)  # pylint:disable=no-member
     with open(out_file, 'wt') as ofile:
-        for _ in range(num_sequences):
-            make_fastq_entry(ofile)
+        for rseed in random_seeds:
+            make_fastq_entry(ofile, rseed)
 
     return os.path.abspath(out_file)
 
