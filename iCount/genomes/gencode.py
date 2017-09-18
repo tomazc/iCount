@@ -25,7 +25,7 @@ def _to_int(string):
     """Convert string to integer, if possible."""
     try:
         return int(string)
-    except ValueError:
+    except (ValueError, TypeError):
         return string
 
 
@@ -94,7 +94,7 @@ def annotation(species, release, out_dir=None, annotation=None):
     ----------
     species : str
         Species name.
-    release : int
+    release : str
         Release number.
     out_dir : str
         Download to this directory (if not given, current working directory).
@@ -166,7 +166,7 @@ def genome(species, release, out_dir=None, genome=None):
     ----------
     species : str by using samtools faidx
         Species latin name.
-    release : int
+    release : str
         Release number. Only gencode releases {0}-{1} are available.
     out_dir : str
         Download to this directory (if not given, current working directory).

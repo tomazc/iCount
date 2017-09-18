@@ -43,7 +43,7 @@ def species(source='gencode', release=None):
     ----------
     source : str
         Source of data. Only ENSEMBL or GENCODE are available.
-    release : int
+    release : str
         Release number. Only relevant if source is ENSEMBL.
 
     Returns
@@ -59,7 +59,7 @@ def species(source='gencode', release=None):
     if source == 'gencode':
         return gencode.species()
     else:
-        return ensembl.species(release=release)
+        return ensembl.species(release=gencode._to_int(release))  # pylint:disable=protected-access
 
 
 def releases(source='gencode', species=None):
@@ -89,7 +89,7 @@ def releases(source='gencode', species=None):
         return ensembl.releases()
 
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,protected-access
 def annotation(species, release, out_dir=None, annotation=None, source='gencode'):
     """
     Download annotation for given release/species/source.
@@ -98,7 +98,7 @@ def annotation(species, release, out_dir=None, annotation=None, source='gencode'
     ----------
     species : str
         Species name.
-    release : int
+    release : str
         Release number.
     out_dir : str
         Download to this directory (if not given, current working directory).
@@ -124,11 +124,11 @@ def annotation(species, release, out_dir=None, annotation=None, source='gencode'
         return gencode.annotation(
             species=species, release=release, out_dir=out_dir, annotation=annotation)
     else:
-        return ensembl.annotation(
-            species=species, release=release, out_dir=out_dir, annotation=annotation)
+        return ensembl.annotation(species=species, release=gencode._to_int(release),
+                                  out_dir=out_dir, annotation=annotation)
 
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,protected-access
 def genome(species, release, out_dir=None, genome=None, chromosomes=None, source='gencode'):
     """
     Download genome for given release/species/source.
@@ -137,7 +137,7 @@ def genome(species, release, out_dir=None, genome=None, chromosomes=None, source
     ----------
     species : str
         Species name.
-    release : int
+    release : str
         Release number.
     out_dir : str
         Download to this directory (if not given, current working directory).
@@ -166,5 +166,5 @@ def genome(species, release, out_dir=None, genome=None, chromosomes=None, source
         return gencode.genome(
             species=species, release=release, out_dir=out_dir, genome=genome)
     else:
-        return ensembl.genome(species=species, release=release, out_dir=out_dir, genome=genome,
-                              chromosomes=chromosomes)
+        return ensembl.genome(species=species, release=gencode._to_int(release), out_dir=out_dir,
+                              genome=genome, chromosomes=chromosomes)

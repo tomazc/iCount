@@ -141,19 +141,19 @@ class TestGencodeAnnotation(unittest.TestCase):
             genomes.annotation('human', '27', source='invalid_source')
 
     def test_annotation(self):
-        genomes.annotation(
-            'human', release=27, out_dir=self.tempdir, annotation=self.tmpfile, source='gencode')
+        genomes.annotation('mouse', release='M15', out_dir=self.tempdir, annotation=self.tmpfile,
+                           source='gencode')
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, self.tmpfile)))
 
     def test_annotation_invalid_species(self):
         message = r'Invalid species name.'
         with self.assertRaisesRegex(ValueError, message):
-            genomes.annotation(species='invalid_species_name', release=26, source='gencode')
+            genomes.annotation(species='invalid_species_name', release='26', source='gencode')
 
     def test_annotation_invalid_release(self):
         message = r"Invalid release number."
         with self.assertRaisesRegex(ValueError, message):
-            genomes.annotation('human', release=42000, source='gencode')
+            genomes.annotation('human', release='42000', source='gencode')
 
     def tearDown(self):
         files = os.listdir(self.tempdir)
@@ -227,7 +227,7 @@ class TestGencodeGenome(unittest.TestCase):
 
     @unittest.skip("This file is too large to download it in unit test.")
     def test_genome(self):
-        genomes.genome('human', release=26, out_dir=self.tempdir, source='gencode')
+        genomes.genome('human', release='26', out_dir=self.tempdir, source='gencode')
 
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, 'human.26.fa.gz')))
         # Confirm that chrom_length file was created!
@@ -236,12 +236,12 @@ class TestGencodeGenome(unittest.TestCase):
     def test_genome_invalid_species(self):
         message = r'Invalid species name.'
         with self.assertRaisesRegex(ValueError, message):
-            genomes.genome(species='invalid_species_name', release=26, source='gencode')
+            genomes.genome(species='invalid_species_name', release='26', source='gencode')
 
     def test_genome_invalid_release(self):
         message = r'Invalid release number.'
         with self.assertRaisesRegex(ValueError, message):
-            genomes.genome('human', release=1000, source='gencode')
+            genomes.genome('human', release='1000', source='gencode')
 
     def tearDown(self):
         files = os.listdir(self.tempdir)
