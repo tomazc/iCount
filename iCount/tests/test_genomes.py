@@ -17,19 +17,19 @@ class TestEnsemblUtils(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_get_ftp_instance(self):
-        ftp_instance = ensembl.get_ftp_instance(ensembl.BASE_URL)
+        ftp_instance = genomes.get_ftp_instance(ensembl.BASE_URL)
 
         self.assertIsInstance(ftp_instance, ftplib.FTP)
         self.assertIsInstance(ftp_instance.pwd(), str)
 
         ftp_instance.quit()
 
-    @mock.patch('iCount.genomes.ensembl.ftplib')
+    @mock.patch('iCount.genomes.ftplib')
     def test_no_connection(self, ftplib_mock):
         ftplib_mock.FTP = mock.MagicMock(side_effect=Exception())
         message = "Problems connecting to ENSEMBL FTP server."
         with self.assertRaisesRegex(Exception, message):
-            ensembl.get_ftp_instance(ensembl.BASE_URL)
+            genomes.get_ftp_instance(ensembl.BASE_URL)
 
 
 class TestSpecies(unittest.TestCase):

@@ -22,6 +22,7 @@ Also, segmentation into genes and segments of same type (exon, intron, UTR, ...)
     https://www.gencodegenes.org/
 
 """
+import ftplib
 
 from . import ensembl
 from . import gencode
@@ -32,6 +33,32 @@ SUPPORTED_SOURCES = [
     'ensembl',
     'gencode',
 ]
+
+
+def _to_int(string):
+    """Convert string to integer, if possible."""
+    try:
+        return int(string)
+    except (ValueError, TypeError):
+        return string
+
+
+def get_ftp_instance(base_url):
+    """
+    Get ftplib.FTP object that is connected to base_url.
+
+    Returns
+    -------
+    ftplib.FTP
+        FTP object connected to base_url.
+
+    """
+    try:
+        ftp = ftplib.FTP(base_url)
+        ftp.login()
+        return ftp
+    except Exception:
+        raise ConnectionError('Problems connecting to ENSEMBL FTP server.')
 
 
 # pylint: disable=redefined-outer-name
@@ -59,7 +86,7 @@ def species(source='gencode', release=None):
     if source == 'gencode':
         return gencode.species()
     else:
-        return ensembl.species(release=gencode._to_int(release))  # pylint:disable=protected-access
+        return ensembl.species(release=_to_int(release))  # pylint:disable=protected-access
 
 
 def releases(source='gencode', species=None):
@@ -124,7 +151,7 @@ def annotation(species, release, out_dir=None, annotation=None, source='gencode'
         return gencode.annotation(
             species=species, release=release, out_dir=out_dir, annotation=annotation)
     else:
-        return ensembl.annotation(species=species, release=gencode._to_int(release),
+        return ensembl.annotation(species=species, release=_to_int(release),
                                   out_dir=out_dir, annotation=annotation)
 
 
@@ -166,5 +193,5 @@ def genome(species, release, out_dir=None, genome=None, chromosomes=None, source
         return gencode.genome(
             species=species, release=release, out_dir=out_dir, genome=genome)
     else:
-        return ensembl.genome(species=species, release=gencode._to_int(release), out_dir=out_dir,
+        return ensembl.genome(species=species, release=_to_int(release), out_dir=out_dir,
                               genome=genome, chromosomes=chromosomes)

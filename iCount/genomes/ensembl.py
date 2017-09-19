@@ -10,7 +10,6 @@ Functions to query and download data from the `Ensembl`_ FTP site.
 
 """
 
-import ftplib
 import gzip
 import logging
 import os
@@ -37,24 +36,6 @@ def _docstring_parameter(*sub):
     return dec
 
 
-def get_ftp_instance(base_url):
-    """
-    Get ftplib.FTP object that is connected to base_url.
-
-    Returns
-    -------
-    ftplib.FTP
-        FTP object connected to base_url.
-
-    """
-    try:
-        ftp = ftplib.FTP(base_url)
-        ftp.login()
-        return ftp
-    except Exception:
-        raise ConnectionError('Problems connecting to ENSEMBL FTP server.')
-
-
 @_docstring_parameter(MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED)
 def releases():
     """
@@ -68,7 +49,7 @@ def releases():
         List of available releases
 
     """
-    ftp = get_ftp_instance(BASE_URL)
+    ftp = iCount.genomes.get_ftp_instance(BASE_URL)
     # set current working directory
     ftp.cwd('pub')
 
@@ -105,7 +86,7 @@ def species(release=MAX_RELEASE_SUPPORTED):
         raise ValueError('Release should be a number between {} and {}.'.format(
             MIN_RELEASE_SUPPORTED, MAX_RELEASE_SUPPORTED))
 
-    ftp = get_ftp_instance(BASE_URL)
+    ftp = iCount.genomes.get_ftp_instance(BASE_URL)
     ftp.cwd('pub/' + 'release-' + str(release) + '/fasta/')
     spec_list = sorted([item for item in ftp.nlst()])
     ftp.quit()
@@ -166,7 +147,7 @@ def annotation(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, annotation=
     if not os.path.isdir(out_dir):
         raise ValueError('Directory "{}" does not exist.'.format(out_dir))
 
-    ftp = get_ftp_instance(BASE_URL)
+    ftp = iCount.genomes.get_ftp_instance(BASE_URL)
     server_dir = '/pub/release-{}/gtf/{}/'.format(release, species)
     ftp.cwd(server_dir)
     server_files = ftp.nlst()
@@ -277,7 +258,7 @@ def genome(species, release=MAX_RELEASE_SUPPORTED, out_dir=None, genome=None,
     if not os.path.isdir(out_dir):
         raise ValueError('Directory "{}" does not exist.'.format(out_dir))
 
-    ftp = get_ftp_instance(BASE_URL)
+    ftp = iCount.genomes.get_ftp_instance(BASE_URL)
     server_dir = '/pub/release-{}/fasta/{}/dna'.format(release, species)
     ftp.cwd(server_dir)
     all_fasta_files = ftp.nlst()

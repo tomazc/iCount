@@ -15,18 +15,9 @@ import os
 import re
 
 import iCount
-from iCount.genomes.ensembl import get_ftp_instance
 
 BASE_URL = 'ftp.sanger.ac.uk'
 LOGGER = logging.getLogger(__name__)
-
-
-def _to_int(string):
-    """Convert string to integer, if possible."""
-    try:
-        return int(string)
-    except (ValueError, TypeError):
-        return string
 
 
 def species():
@@ -41,7 +32,7 @@ def species():
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
 
-    ftp = get_ftp_instance(BASE_URL)
+    ftp = iCount.genomes.get_ftp_instance(BASE_URL)
     ftp.cwd('pub/gencode')
     spec_list = [item[8:] for item in ftp.nlst() if re.match(r'Gencode_\w+', item)]
     ftp.quit()
@@ -68,7 +59,7 @@ def releases(species='human'):
     """
     if species is None:
         species = 'human'
-    ftp = get_ftp_instance(BASE_URL)
+    ftp = iCount.genomes.get_ftp_instance(BASE_URL)
     # set current working directory
     ftp.cwd('pub/gencode/Gencode_{}'.format(species))
 
@@ -77,7 +68,8 @@ def releases(species='human'):
 
     def _keyfunc(item):
         """Separate mixed alphanumeric string into numbers and words."""
-        return [_to_int(i) for i in re.match(r'([0-9]*)([a-zA-Z]*)', item).groups()]
+        # pylint: disable=protected-access
+        return [iCount.genomes._to_int(i) for i in re.match(r'([0-9]*)([a-zA-Z]*)', item).groups()]
     out = sorted(fetch, reverse=True, key=_keyfunc)
 
     LOGGER.info('There are %d GENCODE releases available for %s: %s',
@@ -135,7 +127,7 @@ def annotation(species, release, out_dir=None, annotation=None):
     if not os.path.isdir(out_dir):
         raise ValueError('Directory "{}" does not exist'.format(out_dir))
 
-    ftp = get_ftp_instance(BASE_URL)
+    ftp = iCount.genomes.get_ftp_instance(BASE_URL)
     ftp.cwd('/pub/gencode/Gencode_{}/release_{}/'.format(species, release))
     server_files = ftp.nlst()
 
@@ -207,7 +199,7 @@ def genome(species, release, out_dir=None, genome=None):
     if not os.path.isdir(out_dir):
         raise ValueError('Directory "{}" does not exist'.format(out_dir))
 
-    ftp = get_ftp_instance(BASE_URL)
+    ftp = iCount.genomes.get_ftp_instance(BASE_URL)
     ftp.cwd('/pub/gencode/Gencode_{}/release_{}/'.format(species, release))
     regex = r'[\w\d\.]+\.genome\.fa\.gz'
     fasta_file = next((fname for fname in ftp.nlst() if
