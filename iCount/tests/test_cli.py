@@ -115,8 +115,8 @@ class TestCLI(unittest.TestCase):
     def test_annotation2(self):
         # Execute only full command (with --target_dir), to avoid downloading to cwd.
         command_full = [
-            'iCount', 'annotation', 'homo_sapiens', '84',
-            '--source', 'ensembl',
+            'iCount', 'annotation', 'mouse', 'M15',
+            '--source', 'gencode',
             '--out_dir', self.dir,
             '--annotation', get_temp_file_name(extension='gtf.gz'),
             '-S', '40',  # Supress lower than ERROR messages.

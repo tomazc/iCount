@@ -22,6 +22,7 @@ Also, segmentation into genes and segments of same type (exon, intron, UTR, ...)
     https://www.gencodegenes.org/
 
 """
+import ftplib
 
 from . import ensembl
 from . import gencode
@@ -34,6 +35,32 @@ SUPPORTED_SOURCES = [
 ]
 
 
+def _to_int(string):
+    """Convert string to integer, if possible."""
+    try:
+        return int(string)
+    except (ValueError, TypeError):
+        return string
+
+
+def get_ftp_instance(base_url):
+    """
+    Get ftplib.FTP object that is connected to base_url.
+
+    Returns
+    -------
+    ftplib.FTP
+        FTP object connected to base_url.
+
+    """
+    try:
+        ftp = ftplib.FTP(base_url)
+        ftp.login()
+        return ftp
+    except Exception:
+        raise ConnectionError('Problems connecting to ENSEMBL FTP server.')
+
+
 # pylint: disable=redefined-outer-name
 def species(source='gencode', release=None):
     """
@@ -43,7 +70,7 @@ def species(source='gencode', release=None):
     ----------
     source : str
         Source of data. Only ENSEMBL or GENCODE are available.
-    release : int
+    release : str
         Release number. Only relevant if source is ENSEMBL.
 
     Returns
@@ -59,7 +86,7 @@ def species(source='gencode', release=None):
     if source == 'gencode':
         return gencode.species()
     else:
-        return ensembl.species(release=release)
+        return ensembl.species(release=_to_int(release))  # pylint:disable=protected-access
 
 
 def releases(source='gencode', species=None):
@@ -89,7 +116,7 @@ def releases(source='gencode', species=None):
         return ensembl.releases()
 
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,protected-access
 def annotation(species, release, out_dir=None, annotation=None, source='gencode'):
     """
     Download annotation for given release/species/source.
@@ -98,7 +125,7 @@ def annotation(species, release, out_dir=None, annotation=None, source='gencode'
     ----------
     species : str
         Species name.
-    release : int
+    release : str
         Release number.
     out_dir : str
         Download to this directory (if not given, current working directory).
@@ -124,11 +151,11 @@ def annotation(species, release, out_dir=None, annotation=None, source='gencode'
         return gencode.annotation(
             species=species, release=release, out_dir=out_dir, annotation=annotation)
     else:
-        return ensembl.annotation(
-            species=species, release=release, out_dir=out_dir, annotation=annotation)
+        return ensembl.annotation(species=species, release=_to_int(release),
+                                  out_dir=out_dir, annotation=annotation)
 
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,protected-access
 def genome(species, release, out_dir=None, genome=None, chromosomes=None, source='gencode'):
     """
     Download genome for given release/species/source.
@@ -137,7 +164,7 @@ def genome(species, release, out_dir=None, genome=None, chromosomes=None, source
     ----------
     species : str
         Species name.
-    release : int
+    release : str
         Release number.
     out_dir : str
         Download to this directory (if not given, current working directory).
@@ -166,5 +193,5 @@ def genome(species, release, out_dir=None, genome=None, chromosomes=None, source
         return gencode.genome(
             species=species, release=release, out_dir=out_dir, genome=genome)
     else:
-        return ensembl.genome(species=species, release=release, out_dir=out_dir, genome=genome,
-                              chromosomes=chromosomes)
+        return ensembl.genome(species=species, release=_to_int(release), out_dir=out_dir,
+                              genome=genome, chromosomes=chromosomes)

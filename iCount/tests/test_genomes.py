@@ -17,19 +17,19 @@ class TestEnsemblUtils(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_get_ftp_instance(self):
-        ftp_instance = ensembl.get_ftp_instance(ensembl.BASE_URL)
+        ftp_instance = genomes.get_ftp_instance(ensembl.BASE_URL)
 
         self.assertIsInstance(ftp_instance, ftplib.FTP)
         self.assertIsInstance(ftp_instance.pwd(), str)
 
         ftp_instance.quit()
 
-    @mock.patch('iCount.genomes.ensembl.ftplib')
+    @mock.patch('iCount.genomes.ftplib')
     def test_no_connection(self, ftplib_mock):
         ftplib_mock.FTP = mock.MagicMock(side_effect=Exception())
         message = "Problems connecting to ENSEMBL FTP server."
         with self.assertRaisesRegex(Exception, message):
-            ensembl.get_ftp_instance(ensembl.BASE_URL)
+            genomes.get_ftp_instance(ensembl.BASE_URL)
 
 
 class TestSpecies(unittest.TestCase):
@@ -141,19 +141,19 @@ class TestGencodeAnnotation(unittest.TestCase):
             genomes.annotation('human', '27', source='invalid_source')
 
     def test_annotation(self):
-        genomes.annotation(
-            'human', release=27, out_dir=self.tempdir, annotation=self.tmpfile, source='gencode')
+        genomes.annotation('mouse', release='M15', out_dir=self.tempdir, annotation=self.tmpfile,
+                           source='gencode')
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, self.tmpfile)))
 
     def test_annotation_invalid_species(self):
         message = r'Invalid species name.'
         with self.assertRaisesRegex(ValueError, message):
-            genomes.annotation(species='invalid_species_name', release=26, source='gencode')
+            genomes.annotation(species='invalid_species_name', release='26', source='gencode')
 
     def test_annotation_invalid_release(self):
         message = r"Invalid release number."
         with self.assertRaisesRegex(ValueError, message):
-            genomes.annotation('human', release=42000, source='gencode')
+            genomes.annotation('human', release='42000', source='gencode')
 
     def tearDown(self):
         files = os.listdir(self.tempdir)
@@ -227,7 +227,7 @@ class TestGencodeGenome(unittest.TestCase):
 
     @unittest.skip("This file is too large to download it in unit test.")
     def test_genome(self):
-        genomes.genome('human', release=26, out_dir=self.tempdir, source='gencode')
+        genomes.genome('human', release='26', out_dir=self.tempdir, source='gencode')
 
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, 'human.26.fa.gz')))
         # Confirm that chrom_length file was created!
@@ -236,12 +236,12 @@ class TestGencodeGenome(unittest.TestCase):
     def test_genome_invalid_species(self):
         message = r'Invalid species name.'
         with self.assertRaisesRegex(ValueError, message):
-            genomes.genome(species='invalid_species_name', release=26, source='gencode')
+            genomes.genome(species='invalid_species_name', release='26', source='gencode')
 
     def test_genome_invalid_release(self):
         message = r'Invalid release number.'
         with self.assertRaisesRegex(ValueError, message):
-            genomes.genome('human', release=1000, source='gencode')
+            genomes.genome('human', release='1000', source='gencode')
 
     def tearDown(self):
         files = os.listdir(self.tempdir)
