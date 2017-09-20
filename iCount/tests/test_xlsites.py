@@ -102,10 +102,33 @@ class TestMergeSimilarRandomers(unittest.TestCase):
         }
         expected = {
             'GGGGG': ['hit4', 'hit5'],
-            'AAAAA': ['hit1', 'hit2', 'hit6', 'hit3'],
+            'AAAAA': ['hit1', 'hit2', 'hit6'],
+            'AAAAG': ['hit3'],
             'TTTTN': ['hit42'],
         }
-        xlsites._merge_similar_randomers(by_bc, mismatches=2)
+        xlsites._merge_similar_randomers(by_bc, mismatches=2, ratio_th=0.1)  # 1/10
+        self.assertEqual(by_bc, expected)
+
+    def test_merge_ratio_th(self):
+        # hit1, hit2, should be a 4-tuple, but for this test it is ok as is
+        by_bc = {
+            'AAAAA': ['hit1', 'hit2', 'hit4', 'hit5', 'hit6'],
+            'GGGGG': ['hit7', 'hit8'],
+            'GGGGC': ['hit14', 'hit15'],
+            'GGGGA': ['hit9'],
+            'AAAAG': ['hit10'],
+            'GAAAG': ['hit11'],
+            'CCCCC': ['hit12'],
+            'CCCCG': ['hit13'],
+        }
+        expected = {
+            'AAAAA': ['hit1', 'hit2', 'hit4', 'hit5', 'hit6', 'hit10'],
+            'GGGGG': ['hit7', 'hit8', 'hit9'],
+            'GGGGC': ['hit14', 'hit15'],
+            'GAAAG': ['hit11'],
+            'CCCCG': ['hit13', 'hit12'],
+        }
+        xlsites._merge_similar_randomers(by_bc, mismatches=1, ratio_th=0.4)  # 2/5
         self.assertEqual(by_bc, expected)
 
     @unittest.skip
@@ -113,7 +136,7 @@ class TestMergeSimilarRandomers(unittest.TestCase):
         """
         This test fails since we currently do not support the feature of finding
         the most similar match. Rather than that, we accept the first match even
-        though better one is availiable.
+        though better one is available.
         """
 
         # hit1, hit2, should be a 4-tuple, but for this test it is ok as is
