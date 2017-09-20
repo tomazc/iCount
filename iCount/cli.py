@@ -117,7 +117,7 @@ def _extract_parameter_data(function):
 
     Every parameter in returned object can have the following entries:
 
-        * name - the name of parameter, preceeded by '--' if it is optional
+        * name - the name of parameter, preceded by '--' if it is optional
         * default - the default value (only for optional parameters). Extracted
           from function signature.
         * type - type of parameter, extracted from function docstring. If not
@@ -391,7 +391,7 @@ def main():
 
     # all_args command:
     def all_args():
-        """Print all posssible parameter names and CLI commands where they are used."""
+        """Print all possible parameter names and CLI commands where they are used."""
         for param_name, commands in sorted(PARAMETERS.items(), key=lambda x: x[0].lstrip('-')):
             if param_name in SHORT_OPTARG_NAMES:
                 short_name = ' ({})'.format(SHORT_OPTARG_NAMES[param_name])

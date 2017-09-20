@@ -58,7 +58,8 @@ def get_version():
         return None
 
 
-def build_index(genome, genome_index, annotation='', overhang=100, overhang_min=8, threads=1):
+def build_index(genome, genome_index, annotation='', overhang=100, overhang_min=8, threads=1,
+                genome_sasparsed=1, genome_saindexnbases=14):
     """
     Call STAR to generate genome index, which is used for mapping.
 
@@ -74,9 +75,18 @@ def build_index(genome, genome_index, annotation='', overhang=100, overhang_min=
         Sequence length around annotated junctions to be used by STAR when
         constructing splice junction database.
     overhang_min : int
-        TODO
+        Minimum overhang for unannotated junctions.
     threads : int
         Number of threads that STAR can use for generating index.
+    genome_sasparsed : int
+        STAR parameter genomeSAsparseD.
+        Suffix array sparsity. Bigger numbers decrease RAM requirements
+        at the cost of mapping speed reduction. Suggested values
+        are 1 (30 GB RAM) or 2 (16 GB RAM).
+    genome_saindexnbases : int
+        STAR parameter genomeSAindexNbases.
+        SA pre-indexing string length, typically between 10 and 15.
+        Longer strings require more memory, but result in faster searches.
 
     Returns
     -------
@@ -95,6 +105,8 @@ def build_index(genome, genome_index, annotation='', overhang=100, overhang_min=
     args = [
         'STAR',
         '--runThreadN', '{:d}'.format(threads),
+        '--genomeSAsparseD', '{:d}'.format(genome_sasparsed),
+        '--genomeSAindexNbases', '{:d}'.format(genome_saindexnbases),
         '--runMode', 'genomeGenerate',
         '--genomeDir', '{:s}'.format(genome_index),
         '--genomeFastaFiles', '{:s}'.format(genome_fname2),
