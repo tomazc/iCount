@@ -241,7 +241,8 @@ indexstar
 =========
 
 usage: iCount indexstar [-h] [-a] [--overhang] [--overhang_min] [--threads]
-                        [-S] [-F] [-P] [-M]
+                        [--genome_sasparsed] [--genome_saindexnbases] [-S]
+                        [-F] [-P] [-M]
                         genome genome_index
 
 Generate STAR genome index.
@@ -255,8 +256,16 @@ optional arguments:
   -a , --annotation     Annotation that defines splice junctions (default: )
   --overhang            Sequence length around annotated junctions to be used by STAR when
                         constructing splice junction database (default: 100)
-  --overhang_min        TODO (default: 8)
+  --overhang_min        Minimum overhang for unannotated junctions (default: 8)
   --threads             Number of threads that STAR can use for generating index (default: 1)
+  --genome_sasparsed    STAR parameter genomeSAsparseD.
+                        Suffix array sparsity. Bigger numbers decrease RAM requirements
+                        at the cost of mapping speed reduction. Suggested values
+                        are 1 (30 GB RAM) or 2 (16 GB RAM) (default: 1)
+  --genome_saindexnbases 
+                        STAR parameter genomeSAindexNbases.
+                        SA pre-indexing string length, typically between 10 and 15.
+                        Longer strings require more memory, but result in faster searches (default: 14)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.

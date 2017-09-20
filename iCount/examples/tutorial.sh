@@ -4,16 +4,17 @@ set -vx
 mkdir tutorial_example
 cd tutorial_example
 
-iCount releases
+iCount releases --source ensembl
 
-iCount species -r 88
+iCount species --source ensembl -r 88
 
-iCount genome homo_sapiens -r 88 --chromosomes 21 MT
+iCount genome --source ensembl homo_sapiens 88 --chromosomes 21 MT
 
-iCount annotation homo_sapiens -r 88
+iCount annotation --source ensembl homo_sapiens 88
 
 mkdir hs88
-iCount indexstar homo_sapiens.88.chr21_MT.fa.gz hs88 --annotation homo_sapiens.88.gtf.gz
+iCount indexstar homo_sapiens.88.chr21_MT.fa.gz hs88 \
+--annotation homo_sapiens.88.gtf.gz --genome_sasparsed 2 --genome_saindexnbases 13
 
 # the whole data set [880 MB] is available here:
 #wget http://icount.fri.uni-lj.si/data/20101116_LUjh03/\

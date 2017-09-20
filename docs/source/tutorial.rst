@@ -33,7 +33,7 @@ iCLIP sequencing reads must be mapped to a reference genome. The user can prepar
 Another option is to download a release from `ensembl`_. You can use the command ``releases`` to
 get a list of available releases supported by **iCount**::
 
-    $ iCount releases
+    $ iCount releases --source ensembl
 
     There are 30 releases available: 88,87,86,85,84,83,82,81,80,79,78,77,76,75,74,73,
     72,71,70,69,68,67,66,65,64,63,62,61,60,59
@@ -41,7 +41,7 @@ get a list of available releases supported by **iCount**::
 
 You can then use the command ``species`` to get a list of species available in a release::
 
-    $ iCount species -r 88
+    $ iCount species --source ensembl -r 88
 
     There are 87 species available: ailuropoda_melanoleuca,anas_platyrhynchos,
     ancestral_alleles,anolis_carolinensis,astyanax_mexicanus,bos_taurus,
@@ -55,7 +55,7 @@ You can then use the command ``species`` to get a list of species available in a
 
 Let's download the human genome sequence from release 88::
 
-    $ iCount genome homo_sapiens -r 88 --chromosomes 21 MT
+    $ iCount genome --source ensembl homo_sapiens -r 88 --chromosomes 21 MT
 
     Downloading FASTA file into: /..././homo_sapiens.88.chr21_MT.fa.gz
     Fai file saved to : /..././iCount/homo_sapiens.88.chr21_MT.fa.gz.fai
@@ -67,7 +67,7 @@ Let's download the human genome sequence from release 88::
 
 And the annotation of the human genome from release 88::
 
-    $ iCount annotation homo_sapiens -r 88
+    $ iCount annotation --source ensembl homo_sapiens -r 88
 
     Downloading GTF to: /..././homo_sapiens.88.gtf.gz
     Done.
@@ -77,7 +77,7 @@ The next step is to generate a genome index that is used by `STAR`_ mapper. Let'
 
     $ mkdir hs88  # folder should be empty
     $ iCount indexstar homo_sapiens.88.chr21_MT.fa.gz hs88 \
-    --annotation homo_sapiens.88.gtf.gz
+    --annotation homo_sapiens.88.gtf.gz --genome_sasparsed 2 --genome_saindexnbases 13
 
     Building genome index with STAR for genome homo_sapiens.88.fa.gz
     <timestamp> ..... Started STAR run
@@ -98,6 +98,10 @@ The next step is to generate a genome index that is used by `STAR`_ mapper. Let'
 .. note::
     A subfolder ``hs88`` will be created in current working directory. You can specify
     alternative relative or absolute paths, e.g., ``indexes/hs88``.
+
+.. note::
+    Changing the parameters ``genome_sasparsed`` and ``genome_saindexnbases`` results into
+    lower memory requirements but longer run times.
 
 We are now ready to start mapping iCLIP data to the human genome!
 
