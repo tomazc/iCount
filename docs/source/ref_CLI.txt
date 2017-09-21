@@ -302,7 +302,8 @@ xlsites
 =======
 
 usage: iCount xlsites [-h] [-g] [--quant] [--segmentation] [-mis] [--mapq_th]
-                      [--multimax] [--gap_th] [-prog] [-S] [-F] [-P] [-M]
+                      [--multimax] [--gap_th] [--ratio_th] [-prog] [-S] [-F]
+                      [-P] [-M]
                       bam sites_unique sites_multi skipped
 
 Quantity cross-link events and determine their positions.
@@ -395,10 +396,14 @@ optional arguments:
   --quant               Report number of 'cDNA' or number of 'reads' (default: cDNA)
   --segmentation        File with custon segmentation format (obtained by ``iCount segment``) (default: None)
   -mis , --mismatches   Reads on same position with random barcode differing less than
-                        ``mismatches`` are grouped together (default: 2)
+                        ``mismatches`` are merged together, if their ratio is below ratio_th (default: 1)
   --mapq_th             Ignore hits with MAPQ < mapq_th (default: 0)
   --multimax            Ignore reads, mapped to more than ``multimax`` places (default: 50)
   --gap_th              Reads with gaps less than gap_th are treated as if they have no gap (default: 4)
+  --ratio_th            Ratio between the number of reads supporting a randomer versus the
+                        number of reads supporting the most frequent randomer. All randomers
+                        above this threshold are accepted as unique. Remaining are merged
+                        with the rest, allowing for the specified number of mismatches (default: 0.1)
   -prog, --report_progress
                         Switch to report progress (default: False)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
