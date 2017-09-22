@@ -283,6 +283,8 @@ class TestCLI(unittest.TestCase):
             '--mismatches', '2',
             '--mapq_th', '0',
             '--multimax', '50',
+            '--gap_th', '4',
+            '--ratio_th', '0.1',
             '-S', '40',  # Supress lower than ERROR messages.
         ]
 

@@ -680,7 +680,7 @@ def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
         Switch to report progress.
     gap_th : int
         Reads with gaps less than gap_th are treated as if they have no gap.
-    ratio_th : int
+    ratio_th : float
         Ratio between the number of reads supporting a randomer versus the
         number of reads supporting the most frequent randomer. All randomers
         above this threshold are accepted as unique. Remaining are merged
