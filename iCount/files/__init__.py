@@ -13,6 +13,9 @@ Parsing of `GTF`_ files is done with `pybedtools`_.
 .. automodule:: iCount.files.bed
    :members:
 
+.. automodule:: iCount.files.bedgraph
+   :members:
+
 .. automodule:: iCount.files.fastq
    :members:
 
@@ -48,6 +51,7 @@ import shutil
 import iCount
 
 from . import bed
+from . import bedgraph
 from . import fasta
 from . import fastq
 
