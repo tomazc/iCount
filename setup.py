@@ -56,7 +56,7 @@ setup(
             'examples/*.sh',
         ]
     },
-    install_requires={
+    install_requires=[
         'numpy',
         'pandas',
         'cutadapt>=1.10',
@@ -65,7 +65,7 @@ setup(
         'numpydoc',
         'sphinx>=1.4',
         'matplotlib',
-    },
+    ],
     extras_require={
         'docs': [
             'docutils',
