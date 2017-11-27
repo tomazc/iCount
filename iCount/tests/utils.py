@@ -155,7 +155,7 @@ def make_aligned_segment(data, rnd_seed=None):
     segment.next_reference_start = 0
     segment.template_length = 0
 
-    length = sum([n2 for (n1, n2) in segment.cigar if n1 in [0, 2, 3, 7, 8]])
+    length = sum([n2 for (n1, n2) in segment.cigar if n1 in [0, 1, 4, 7, 8]])
     segment.query_sequence = make_sequence(size=length, include_n=True, rnd_seed=rnd_seed)
     segment.query_qualities = pysam.qualitystring_to_array(
         make_quality_scores(size=length, rnd_seed=rnd_seed))
