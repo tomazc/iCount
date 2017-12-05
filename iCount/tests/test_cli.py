@@ -26,7 +26,7 @@ class TestCLI(unittest.TestCase):
             ['1', '16', '17', '.', '5', '+'],
             ['1', '14', '15', '.', '5', '+'],
             ['1', '15', '16', '.', '5', '+'],
-        ])
+        ], extension='bed')
 
         self.peaks = make_file_from_list([
             ['1', '15', '16', '.', '15', '+'],
@@ -392,6 +392,22 @@ class TestCLI(unittest.TestCase):
             '--digits', '8',
             '--subtype', 'biotype',
             '--excluded_types', 'ncRNA,', 'intron',
+            '-S', '40',  # Supress lower than ERROR messages.
+        ]
+
+        self.assertEqual(subprocess.call(command_basic), 0)
+        self.assertEqual(subprocess.call(command_full), 0)
+
+    def test_bed2bedgraph(self):
+        command_basic = [
+            'iCount', 'bedgraph', self.cross_links, self.tmp1,
+            '-S', '40',  # Supress lower than ERROR messages.
+        ]
+
+        command_full = [
+            'iCount', 'bedgraph', self.cross_links, self.tmp1,
+            '--name', 'Name.',
+            '--description', 'Description.',
             '-S', '40',  # Supress lower than ERROR messages.
         ]
 

@@ -366,6 +366,9 @@ def main():
     make_parser_from_function(
         iCount.analysis.summary.make_summary_report, subparsers)
 
+    # File converters:
+    make_parser_from_function(iCount.files.bedgraph.bed2bedgraph, subparsers)
+
     # Examples:
     make_parser_from_function(
         iCount.examples.run, subparsers)

@@ -178,5 +178,50 @@ class TestFilesFastq(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
+class TestBedGraph(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
+        bed_data = [
+            ['1', '4', '5', '.', '5', '+'],
+            ['1', '5', '6', '.', '1', '+'],
+            ['1', '5', '6', '.', '1', '-'],
+            ['2', '5', '6', '.', '3', '+'],
+        ]
+        self.bed = make_file_from_list(bed_data, extension='bed')
+        self.bedgraph = get_temp_file_name(extension='bedgraph')
+
+    def test_bed2bedgraph(self):
+        iCount.files.bedgraph.bed2bedgraph(self.bed, self.bedgraph)
+        expected = [
+            ['track type=bedGraph name="User Track" description="User Supplied Track"'],
+            ['1', '4', '5', '+5'],
+            ['1', '5', '6', '+1'],
+            ['1', '5', '6', '-1'],
+            ['2', '5', '6', '+3'],
+        ]
+        result = make_list_from_file(self.bedgraph, fields_separator='\t')
+        self.assertEqual(result, expected)
+
+    def test_bed2bedgraph_params(self):
+        """
+        Test with custom ``name`` and ``description`` parameters.
+
+        Note that ``name`` is too long and is trimmed to 15 characters.
+        """
+        iCount.files.bedgraph.bed2bedgraph(
+            self.bed, self.bedgraph, name='Longer than 15 chars.', description='Custom text.')
+        expected = [
+            ['track type=bedGraph name="Longer than 15 " description="Custom text."'],
+            ['1', '4', '5', '+5'],
+            ['1', '5', '6', '+1'],
+            ['1', '5', '6', '-1'],
+            ['2', '5', '6', '+3'],
+        ]
+        result = make_list_from_file(self.bedgraph, fields_separator='\t')
+        self.assertEqual(result, expected)
+
+
 if __name__ == '__main__':
     unittest.main()
