@@ -29,13 +29,17 @@ def get_temp_dir(tmp_dir=None):
     return tempfile.mkdtemp()
 
 
-def make_file_from_list(data, bedtool=True, extension=''):
+def make_file_from_list(data, bedtool=True, extension='', tmp_dir=None, tfile=None, sort=False):
     """Return path to file with the content from `data` (list of lists)."""
-    tfile = get_temp_file_name(extension=extension)
+    if tfile is None:
+        tfile = get_temp_file_name(extension=extension, tmp_dir=tmp_dir)
     if bedtool:
         tmp_bt = pybedtools.BedTool(
             pybedtools.create_interval_from_list(line) for line in data).saveas()
-        tmp_bt.saveas(tfile)
+        if sort:
+            tmp_bt.sort().saveas(tfile)
+        else:
+            tmp_bt.saveas(tfile)
     else:
         with open(tfile, 'wt') as file_:
             for list_ in data:

@@ -401,7 +401,7 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
         BAM file with alligned reads.
     segmentation : str
         GTF file with segmentation. Should be a file produced by function
-        `get_regions`.
+        `get_segments`.
     out_file : str
         Output file with analysis results.
     strange : str

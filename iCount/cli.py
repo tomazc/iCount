@@ -341,7 +341,7 @@ def main():
     make_parser_from_function(
         iCount.genomes.genome, subparsers, only_func=True)
     make_parser_from_function(
-        iCount.genomes.segment.get_regions, subparsers)
+        iCount.genomes.segment.get_segments, subparsers)
 
     # Demultiplex and mapping:
     make_parser_from_function(iCount.demultiplex.run, subparsers)
@@ -364,7 +364,7 @@ def main():
     make_parser_from_function(
         iCount.analysis.rnamaps.run, subparsers)
     make_parser_from_function(
-        iCount.analysis.summary.make_summary_report, subparsers)
+        iCount.analysis.summary.summary_reports, subparsers)
 
     # File converters:
     make_parser_from_function(iCount.files.bedgraph.bed2bedgraph, subparsers)

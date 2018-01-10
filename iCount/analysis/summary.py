@@ -3,214 +3,130 @@
 Cross-link site summary
 -----------------------
 
-Report proportion of cross-link events/sites on each region type.
+Report count of cross-link events in each region type.
 """
-import os
-import re
 import logging
+import math
+import re
+import os
+import tempfile
 
-import pybedtools
-from pybedtools import create_interval_from_list
+from pybedtools import BedTool
 
 import iCount
-from iCount.genomes.segment import _complement, _first_two_columns
+from iCount.genomes.segment import summary_templates, sort_types_subtypes, TEMPLATE_TYPE, TEMPLATE_SUBTYPE, \
+    TEMPLATE_GENE, SUMMARY_TYPE, SUMMARY_SUBTYPE, SUMMARY_GENE
 
 LOGGER = logging.getLogger(__name__)
 
 
-def make_types_length_file(annotation, fai, out_file=None, subtype='biotype', excluded_types=None):
+def summary_reports(annotation, sites, out_dir, templates_dir=None):
     """
-    Calculate the number of non-overlapping base pairs of each "type".
-
-    In the context of this function "type" equals to the combination of 3rd
-    column and attribute subtype from annotation file (GTF).
-
+    Make summary reports for a cross-link file.
 
     Parameters
     ----------
     annotation : str
-        Path to annotation GTF file (should include subtype attribute).
-    out_file : str
-        Path to output file (if None, name is set automatically).
-    subtype : int
-        Subtype.
-    excluded_types : list_str
-        Types listed in 3rd column of GTF to be exclude from analysis.
-
-    Returns
-    -------
-    str
-        Absolute path to out_file.
-
-    """
-    excluded_types = excluded_types or []
-    ann_filtered = pybedtools.BedTool(annotation).filter(
-        lambda x: x[2] not in excluded_types).sort().saveas()
-
-    fai = _first_two_columns(fai)
-
-    if out_file is None:
-        match = re.match(r'([\w_]+\.\d+.).*', os.path.basename(annotation))
-        if match:
-            out_file = str(match.group(1)) + 'types_length.txt'
-        else:
-            out_file = annotation + 'types_length.txt'
-
-    # Merge all annotation and take what is left = unannotated regions:
-    unann_pos = _complement(ann_filtered.fn, fai, '+', type_name='unannotated')
-    unann_neg = _complement(ann_filtered.fn, fai, '-', type_name='unannotated')
-    ann_modified_file = out_file + 'modified'
-    ann_joined = ann_filtered.cat(unann_pos, unann_neg, postmerge=False). \
-        sort().saveas(ann_modified_file)
-
-    data = {}
-    for interval in ann_joined:
-        if subtype:
-            sbtyp = interval.attrs.get(subtype, None)
-            type_ = ' '.join([interval[2], sbtyp] if sbtyp else [interval[2]])
-        else:
-            type_ = interval[2]
-        if type_ not in data:
-            data[type_] = []
-        data[type_].append(create_interval_from_list(interval.fields))
-
-    type_lengths = {}
-    for type_, list_ in data.items():
-        total_bp = 0
-        # pylint: disable=unexpected-keyword-arg
-        for feature in pybedtools.BedTool(i for i in list_).merge(s=True):
-            total_bp += len(feature)
-        type_lengths[type_] = total_bp
-
-    # Write results to file:
-    with open(out_file, 'wt') as outfile:
-        for type_, length in sorted(type_lengths.items()):
-            outfile.write('{}\t{}\n'.format(type_, length))
-
-    return os.path.abspath(out_file), os.path.abspath(ann_modified_file)
-
-
-def make_summary_report(annotation, sites, summary, fai, types_length_file=None, digits='8',
-                        subtype=None, excluded_types=None):
-    """
-    Make summary report from cross-link and annotation data.
-
-    In the context of this report "type" equals to the combination of 3rd
-    column and attribute `subtype` from annotation file (GTF).
-    "Regions" are parts of transcript (UTR, CDS, introns...) that "non-
-    intersectingly" span the whole transcript. Intergenic regions are also
-    considered as region. Each region has one and only one type.
-
-    For each of such types, number of cross-link events/sites is counted.
-    Sites = sum of *all* cross-link sites that are in regions of some type.
-    Events = sum of col5 for *all* cross-link sites that are in regions of
-    some type (multiple events can happen on each cross link). Col5 is
-    numerical value in 5th column of cross-link file.
-
-    Parameters
-    ----------
-    annotation : str
-        Path to annotation GTF file (should include subtype attribute).
+        Annotation file (GTF format). It is recommended to use genome-level segmentation (e.g. regions.gtf.gz), that
+        is produced by ``iCount segment`` command.
     sites : str
-        Path to BED6 file listing cross-linked sites.
-    summary : str
-        Path to output tab-delimited file with summary statistics.
-    fai : str
-        Path to file with chromosome lengths.
-    types_length_file : str
-        Path to file with lengths of each type.
-    digits : int
-        Number of decimal places in results.
-    subtype : str
-        Name of attribute to be used as subtype.
-    excluded_types : list_str
-        Types listed in 3rd column of GTF to be exclude from analysis.
+        Croslinks file (BED6 format). Should be sorted by coordinate.
+    out_dir : str
+        Output directory.
+    templates_dir : str
+        Directory containing templates for summary calculation. Made by ``iCount segment`` command. If this argument
+        is not provided, summary templates are made on the fly.
 
     Returns
     -------
-    str
-        Path to summary report file (equal to parameter out_file)
+    iCount.Metrics
+        iCount Metrics object.
 
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)
     metrics = iCount.Metrics()
 
-    # If not given/present, make file with cumulative length for each type:
-    if not types_length_file or not os.path.isfile(types_length_file):
-        LOGGER.info('types_length_file not given - calculating it')
-        types_length_file, annotation = make_types_length_file(
-            annotation, fai, subtype=subtype, excluded_types=excluded_types)
-    # read the file to dict, named type_lengths
-    type_lengths = {}
-    with open(types_length_file) as tfile:
-        for line in tfile:
-            parts = line.strip().split()
-            type_lengths[' '.join(parts[:-1])] = int(parts[-1])
+    if templates_dir is None:
+        templates_dir = tempfile.mkdtemp()
+        summary_templates(annotation, templates_dir)
 
-    # sorted=True - invokes memory efficient algorithm for large files
-    # s=True - only report hits in B that overlap A on the same strand
-    # wb=True - Write the original entry in B for each overlap
-    cross_links = pybedtools.BedTool(sites).sort().saveas()
-    annotation = pybedtools.BedTool(annotation).sort().saveas()
     LOGGER.info('Calculating intersection between cross-link and annotation...')
-    overlaps = cross_links.intersect(annotation, sorted=True, s=True, wb=True).saveas()
+    # pylint: disable=too-many-function-args,unexpected-keyword-arg
+    overlaps = BedTool(sites).intersect(
+        BedTool(annotation),
+        sorted=True,  # invokes memory efficient algorithm for large files
+        s=True,  # only report hits in B that overlap A on the same strand
+        wb=True,  # write the original entry in B for each overlap
+        nonamecheck=True,  # Do not print warnings about name inconsistency to stdout
+    ).saveas()
+    # pylint: enable=too-many-function-args,unexpected-keyword-arg
     try:
-        # this will raise TypeError if overlaps is empty:
-        overlaps[0]
+        overlaps[0]  # will raise Error if overlaps is empty:
     except (IndexError, TypeError):
-        raise ValueError('No intersections found. This may be caused by '
-                         'different naming of chromosomes in annotation and '
-                         'cross-links file (example: "chr1" vs. "1")')
+        raise ValueError('No intersections found. This may be caused by different naming of chromosomes in annotation'
+                         'and cross-links file (example: "chr1" vs. "1")')
 
-    # dict structure = type_: [# of sites, # of events]
-    type_counter = {type_: [0, 0] for type_ in type_lengths}
-    site_types = []
-    previous_segment = overlaps[0]
-
-    def finalize(types, segment):
-        """Increase counter for all types that intersect with segment."""
-        for type_ in set(types):
-            type_counter[type_][0] += 1  # sites
-            type_counter[type_][1] += int(segment[4])  # events
-
-    LOGGER.info('Extracting summary from data...')
+    type_counter, subtype_counter, gene_counter = {}, {}, {}
+    LOGGER.info('Extracting summary data from intersection...')
     for segment in overlaps:
-        # detect if segment contains new cross-link site:
-        if segment.start != previous_segment.start or segment.strand != previous_segment.strand:
-            finalize(site_types, previous_segment)
-            site_types = []
-        if subtype:
-            # Extract subtype attribute:
-            stype = re.match(r'.*{} "(.*)";'.format(subtype), segment[-1])
-            stype = stype.group(1) if stype else None
-            site_types.append(' '.join([segment[8], stype] if stype else [segment[8]]))
-        else:
-            site_types.append(segment[8])
-        previous_segment = segment
-    finalize(site_types, previous_segment)
+        score = int(segment.score)
 
-    # Produce report file:
-    header = ['type', 'length', 'length %', 'sites #', 'sites %',
-              'sites enrichment', 'events #', 'events %', 'events enrichment']
-    sum_sites = sum([i[0] for i in type_counter.values()])
-    sum_events = sum([i[1] for i in type_counter.values()])
+        type_ = segment[8]
+        type_counter[type_] = type_counter.get(type_, 0) + score
 
-    # total genome len = sum_of_all_chrom_length * 2 (there are + and - strand):
-    total_length = sum([int(line.strip().split()[1]) for line in
-                        open(fai)]) * 2
-    with open(summary, 'wt') as out:
+        biotype = re.match(r'.*biotype "(.*?)";', segment[-1])
+        biotype = biotype.group(1) if biotype else ''
+        biotypes = biotype.split(',')
+        for biotype in biotypes:
+            sbtyp = iCount.genomes.segment.make_subtype(type_, biotype)
+            subtype_counter[sbtyp] = subtype_counter.get(sbtyp, 0) + score / len(biotypes)
+
+        gene_id = re.match(r'.*gene_id "(.*?)";', segment[-1])
+        gene_id = gene_id.group(1) if gene_id else None
+        gene_counter[gene_id] = gene_counter.get(gene_id, 0) + score
+
+    sum_cdna = 0
+    for seg in BedTool(sites):
+        sum_cdna += int(seg.score)
+
+    def parse_template(template_file):
+        """Parse template file."""
+        template = {}
+        with open(template_file, 'rt') as ifile:
+            for line in ifile:
+                line = line.strip().split('\t')
+                template[line[0]] = line[1:]
+        return template
+
+    LOGGER.info('Writing type report...')
+    type_template = parse_template(os.path.join(templates_dir, TEMPLATE_TYPE))
+    with open(os.path.join(out_dir, SUMMARY_TYPE), 'wt') as out:
+        header = ['Type', 'Length', 'cDNA #', 'cDNA %']
         out.write('\t'.join(header) + '\n')
-        for type_, [sites, events] in sorted(type_counter.items()):
-            length_percent = type_lengths[type_] / total_length
-            site_percent = sites / sum_sites
-            site_enrichment = site_percent / length_percent
-            event_percent = events / sum_events
-            event_enrichment = event_percent / length_percent
-            line = [type_, type_lengths[type_], length_percent,
-                    sites, site_percent, site_enrichment,
-                    events, event_percent, event_enrichment]
-            line = line[:1] + [round(i, int(digits)) for i in line[1:]]
+        for type_, cdna in sorted(type_counter.items(), key=lambda x: sort_types_subtypes(x[0])):
+            line = [type_, type_template.get(type_, [-1])[0], math.floor(cdna), cdna / sum_cdna * 100]
             out.write('\t'.join(map(str, line)) + '\n')
 
-    LOGGER.info('Done. Results saved to: %s', os.path.abspath(summary))
+    LOGGER.info('Writing subtype report...')
+    subtype_template = parse_template(os.path.join(templates_dir, TEMPLATE_SUBTYPE))
+    with open(os.path.join(out_dir, SUMMARY_SUBTYPE), 'wt') as out:
+        header = ['Subtype', 'Length', 'cDNA #', 'cDNA %']
+        out.write('\t'.join(header) + '\n')
+        for stype, cdna in sorted(subtype_counter.items(), key=lambda x: sort_types_subtypes(x[0])):
+            line = [stype, subtype_template.get(stype, [-1])[0], math.floor(cdna), cdna / sum_cdna * 100]
+            out.write('\t'.join(map(str, line)) + '\n')
+
+    LOGGER.info('Writing gene report...')
+    gene_template = parse_template(os.path.join(templates_dir, TEMPLATE_GENE))
+    with open(os.path.join(out_dir, SUMMARY_GENE), 'wt') as out:
+        header = ['Gene name (Gene ID)', 'Length', 'cDNA #', 'cDNA %']
+        out.write('\t'.join(header) + '\n')
+        for gene_id, cdna in sorted(gene_counter.items()):
+            gene_name, length = gene_template.get(gene_id, ['', -1])
+            if gene_id == '.':
+                gene_name = 'intergenic'
+            line = ['{} ({})'.format(gene_name, gene_id), length, math.floor(cdna), cdna / sum_cdna * 100]
+            out.write('\t'.join(map(str, line)) + '\n')
+
+    LOGGER.info('Done.')
     return metrics

@@ -23,9 +23,9 @@ class TestCLI(unittest.TestCase):
         self.dir2 = get_temp_dir()
 
         self.cross_links = make_file_from_list([
-            ['1', '16', '17', '.', '5', '+'],
             ['1', '14', '15', '.', '5', '+'],
             ['1', '15', '16', '.', '5', '+'],
+            ['1', '16', '17', '.', '5', '+'],
         ], extension='bed')
 
         self.peaks = make_file_from_list([
@@ -375,28 +375,20 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(subprocess.call(command_basic), 0)
 
     def test_summary(self):
-        chrom_len = make_file_from_list(bedtool=False, data=[
-            ['1', '2000'],
-            ['2', '1000'],
-        ])
-
-        command_basic = [
-            'iCount', 'summary', self.annotation,
-            self.cross_links, self.tmp1, chrom_len,
-            '-S', '40',  # Supress lower than ERROR messages.
+        annotation = [
+            ['1', '0', '10', 'CDS;A,B;.', '.', '+'],
+            ['1', '10', '30', 'ncRNA;A,C;.', '.', '+'],
         ]
 
-        command_full = [
-            'iCount', 'summary', self.annotation,
-            self.cross_links, self.tmp1, chrom_len,
-            '--digits', '8',
-            '--subtype', 'biotype',
-            '--excluded_types', 'ncRNA,', 'intron',
+        command_basic = [
+            'iCount', 'summary',
+            make_file_from_list(annotation),
+            self.cross_links,
+            self.dir,
             '-S', '40',  # Supress lower than ERROR messages.
         ]
 
         self.assertEqual(subprocess.call(command_basic), 0)
-        self.assertEqual(subprocess.call(command_full), 0)
 
     def test_bed2bedgraph(self):
         command_basic = [

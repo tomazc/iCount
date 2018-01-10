@@ -1,6 +1,5 @@
 # pylint: disable=missing-docstring, protected-access
 
-import os
 import unittest
 import warnings
 
@@ -44,10 +43,6 @@ def template(cross_links, annotation, subtype='biotype',
 class TestAnnotateCrossLinks(unittest.TestCase):
 
     def setUp(self):
-        self.annotation_file = os.path.normpath(os.path.join(
-            os.path.dirname(__file__), "files/annotation.get_regions.gtf"))
-        self.cross_links_file = os.path.normpath(os.path.join(
-            os.path.dirname(__file__), "files/cross_links.bed"))
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_diff_chromosome_naming(self):
