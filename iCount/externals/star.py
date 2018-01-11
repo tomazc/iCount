@@ -200,6 +200,8 @@ def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatch
         '--outFilterMultimapNmax', '{:d}'.format(multimax),
         '--outFilterMismatchNmax', '{:d}'.format(mismatches),
         '--alignEndsType', 'EndToEnd',
+        ## Share memory
+        '--genomeLoad LoadAndRemove',
         # otherwise soft-clipping of the starts and ends may produce too
         # many multiple hits
         '--outSAMtype', 'BAM', 'SortedByCoordinate',
