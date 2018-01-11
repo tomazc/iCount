@@ -173,6 +173,42 @@ class TestExtract(unittest.TestCase):
             self.assertEqual(read.plus, '+')
             self.assertEqual(read.qual, data[3])
 
+    def test_barcode_size_diff(self):
+        # One mismatch, second barcode.
+        barcodes = ['NAAANN', 'NNCCCNN']
+        adapter = 'CCCCCC'
+        data = [
+            '@header1',
+            'TACATT' + adapter + make_sequence(40, rnd_seed=0),
+            '+',
+            make_quality_scores(50, rnd_seed=0) + '!J',
+            '@header2',
+            'AACCCTT' + adapter + make_sequence(39, rnd_seed=0),
+            '+',
+            make_quality_scores(50, rnd_seed=0) + '!J',
+        ]
+        fq_fname = get_temp_file_name(extension='fq')
+        fq_file = iCount.files.fastq.FastqFile(fq_fname, 'wt')
+        fq_file.write(iCount.files.fastq.FastqEntry(*data[:4]))
+        fq_file.write(iCount.files.fastq.FastqEntry(*data[4:]))
+        fq_file.close()
+
+        handle = demultiplex._extract(fq_fname, barcodes, mismatches=1)
+        read1, exp_id1, randomer1 = next(handle)
+        self.assertEqual(exp_id1, 0)
+        self.assertEqual(randomer1, 'TTT')
+        self.assertEqual(read1.id, data[0])
+        self.assertEqual(read1.seq, data[1][6:])
+        self.assertEqual(read1.plus, '+')
+        self.assertEqual(read1.qual, data[3][6:])
+        read2, exp_id2, randomer2 = next(handle)
+        self.assertEqual(exp_id2, 1)
+        self.assertEqual(randomer2, 'AATT')
+        self.assertEqual(read2.id, data[4])
+        self.assertEqual(read2.seq, data[5][7:])
+        self.assertEqual(read2.plus, '+')
+        self.assertEqual(read2.qual, data[7][7:])
+
 
 class TestMakeP2n2i(unittest.TestCase):
 
@@ -199,6 +235,33 @@ class TestMakeP2n2i(unittest.TestCase):
                 'A': {0},
                 'T': {1},
                 'G': {2},
+            },
+        }
+        self.assertEqual(result, expected)
+
+    def test_barcode_size_diff(self):
+        barcodes = [
+            'NATAN',
+            'NNNCAGN',
+        ]
+
+        result = demultiplex._make_p2n2i(barcodes)
+        expected = {
+            1: {
+                'A': {0}
+            },
+            2: {
+                'T': {0}
+            },
+            3: {
+                'A': {0},
+                'C': {1},
+            },
+            4: {
+                'A': {1},
+            },
+            5: {
+                'G': {1},
             },
         }
         self.assertEqual(result, expected)
