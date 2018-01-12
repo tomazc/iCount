@@ -22,10 +22,10 @@ import argparse
 import traceback
 import collections
 
+from sphinx.ext.napoleon.docstring import NumpyDocstring
+
 import iCount
 from iCount import logger
-
-from sphinx.ext.napoleon.docstring import NumpyDocstring
 
 LOGGER = logging.getLogger(__name__)
 
