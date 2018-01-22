@@ -219,15 +219,14 @@ class TestCLI(unittest.TestCase):
         command_basic = [
             'iCount', 'cutadapt',
             fastq,
-            self.tmp1,
             adapter,
             '-S', '40',  # Supress lower than ERROR messages.
         ]
         command_full = [
             'iCount', 'cutadapt',
             fastq,
-            self.tmp1,
             adapter,
+            '--reads_trimmed', self.tmp1,
             '--qual_trim', '20',
             '--minimum_length', '15',
             '-S', '40',  # Supress lower than ERROR messages.

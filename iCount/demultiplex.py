@@ -95,7 +95,8 @@ def run(reads, adapter, barcodes, mismatches=1, minimum_length=15, prefix='demux
     out_fnames_final = ['{}.fastq.gz'.format(fname[:-13]) for fname in out_fnames]
     for fname_in, fname_out in zip(out_fnames, out_fnames_final):
         if adapter and 'nomatch' not in fname_in:
-            remove_adapter(fname_in, fname_out, adapter, minimum_length=minimum_length)
+            remove_adapter(
+                fname_in, adapter, reads_trimmed=fname_out, minimum_length=minimum_length)
             os.remove(fname_in)
         else:
             shutil.move(fname_in, fname_out)
