@@ -141,34 +141,40 @@ def _extract(reads, barcodes, mismatches=1, minimum_length=15):
         FastqEntry, experiment ID, randomer
 
     """
-    all_barcodes = len(barcodes)
-    barcode_len = len(barcodes[0])
     p2n2i = _make_p2n2i(barcodes)
-    max_votes = len(p2n2i)
-    randomer_pos = [i for i in range(barcode_len) if i not in p2n2i]
+    all_barcodes = len(barcodes)
+    # Precompute barcode length for each barcode
+    barcode_len = {i: len(brc) for i, brc in enumerate(barcodes)}
+    # Precompute max possible votes for each barcode. Equals to the number of valid nucleotides
+    max_votes = {i: len(brc.replace('N', '')) for i, brc in enumerate(barcodes)}
+    # Precompute positions of randomer nucleotides for each barcode
+    randomer_pos = {
+        i: [j for j, nuc in enumerate(brc) if nuc == 'N'] for i, brc in enumerate(barcodes)}
 
     # Determine experiment ID and extract random barcode for each FASTQ entry.
     # Experiment ID si determined by "voting": at each non-randomer position
     # `pos` there is nucleotide X. Check which experiments (=barcodes) have X
-    # at position `pos`. Increment votes for them. Experiment with max votes is
-    # the winner, but only if votes equal/exceed max_votes - mismatches.
+    # at position `pos`. Increment votes for them.
     for read in iCount.files.fastq.FastqFile(reads).read():
         votes = [0] * all_barcodes
         for pos, n2i in p2n2i.items():
             for exp_id in n2i.get(read.seq[pos], []):
                 votes[exp_id] += 1
-        mvotes = max(votes)
-        if mvotes < max_votes - mismatches:  # not recognized as valid barcode
+
+        # Count mismatches for each barcode. Experiment with least mismatches is the winner.
+        xmatches = [max_votes[i] - votes[i] for i, barcode in enumerate(barcodes)]
+        min_mismatches = min(xmatches)
+        if min_mismatches > mismatches:  # not recognized as valid barcode
             experiment_id = -1
             randomer = ''
             seq = read.seq
             qual = read.qual
         else:  # recognized as valid barcode
-            experiment_id = votes.index(mvotes)
-            randomer = ''.join(read.seq[p] for p in randomer_pos)
+            experiment_id = xmatches.index(min_mismatches)
+            randomer = ''.join(read.seq[p] for p in randomer_pos[experiment_id])
             # Keep only the remainder of the sequence / quality scores
-            seq = read.seq[barcode_len:]
-            qual = read.qual[barcode_len:]
+            seq = read.seq[barcode_len[experiment_id]:]
+            qual = read.qual[barcode_len[experiment_id]:]
 
         if len(seq) >= minimum_length:
             new_fq_entry = iCount.files.fastq.FastqEntry(read.id, seq, '+', qual)
