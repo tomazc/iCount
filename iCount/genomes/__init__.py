@@ -130,10 +130,9 @@ def annotation(species, release, out_dir=None, annotation=None, source='gencode'
     out_dir : str
         Download to this directory (if not given, current working directory).
     annotation : str
-        Annotation filename (must have .gz file extension). If not given,
-        species.release.gtf.gz is used. If annotation is provided as absolute
-        path, value of out_dir parameter is ignored and file is saved to given
-        absolute path.
+        Annotation filename (must have .gz file extension). If annotation is
+        provided as absolute path, value of out_dir parameter is ignored and
+        file is saved to given absolute path.
     source : str
         Source of data. Only ENSEMBL or GENCODE are available.
 
@@ -169,10 +168,9 @@ def genome(species, release, out_dir=None, genome=None, chromosomes=None, source
     out_dir : str
         Download to this directory (if not given, current working directory).
     genome : str
-        Genome filename (must have .gz file extension). If not given,
-        species.release.fa.gz is used. If genome is provided as absolute path,
-        value of out_dir parameter is ignored and file is saved to given
-        absolute path.
+        Genome filename (must have .gz file extension). If genome is provided
+        as absolute path, value of out_dir parameter is ignored and file is
+        saved to given absolute path.
     chromosomes : list_str
         If given, do not download the whole genome, but listed
         chromosomes only. Only relevant if source is ENSEMBL.
