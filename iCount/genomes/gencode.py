@@ -20,6 +20,12 @@ BASE_URL = 'ftp.sanger.ac.uk'
 LOGGER = logging.getLogger(__name__)
 
 
+MIN_RELEASE_SUPPORTED = {
+    'human': '22',
+    'mouse': 'M5',
+}
+
+
 def species():
     """
     Get list of available species.
@@ -69,8 +75,12 @@ def releases(species='human'):
     def _keyfunc(item):
         """Separate mixed alphanumeric string into numbers and words."""
         # pylint: disable=protected-access
-        return [iCount.genomes._to_int(i) for i in re.match(r'([0-9]*)([a-zA-Z]*)', item).groups()]
+        regex = r'([a-zA-Z]*)([0-9]*)([a-zA-Z]*)'
+        return [iCount.genomes._to_int(i) for i in re.match(regex, item).groups()]
     out = sorted(fetch, reverse=True, key=_keyfunc)
+    # Suggest only supported releases: the ones with higher version than in MIN_RELEASE_SUPPORTED
+    until_here = out.index(MIN_RELEASE_SUPPORTED[species])
+    out = out[:until_here + 1]
 
     LOGGER.info('There are %d GENCODE releases available for %s: %s',
                 len(out), species, ','.join(map(str, (out))))
@@ -82,6 +92,8 @@ def annotation(species, release, out_dir=None, annotation=None):
     """
     Download GENCODE annotation for given release/species.
 
+    Note: This will download the "primary assembly" type of annotation.
+
     Parameters
     ----------
     species : str
@@ -91,8 +103,8 @@ def annotation(species, release, out_dir=None, annotation=None):
     out_dir : str
         Download to this directory (if not given, current working directory).
     annotation : str
-        Annotation filename (must have .gz file extension). If not given,
-        species.release.gtf.gz is used. If annotation is provided as absolute
+        Annotation filename (must have .gz file extension). If not given
+        original filename will be used. If annotation is provided as absolute
         path, value of out_dir parameter is ignored and file is saved to given
         absolute path.
 
@@ -112,11 +124,9 @@ def annotation(species, release, out_dir=None, annotation=None):
 
     if annotation:
         assert annotation.endswith(('.gtf', '.gtf.gz'))
-    else:
-        annotation = '{}.{}.gtf.gz'.format(species, release)
 
     # If absolute path is given, ignore out_dir:
-    if os.path.isabs(annotation):
+    if annotation is not None and os.path.isabs(annotation):
         if out_dir:
             LOGGER.info('out_dir parameter has been changed, since absolute '
                         'path is provided by annotation parameter.')
@@ -132,27 +142,29 @@ def annotation(species, release, out_dir=None, annotation=None):
     server_files = ftp.nlst()
 
     # Get the desired annotation file form list of all server files:
-    regex = r'gencode\.v{}\.annotation\.gtf\.gz'.format(release)
+    regex = r'gencode\.v{}\.primary_assembly\.annotation\.gtf\.gz'.format(release)
     annotation_file = next((fname for fname in server_files if re.match(regex, fname)), None)
 
     if not annotation_file:
         LOGGER.info('No GTF file found for species %s, release %s', species, str(release))
         return None
 
-    saveas_fname = os.path.join(out_dir, annotation)
-    LOGGER.info('Downloading GTF to: %s', saveas_fname)
-    with open(saveas_fname, 'wb') as fhandle:
+    target_path = os.path.join(out_dir, annotation or annotation_file)
+    LOGGER.info('Downloading GTF to: %s', target_path)
+    with open(target_path, 'wb') as fhandle:
         ftp.retrbinary('RETR ' + annotation_file, fhandle.write)
     ftp.quit()
 
     LOGGER.info('Done.')
-    return os.path.abspath(saveas_fname)
+    return os.path.abspath(target_path)
 
 
 # pylint: disable=redefined-outer-name
 def genome(species, release, out_dir=None, genome=None):
     """
     Download GENCODE genome for given release/species.
+
+    Note: This will download the "primary assembly" type of genome.
 
     Parameters
     ----------
@@ -163,10 +175,10 @@ def genome(species, release, out_dir=None, genome=None):
     out_dir : str
         Download to this directory (if not given, current working directory).
     genome : str
-        Genome filename (must have .gz file extension). If not given,
-        species.release.fa.gz is used. If genome is provided as absolute path,
-        value of out_dir parameter is ignored and file is saved to given
-        absolute path.
+        Genome filename (must have .gz file extension). If not given original
+        filename will be used. If genome is provided as absolute path, value
+        of out_dir parameter is ignored and file is saved to given absolute
+        path.
 
     Returns
     -------
@@ -184,11 +196,9 @@ def genome(species, release, out_dir=None, genome=None):
 
     if genome:
         assert genome.endswith(('.fa', '.fasta', '.fa.gz', '.fasta.gz'))
-    else:
-        genome = '{}.{}.fa.gz'.format(species, release)
 
     # If absolute path is given, ignore out_dir:
-    if genome and os.path.isabs(genome):
+    if genome is not None and os.path.isabs(genome):
         if out_dir:
             LOGGER.info('out_dir parameter has been changed, since absolute '
                         'path is provided by genome parameter.')
@@ -201,11 +211,10 @@ def genome(species, release, out_dir=None, genome=None):
 
     ftp = iCount.genomes.get_ftp_instance(BASE_URL)
     ftp.cwd('/pub/gencode/Gencode_{}/release_{}/'.format(species, release))
-    regex = r'[\w\d\.]+\.genome\.fa\.gz'
-    fasta_file = next((fname for fname in ftp.nlst() if
-                       (re.match(regex, fname) and 'primary_assembly' not in fname)), None)
+    regex = r'[\w\d\.]+\.primary_assembly\.genome\.fa\.gz'
+    fasta_file = next((fname for fname in ftp.nlst() if re.match(regex, fname)), None)
 
-    target_path = os.path.abspath(os.path.join(out_dir, genome))
+    target_path = os.path.abspath(os.path.join(out_dir, genome or fasta_file))
     LOGGER.info('Downloading FASTA file into: %s', target_path)
     with open(target_path, 'wb') as fhandle:
         ftp.retrbinary('RETR ' + fasta_file, fhandle.write)
