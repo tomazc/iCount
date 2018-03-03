@@ -103,7 +103,7 @@ Conventions
 Syntax
 ------
 
-* Line length is 99 characters plus newline character.
+* Line length is 119 characters plus newline character.
 * Use ``'`` instead of ``"`` character, if possible.
 
 Parameters naming
