@@ -110,7 +110,7 @@ class TestEndToEnd(unittest.TestCase):
 
         # Make segmentation
         seg = get_temp_file_name(extension='gtf')
-        iCount.genomes.segment.get_regions(self.gtf, seg, self.fai)
+        iCount.genomes.segment.get_segments(self.gtf, seg, self.fai)
 
         # Build STAR index:
         genome_index = get_temp_dir()

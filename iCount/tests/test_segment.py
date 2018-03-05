@@ -1,14 +1,285 @@
 # pylint: disable=missing-docstring, protected-access
+import os
 import warnings
 import unittest
 from unittest.mock import patch  # pylint: disable=unused-import
 
-from pybedtools import create_interval_from_list
+from pybedtools import create_interval_from_list, BedTool
 
 import iCount  # pylint: disable=unused-import
 from iCount.genomes import segment
-from iCount.tests.utils import list_to_intervals, intervals_to_list, \
-    reverse_strand, make_file_from_list, make_list_from_file, get_temp_file_name
+from iCount.tests.utils import list_to_intervals, intervals_to_list, reverse_strand, make_file_from_list, \
+    make_list_from_file, get_temp_file_name, get_temp_dir
+
+
+class TestConstructBorders(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
+    def test_basic(self):
+        segmentation = [
+            # Transcript #1
+            ['1', '.', 'ncRNA', '1', '10', '.', '+', '.', 'biotype "A"; gene_name "X";'],
+            ['1', '.', 'intron', '11', '20', '.', '+', '.', 'biotype "A"; gene_name "X";'],
+            ['1', '.', 'CDS', '21', '30', '.', '+', '.', 'biotype "A"; gene_name "X";'],
+            ['1', '.', 'UTR3', '31', '40', '.', '+', '.', 'biotype "A"; gene_name "X";'],
+            # Transcript #1
+            ['1', '.', 'CDS', '5', '14', '.', '+', '.', 'biotype "A"; gene_name "X";'],
+            ['1', '.', 'intron', '15', '24', '.', '+', '.', 'biotype "A"; gene_name "X";'],
+            ['1', '.', 'CDS', '25', '34', '.', '+', '.', 'biotype "A"; gene_name "X";'],
+            # Also negative strand:
+            ['1', '.', 'CDS', '3', '32', '.', '-', '.', 'biotype "A"; gene_name "X";'],
+        ]
+        expected = [
+            ['1', '0', '4', '.', '.', '+'],
+            ['1', '4', '10', '.', '.', '+'],
+            ['1', '10', '14', '.', '.', '+'],
+            ['1', '14', '20', '.', '.', '+'],
+            ['1', '20', '24', '.', '.', '+'],
+            ['1', '24', '30', '.', '.', '+'],
+            ['1', '30', '34', '.', '.', '+'],
+            ['1', '34', '40', '.', '.', '+'],
+            ['1', '2', '32', '.', '.', '-'],
+        ]
+
+        segmentation_file = make_file_from_list(segmentation)
+        borders_file = segment.construct_borders(BedTool(segmentation_file))
+        results = make_list_from_file(borders_file, fields_separator='\t')
+        self.assertEqual(
+            expected,
+            # Sort results by chrom, strand, start, stop
+            sorted(results, key=lambda x: (x[0], x[-1], int(x[1]), int(x[2])))
+        )
+
+
+class TestSimplifyBiotype(unittest.TestCase):
+
+    def test_simplify(self):
+        self.assertEqual('mRNA', segment.simplify_biotype('CDS', 'IG_C_gene'))
+        self.assertEqual('pre-mRNA', segment.simplify_biotype('intron', 'IG_C_gene'))
+        self.assertEqual('lncRNA', segment.simplify_biotype('UTR3', 'TEC'))
+        self.assertEqual('lncRNA', segment.simplify_biotype('ncRNA', 'protein_coding'))
+
+    def test_uniqness_of_entries(self):
+        """
+        Ensure that entries in SUBTYPE_GROUPS do not repeat.
+        """
+        all_elements = []
+        for _, group_elements in segment.SUBTYPE_GROUPS.items():
+            all_elements.extend(group_elements)
+
+        self.assertEqual(len(all_elements), len(set(all_elements)))
+
+
+class TestMakeUniqRegion(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
+    def test_basic(self):
+        # seg is composed of borders(BED6) and segment(GTF) interval:
+        seg = create_interval_from_list(
+            ['1', '0', '10', '.', '.', '+'] + ['.', '.', '.', '.', '.', '.', '.', '.', '.'])
+        types = ['UTR3']
+        subtypes = ['TEC']
+        genes = [('id1', 'A', 50)]
+
+        interval = segment.make_uniq_region(seg, types, subtypes, genes)
+        self.assertEqual(interval[:], ['1', '.', 'UTR3', '1', '10', '.', '+', '.',
+                                       'gene_id "id1"; gene_name "A"; biotype "lncRNA";'])
+
+    def test_highest_rated_type(self):
+        # seg is compositon of BED6 and GTF interval:
+        seg = create_interval_from_list(
+            ['1', '0', '10', '.', '.', '+'] + ['.', '.', '.', '.', '.', '.', '.', '.', '.'])
+        types = ['UTR3', 'intron', 'UTR5']
+        subtypes = ['protein_coding', 'TEC', 'non_stop_decay']
+        genes = [('id1', 'A', 20), ('id1', 'A', 20), ('id1', 'A', 20)]
+
+        interval = segment.make_uniq_region(seg, types, subtypes, genes)
+        self.assertEqual(interval[:], ['1', '.', 'UTR3', '1', '10', '.', '+', '.',
+                                       'gene_id "id1"; gene_name "A"; biotype "mRNA";'])
+
+    def test_multiple_biotypes(self):
+        # seg is compositon of BED6 and GTF interval:
+        seg = create_interval_from_list(
+            ['1', '0', '10', '.', '.', '+'] + ['.', '.', '.', '.', '.', '.', '.', '.', '.'])
+        types = ['intron', 'intron']
+        subtypes = ['protein_coding', 'TEC']
+        genes = [('id1', 'A', 20), ('id1', 'A', 20)]
+
+        interval = segment.make_uniq_region(seg, types, subtypes, genes)
+        self.assertEqual(interval[:], ['1', '.', 'intron', '1', '10', '.', '+', '.',
+                                       'gene_id "id1"; gene_name "A"; biotype "lncRNA,pre-mRNA";'])
+
+    def test_take_longer_gene(self):
+        # seg is compositon of BED6 and GTF interval:
+        seg = create_interval_from_list(
+            ['1', '0', '10', '.', '.', '+'] + ['.', '.', '.', '.', '.', '.', '.', '.', '.'])
+        types = ['CDS', 'CDS']
+        subtypes = ['protein_coding', 'protein_coding']
+        genes = [('id1', 'A', 20), ('id2', 'B', 40)]
+
+        interval = segment.make_uniq_region(seg, types, subtypes, genes)
+        self.assertEqual(interval[:], ['1', '.', 'CDS', '1', '10', '.', '+', '.',
+                                       'gene_id "id2"; gene_name "B"; biotype "mRNA";'])
+
+    def test_utr3(self):
+        # seg is compositon of BED6 and GTF interval:
+        seg = create_interval_from_list(
+            ['1', '0', '10', '.', '.', '+'] + ['.', '.', '.', '.', '.', '.', '.', '.', '.'])
+        types = ['intron']
+        subtypes = ['3prime_overlapping_ncRNA']
+        genes = [('id1', 'A', 20)]
+
+        interval = segment.make_uniq_region(seg, types, subtypes, genes)
+        self.assertEqual(interval[:], ['1', '.', 'UTR3', '1', '10', '.', '+', '.',
+                                       'gene_id "id1"; gene_name "A"; biotype "mRNA";'])
+
+    def test_intergenic(self):
+        # seg is compositon of BED6 and GTF interval:
+        seg = create_interval_from_list(
+            ['1', '0', '10', '.', '.', '+'] + ['.', '.', '.', '.', '.', '.', '.', '.', '.'])
+        types = ['intergenic']
+        subtypes = [None]
+        genes = [('.', None, 0)]
+
+        interval = segment.make_uniq_region(seg, types, subtypes, genes)
+        self.assertEqual(interval[:], ['1', '.', 'intergenic', '1', '10', '.', '+', '.',
+                                       'gene_id "."; gene_name "None"; biotype "";'])
+
+
+class TestMergeRegions(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+        self.tmp = get_temp_file_name()
+
+    def test_basic(self):
+        # seg is compositon of BED6 and GTF interval:
+        nonmerged = make_file_from_list([
+            ['1', '.', 'UTR3', '1', '10', '.', '+', '.', 'biotype "lncRNA";gene_id "id1";'],
+            ['1', '.', 'UTR3', '11', '20', '.', '+', '.', 'biotype "lncRNA";gene_id "id1";'],
+            ['1', '.', 'UTR3', '21', '30', '.', '+', '.', 'biotype "lncRNA";gene_id "id2";'],
+            ['1', '.', 'UTR3', '31', '40', '.', '+', '.', 'biotype "lncRNA";gene_id "id1";'],
+            ['1', '.', 'UTR3', '31', '40', '.', '-', '.', 'biotype "lncRNA";gene_id "id1";'],
+        ])
+
+        expected = [
+            ['1', '.', 'UTR3', '1', '20', '.', '+', '.', 'biotype "lncRNA";gene_id "id1";'],
+            ['1', '.', 'UTR3', '21', '30', '.', '+', '.', 'biotype "lncRNA";gene_id "id2";'],
+            ['1', '.', 'UTR3', '31', '40', '.', '+', '.', 'biotype "lncRNA";gene_id "id1";'],
+            ['1', '.', 'UTR3', '31', '40', '.', '-', '.', 'biotype "lncRNA";gene_id "id1";'],
+        ]
+
+        segment.merge_regions(nonmerged, self.tmp)
+        results = make_list_from_file(self.tmp, fields_separator='\t')
+        # Since order of attrs can be arbitrary, equality checks are more complex:
+        for res, exp in zip(results, expected):
+            self.assertEqual(res[:8], exp[:8])
+            self.assertEqual(
+                ';'.join(sorted(res[8].split(';'))),
+                ';'.join(sorted(exp[8].split(';'))),
+            )
+
+
+class TestSummaryTemplates(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
+    def test_templates1(self):
+        out_dir = get_temp_dir()
+        segmentation = make_file_from_list([
+            ['1', '.', 'intergenic', '1', '10', '.', '+', '.', 'gene_id ".";'],
+            ['1', '.', 'UTR3', '11', '20', '.', '+', '.', 'biotype "mRNA";gene_name "ABC";gene_id "G1";'],
+            ['1', '.', 'intron', '21', '30', '.', '+', '.', 'biotype "lncRNA";gene_name "ABC";gene_id "G1";'],
+            ['1', '.', 'CDS', '31', '40', '.', '+', '.', 'biotype "mRNA";gene_name "DEF";gene_id "G2";'],
+            ['1', '.', 'intron', '41', '50', '.', '+', '.', 'biotype "sRNA,lncRNA";gene_name "DEF"; gene_id "G2";'],
+        ])
+        segment.summary_templates(segmentation, out_dir)
+
+        results_type = make_list_from_file(os.path.join(out_dir, segment.TEMPLATE_TYPE), '\t')
+        self.assertEqual(results_type, [
+            ['CDS', '10'],
+            ['UTR3', '10'],
+            ['intron', '20'],
+            ['intergenic', '10'],
+        ])
+
+        results_subtype = make_list_from_file(os.path.join(out_dir, segment.TEMPLATE_SUBTYPE), fields_separator='\t')
+        self.assertEqual(results_subtype, [
+            ['CDS mRNA', '10'],
+            ['UTR3 mRNA', '10'],
+            ['intron lncRNA', '15'],
+            ['intron sRNA', '5'],
+            ['intergenic', '10'],
+        ])
+
+        results_gene = make_list_from_file(os.path.join(out_dir, segment.TEMPLATE_GENE), fields_separator='\t')
+        self.assertEqual(results_gene, [
+            ['.', '', '10'],
+            ['G1', 'ABC', '20'],
+            ['G2', 'DEF', '20'],
+        ])
+
+
+class TestMakeRegionsFile(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+        self.dir = get_temp_dir()
+
+    def test_basic(self):
+        segmentation = [
+            ['1', '.', 'gene', '1', '50', '.', '+', '.', 'biotype "lincRNA"; gene_name "A"; gene_id "X";'],
+            # Transcript #1
+            ['1', '.', 'transcript', '1', '40', '.', '+', '.', 'biotype "lincRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'ncRNA', '1', '10', '.', '+', '.', 'biotype "lincRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'UTR5', '11', '20', '.', '+', '.', 'biotype "lincRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'CDS', '21', '30', '.', '+', '.', 'biotype "lincRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'intron', '31', '35', '.', '+', '.', 'biotype "lincRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'CDS', '36', '40', '.', '+', '.', 'biotype "lincRNA"; gene_name "A"; gene_id "X";'],
+            # Transcript #2
+            ['1', '.', 'transcript', '10', '50', '.', '+', '.', 'biotype "rRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'ncRNA', '10', '18', '.', '+', '.', 'biotype "rRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'UTR5', '19', '25', '.', '+', '.', 'biotype "rRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'CDS', '26', '32', '.', '+', '.', 'biotype "rRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'intron', '33', '39', '.', '+', '.', 'biotype "rRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'CDS', '40', '44', '.', '+', '.', 'biotype "rRNA"; gene_name "A"; gene_id "X";'],
+            ['1', '.', 'UTR3', '45', '50', '.', '+', '.', 'biotype "rRNA"; gene_name "A"; gene_id "X";'],
+            # Itergenic
+            ['1', '.', 'intergenic', '51', '100', '.', '+', '.', 'gene_id ".";'],
+
+        ]
+        expected = [
+            ['1', '.', 'ncRNA', '1', '9', '.', '+', '.', 'gene_id "X";biotype "lncRNA";gene_name "A";'],
+            ['1', '.', 'ncRNA', '10', '10', '.', '+', '.', 'gene_id "X";biotype "lncRNA,rRNA";gene_name "A";'],
+            ['1', '.', 'UTR5', '11', '18', '.', '+', '.', 'gene_id "X";biotype "lncRNA";gene_name "A";'],
+            ['1', '.', 'UTR5', '19', '20', '.', '+', '.', 'gene_id "X";biotype "lncRNA,rRNA";gene_name "A";'],
+            ['1', '.', 'CDS', '21', '25', '.', '+', '.', 'gene_id "X";biotype "lncRNA";gene_name "A";'],
+            ['1', '.', 'CDS', '26', '30', '.', '+', '.', 'gene_id "X";biotype "lncRNA,rRNA";gene_name "A";'],
+            ['1', '.', 'CDS', '31', '32', '.', '+', '.', 'gene_id "X";biotype "rRNA";gene_name "A";'],
+            ['1', '.', 'intron', '33', '35', '.', '+', '.', 'gene_id "X";biotype "lncRNA,rRNA";gene_name "A";'],
+            ['1', '.', 'CDS', '36', '39', '.', '+', '.', 'gene_id "X";biotype "lncRNA";gene_name "A";'],
+            ['1', '.', 'CDS', '40', '40', '.', '+', '.', 'gene_id "X";biotype "lncRNA,rRNA";gene_name "A";'],
+            ['1', '.', 'CDS', '41', '44', '.', '+', '.', 'gene_id "X";biotype "rRNA";gene_name "A";'],
+            ['1', '.', 'UTR3', '45', '50', '.', '+', '.', 'gene_id "X";biotype "rRNA";gene_name "A";'],
+            ['1', '.', 'intergenic', '51', '100', '.', '+', '.', 'gene_id ".";biotype "";gene_name "None";'],
+        ]
+
+        segmentation_file = make_file_from_list(segmentation, sort=True)
+        segment.make_regions(segmentation_file, self.dir)
+        results = make_list_from_file(os.path.join(self.dir, segment.REGIONS_FILE), fields_separator='\t')
+
+        # Since order of attrs can be arbitrary, equality checks are more complex:
+        for res, exp in zip(results, expected):
+            self.assertEqual(res[:8], exp[:8])
+            self.assertEqual(
+                ';'.join(sorted(res[8].split(';'))),
+                ';'.join(sorted(exp[8].split(';'))),
+            )
 
 
 class TestOtherFunctions(unittest.TestCase):
@@ -59,8 +330,7 @@ class TestOtherFunctions(unittest.TestCase):
         self.assertEqual(segment._get_biotype(gene_ensembl_old), 'Q')
 
     def test_add_biotype_value(self):
-        interval = create_interval_from_list(
-            ['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_id "1";'])
+        interval = create_interval_from_list(['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_id "1";'])
         interval_new = segment._add_biotype_value(interval, 'my_biotype')
         self.assertEqual(interval_new.attrs['biotype'], 'my_biotype')
 
@@ -70,15 +340,12 @@ class TestOtherFunctions(unittest.TestCase):
                 ['1', '.', 'gene', '1', '200', '.', '+', '.', 'gene_biotype "G";']
             ),
             'transcript1': list_to_intervals([
-                ['1', '.', 'CDS', '1', '5', '.', '+', '.',
-                 'gene_biotype "G"; transcript_biotype "A";'],
-                ['1', '.', 'ncRNA', '1', '5', '.', '+', '.',
-                 'gene_biotype "G"; transcript_biotype "A";'],
+                ['1', '.', 'CDS', '1', '5', '.', '+', '.', 'gene_biotype "G"; transcript_biotype "A";'],
+                ['1', '.', 'ncRNA', '1', '5', '.', '+', '.', 'gene_biotype "G"; transcript_biotype "A";'],
                 ['1', '.', 'intron', '1', '5', '.', '+', '.', '.'],
             ]),
             'transcript2': list_to_intervals([
-                ['1', '.', 'ncRNA', '1', '5', '.', '+', '.',
-                 'gene_biotype "G"; transcript_biotype "B";'],
+                ['1', '.', 'ncRNA', '1', '5', '.', '+', '.', 'gene_biotype "G"; transcript_biotype "B";'],
                 ['1', '.', 'intron', '1', '5', '.', '+', '.', '.'],
             ]),
         }
@@ -114,8 +381,7 @@ class TestOtherFunctions(unittest.TestCase):
         """
         No transcript interval.
         """
-        intervals = [create_interval_from_list(
-            ['1', '.', 'UTR5', '1', '9', '.', '+', '.', '.'])]
+        intervals = [create_interval_from_list(['1', '.', 'UTR5', '1', '9', '.', '+', '.', '.'])]
 
         message = "No transcript interval in list of intervals."
         with self.assertRaisesRegex(ValueError, message):
@@ -149,32 +415,25 @@ class TestOtherFunctions(unittest.TestCase):
 
     def test_filter_col8(self):
         interval = list_to_intervals([
-            ['1', '.', 'CDS', '1', '2', '.', '+', '.',
-             'gene_name "B"; transcript_id "A"; key42 "A"; key43: "?";'],
+            ['1', '.', 'CDS', '1', '2', '.', '+', '.', 'gene_name "B"; transcript_id "A"; key42 "A"; key43: "?";'],
         ])[0]
 
         expected = 'gene_name "B"; transcript_id "A";'
         self.assertEqual(segment._filter_col8(interval), expected)
 
         expected = 'gene_name "B"; key42 "A";'
-        self.assertEqual(
-            segment._filter_col8(interval, keys=['gene_name', 'key42']), expected)
+        self.assertEqual(segment._filter_col8(interval, keys=['gene_name', 'key42']), expected)
 
     def test_get_introns(self):
         exons = list_to_intervals([
-            ['1', '.', 'exon', '1', '10', '.', '+', '.',
-             'transcript_id "42"; exon_number "1"'],
-            ['1', '.', 'exon', '20', '30', '.', '+', '.',
-             'gene_name "42"; '],
-            ['1', '.', 'exon', '40', '50', '.', '+', '.',
-             'gene_id "FHIT"; useless_data "3"'],
+            ['1', '.', 'exon', '1', '10', '.', '+', '.', 'transcript_id "42"; exon_number "1"'],
+            ['1', '.', 'exon', '20', '30', '.', '+', '.', 'gene_name "42"; '],
+            ['1', '.', 'exon', '40', '50', '.', '+', '.', 'gene_id "FHIT"; useless_data "3"'],
         ])
 
         expected = list_to_intervals([
-            ['1', '.', 'exon', '11', '19', '.', '+', '.',
-             'transcript_id "42";'],
-            ['1', '.', 'exon', '31', '39', '.', '+', '.',
-             'gene_id "FHIT";'],
+            ['1', '.', 'exon', '11', '19', '.', '+', '.', 'transcript_id "42";'],
+            ['1', '.', 'exon', '31', '39', '.', '+', '.', 'gene_id "FHIT";'],
         ])
         self.assertEqual(segment._get_introns(exons), expected)
 
@@ -534,8 +793,7 @@ class TestComplement(unittest.TestCase):
             ['2', '.', 'gene5', '100', '300', '.', '-', '.', '.'],
         ])
 
-        complement = make_list_from_file(
-            segment._complement(genes, genome_file, '+'), fields_separator='\t')
+        complement = make_list_from_file(segment._complement(genes, genome_file, '+'), fields_separator='\t')
 
         empty_col8 = 'ID "inter%s"; gene_id "."; transcript_id ".";'
         expected = [
@@ -560,32 +818,19 @@ class TestGetGeneContent(unittest.TestCase):
         * last interval is on chromosome 2, but it is not in the output
         """
         gtf_data = list_to_intervals([
-            ['1', '.', 'gene', '100', '300', '.', '+', '.',
-             'gene_id "G1";'],
-            ['1', '.', 'transcript', '100', '250', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1";'],
-            ['1', '.', 'exon', '100', '150', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1"; exon_number "1";'],
-            ['1', '.', 'exon', '200', '250', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1"; exon_number "2";'],
-            ['1', '.', 'transcript', '150', '300', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2";'],
-            ['1', '.', 'exon', '150', '200', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2"; exon_number "1";'],
-            ['1', '.', 'exon', '250', '300', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2"; exon_number "2";'],
-            ['1', '.', 'transcript', '400', '500', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3";'],
-            ['1', '.', 'exon', '400', '430', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3"; exon_number "1"'],
-            ['1', '.', 'CDS', '410', '430', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3";'],
-            ['1', '.', 'exon', '470', '500', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3"; exon_number "2"'],
-            ['1', '.', 'CDS', '470', '490', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3";'],
-            ['2', '.', 'CDS', '470', '490', '.', '+', '.',
-             'gene_id "G3"; transcript_id "T4";'],
+            ['1', '.', 'gene', '100', '300', '.', '+', '.', 'gene_id "G1";'],
+            ['1', '.', 'transcript', '100', '250', '.', '+', '.', 'gene_id "G1"; transcript_id "T1";'],
+            ['1', '.', 'exon', '100', '150', '.', '+', '.', 'gene_id "G1"; transcript_id "T1"; exon_number "1";'],
+            ['1', '.', 'exon', '200', '250', '.', '+', '.', 'gene_id "G1"; transcript_id "T1"; exon_number "2";'],
+            ['1', '.', 'transcript', '150', '300', '.', '+', '.', 'gene_id "G1"; transcript_id "T2";'],
+            ['1', '.', 'exon', '150', '200', '.', '+', '.', 'gene_id "G1"; transcript_id "T2"; exon_number "1";'],
+            ['1', '.', 'exon', '250', '300', '.', '+', '.', 'gene_id "G1"; transcript_id "T2"; exon_number "2";'],
+            ['1', '.', 'transcript', '400', '500', '.', '+', '.', 'gene_id "G2"; transcript_id "T3";'],
+            ['1', '.', 'exon', '400', '430', '.', '+', '.', 'gene_id "G2"; transcript_id "T3"; exon_number "1"'],
+            ['1', '.', 'CDS', '410', '430', '.', '+', '.', 'gene_id "G2"; transcript_id "T3";'],
+            ['1', '.', 'exon', '470', '500', '.', '+', '.', 'gene_id "G2"; transcript_id "T3"; exon_number "2"'],
+            ['1', '.', 'CDS', '470', '490', '.', '+', '.', 'gene_id "G2"; transcript_id "T3";'],
+            ['2', '.', 'CDS', '470', '490', '.', '+', '.', 'gene_id "G3"; transcript_id "T4";'],
         ])
         gtf = make_file_from_list(intervals_to_list(gtf_data))
 
@@ -597,8 +842,7 @@ class TestGetGeneContent(unittest.TestCase):
             'T2': gtf_data[4:7],
         }
 
-        extra_gene = create_interval_from_list(
-            ['1', '.', 'gene', '400', '500', '.', '+', '.', 'gene_id "G2";'])
+        extra_gene = create_interval_from_list(['1', '.', 'gene', '400', '500', '.', '+', '.', 'gene_id "G2";'])
         expected2 = {
             'gene': extra_gene,
             'T3': gtf_data[7:-1],
@@ -612,14 +856,10 @@ class TestGetGeneContent(unittest.TestCase):
         Raise error if member of already processed transcript is found.
         """
         gtf = make_file_from_list([
-            ['1', '.', 'gene', '100', '300', '.', '+', '.',
-             'gene_id "G1";'],
-            ['1', '.', 'transcript', '100', '250', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1";'],
-            ['1', '.', 'transcript', '150', '300', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2";'],
-            ['1', '.', 'exon', '150', '200', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1"; exon_number "1";'],
+            ['1', '.', 'gene', '100', '300', '.', '+', '.', 'gene_id "G1";'],
+            ['1', '.', 'transcript', '100', '250', '.', '+', '.', 'gene_id "G1"; transcript_id "T1";'],
+            ['1', '.', 'transcript', '150', '300', '.', '+', '.', 'gene_id "G1"; transcript_id "T2";'],
+            ['1', '.', 'exon', '150', '200', '.', '+', '.', 'gene_id "G1"; transcript_id "T1"; exon_number "1";'],
         ])
 
         with self.assertRaises(AssertionError):
@@ -630,14 +870,10 @@ class TestGetGeneContent(unittest.TestCase):
         Raise error if member of already processed gene is found.
         """
         gtf = make_file_from_list([
-            ['1', '.', 'gene', '100', '300', '.', '+', '.',
-             'gene_id "G1";'],
-            ['1', '.', 'transcript', '100', '250', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1";'],
-            ['1', '.', 'gene', '500', '700', '.', '+', '.',
-             'gene_id "G2";'],
-            ['1', '.', 'transcript', '500', '600', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T3";'],
+            ['1', '.', 'gene', '100', '300', '.', '+', '.', 'gene_id "G1";'],
+            ['1', '.', 'transcript', '100', '250', '.', '+', '.', 'gene_id "G1"; transcript_id "T1";'],
+            ['1', '.', 'gene', '500', '700', '.', '+', '.', 'gene_id "G2";'],
+            ['1', '.', 'transcript', '500', '600', '.', '+', '.', 'gene_id "G1"; transcript_id "T3";'],
         ])
 
         with self.assertRaises(AssertionError):
@@ -651,7 +887,7 @@ class TestGetGeneContent(unittest.TestCase):
             ['1', '.', 'transcript', '500', '600', '.', '+', '.', 'gene_id "G1";'],
         ])
 
-        message = "Unexpected situation!"
+        message = "First element in gene content is neither gene or transcript!"
         with self.assertRaisesRegex(Exception, message):
             list((segment._get_gene_content(gtf, ['1', 'MT'])))
 
@@ -663,57 +899,40 @@ class TestGetRegions(unittest.TestCase):
 
     def test_all_good(self):
         gtf_in_data = list_to_intervals([
-            ['1', '.', 'gene', '400', '500', '.', '+', '.',
-             'gene_id "G2";'],
-            ['1', '.', 'transcript', '400', '500', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3";'],
-            ['1', '.', 'exon', '400', '430', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3"; exon_number "1"'],
-            ['1', '.', 'CDS', '410', '430', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3";'],
-            ['1', '.', 'exon', '470', '500', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3"; exon_number "2"'],
-            ['1', '.', 'CDS', '470', '490', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3";'],
+            ['1', '.', 'gene', '400', '500', '.', '+', '.', 'gene_id "G2";'],
+            ['1', '.', 'transcript', '400', '500', '.', '+', '.', 'gene_id "G2"; transcript_id "T3";'],
+            ['1', '.', 'exon', '400', '430', '.', '+', '.', 'gene_id "G2"; transcript_id "T3"; exon_number "1"'],
+            ['1', '.', 'CDS', '410', '430', '.', '+', '.', 'gene_id "G2"; transcript_id "T3";'],
+            ['1', '.', 'exon', '470', '500', '.', '+', '.', 'gene_id "G2"; transcript_id "T3"; exon_number "2"'],
+            ['1', '.', 'CDS', '470', '490', '.', '+', '.', 'gene_id "G2"; transcript_id "T3";'],
         ])
         gtf_in_file = make_file_from_list(intervals_to_list(gtf_in_data))
 
         gtf_out = get_temp_file_name()
 
-        genome_file = make_file_from_list(
-            [
-                ['1', '2000'],
-                ['MT', '500'],
-            ], bedtool=False)
+        genome_file = make_file_from_list([
+            ['1', '2000'],
+            ['MT', '500'],
+        ], bedtool=False)
 
-        segment.get_regions(gtf_in_file, gtf_out, genome_file)
+        segment.get_segments(gtf_in_file, gtf_out, genome_file)
         gtf_out_data = list_to_intervals(make_list_from_file(gtf_out, fields_separator='\t'))
 
         expected = list_to_intervals([
-            ['1', '.', 'intergenic', '1', '399', '.', '+', '.',
-             'gene_id "."; transcript_id ".";'],
-            ['1', '.', 'intergenic', '1', '2000', '.', '-', '.',
-             'gene_id "."; transcript_id ".";'],
-            ['1', '.', 'transcript', '400', '500', '.', '+', '.',
-             'gene_id "G2";transcript_id "T3"; biotype ".";'],
+            ['1', '.', 'intergenic', '1', '399', '.', '+', '.', 'gene_id "."; transcript_id ".";'],
+            ['1', '.', 'intergenic', '1', '2000', '.', '-', '.', 'gene_id "."; transcript_id ".";'],
+            ['1', '.', 'transcript', '400', '500', '.', '+', '.', 'gene_id "G2";transcript_id "T3"; biotype ".";'],
             ['1', '.', 'UTR5', '400', '409', '.', '+', '.',
              'gene_id "G2";exon_number "1";transcript_id "T3"; biotype ".";'],
-            ['1', '.', 'gene', '400', '500', '.', '+', '.',
-             'gene_id "G2"; biotype "[.]";'],
-            ['1', '.', 'CDS', '410', '430', '.', '+', '.',
-             'gene_id "G2";transcript_id "T3"; biotype ".";'],
-            ['1', '.', 'intron', '431', '469', '.', '+', '.',
-             'gene_id "G2"; transcript_id "T3"; biotype ".";'],
-            ['1', '.', 'CDS', '470', '490', '.', '+', '.',
-             'gene_id "G2";transcript_id "T3"; biotype ".";'],
+            ['1', '.', 'gene', '400', '500', '.', '+', '.', 'gene_id "G2"; biotype "[.]";'],
+            ['1', '.', 'CDS', '410', '430', '.', '+', '.', 'gene_id "G2";transcript_id "T3"; biotype ".";'],
+            ['1', '.', 'intron', '431', '469', '.', '+', '.', 'gene_id "G2"; transcript_id "T3"; biotype ".";'],
+            ['1', '.', 'CDS', '470', '490', '.', '+', '.', 'gene_id "G2";transcript_id "T3"; biotype ".";'],
             ['1', '.', 'UTR3', '491', '500', '.', '+', '.',
              'gene_id "G2";exon_number "2";transcript_id "T3"; biotype ".";'],
-            ['1', '.', 'intergenic', '501', '2000', '.', '+', '.',
-             'gene_id "."; transcript_id ".";'],
-            ['MT', '.', 'intergenic', '1', '500', '.', '+', '.',
-             'gene_id "."; transcript_id ".";'],
-            ['MT', '.', 'intergenic', '1', '500', '.', '-', '.',
-             'gene_id "."; transcript_id ".";'],
+            ['1', '.', 'intergenic', '501', '2000', '.', '+', '.', 'gene_id "."; transcript_id ".";'],
+            ['MT', '.', 'intergenic', '1', '500', '.', '+', '.', 'gene_id "."; transcript_id ".";'],
+            ['MT', '.', 'intergenic', '1', '500', '.', '-', '.', 'gene_id "."; transcript_id ".";'],
         ])
 
         self.assertEqual(expected, gtf_out_data)

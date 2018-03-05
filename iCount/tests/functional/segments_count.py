@@ -1,11 +1,11 @@
 """
-Test iCount.genomes.segments.get_regions consistency.
+Test iCount.genomes.segments.get_segments consistency.
 
-This script tests if results of iCount.genomes.segments.get_regions function
+This script tests if results of iCount.genomes.segments.get_segments function
 are consistent with the reference results. If reference results are not
 present, they are created.
 
-If gtf/fasta/genome/get_regions.gtf files for given release and species are
+If gtf/fasta/genome/get_segments.gtf files for given release and species are
 not found in `self.files_dir` they are downloaded/calculated. This may
 significantly extend the execution time of this script.
 
@@ -61,7 +61,7 @@ class TestSegmentation(unittest.TestCase):
 
         Also, download/compute all the necessary files.
         """
-        gtf_regions = join(self.files_dir, '{}.{}.get_regions.gtf.gz'.format(species, release))
+        gtf_regions = join(self.files_dir, '{}.{}.get_segments.gtf.gz'.format(species, release))
 
         if not isfile(gtf_regions):
             # If gtf_regions file is not preswent, make it from gtf_base and chrom_length file
@@ -80,7 +80,7 @@ class TestSegmentation(unittest.TestCase):
                 chrom_length = ensembl.chrom_length(fasta)
 
             # Now we have gtf_base and chrom_length: produce gtf_regions:
-            gtf_regions = segment.get_regions(gtf_base, gtf_regions, chrom_length)
+            gtf_regions = segment.get_segments(gtf_base, gtf_regions, chrom_length)
 
         return gtf_regions
 

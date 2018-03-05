@@ -779,7 +779,7 @@ Wishes and ideas(Jernej, Tomaz):
 positional arguments:
   bam                   BAM file with alligned reads
   segmentation          GTF file with segmentation. Should be a file produced by function
-                        `get_regions`
+                        `get_segments`
   out_file              Output file with analysis results
   strange               File with strange propertieas obtained when processing bam file
   cross_transcript      File with reads spanning over multiple transcripts or multiple genes
