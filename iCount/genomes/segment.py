@@ -79,7 +79,7 @@ import iCount
 
 LOGGER = logging.getLogger(__name__)
 
-REGIONS_FILE = 'regions.bed.gz'
+REGIONS_FILE = 'regions.gtf.gz'
 TEMPLATE_TYPE = 'template_type.tsv'
 TEMPLATE_SUBTYPE = 'template_subtype.tsv'
 TEMPLATE_GENE = 'template_gene.tsv'
