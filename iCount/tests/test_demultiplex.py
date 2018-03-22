@@ -21,7 +21,7 @@ class TestDemultiplex(unittest.TestCase):
 
     def test_run_ok_with_adapter(self):
         adapter = 'GGAACC'
-        barcodes = ['NNAAAN', 'NNACTN']
+        barcodes = ['NNAAAN', 'NNACTN', 'NNTTTTTTTTN']
         data = [
             ['@header/1', 'GGAAAG' + make_sequence(40, rnd_seed=0) + adapter, '+',
              make_quality_scores(50, min_chr=33, max_chr=74, rnd_seed=1) + '!J'],
@@ -56,14 +56,17 @@ class TestDemultiplex(unittest.TestCase):
         ]
         self.assertEqual(fq2_list, expected2)
 
-        fq3_list = make_list_from_file('{}/demux_{}.fastq.gz'.format(self.dir, 'nomatch'))
-        expected3 = [
+        fq3_list = make_list_from_file('{}/demux_{}.fastq.gz'.format(self.dir, barcodes[2]))
+        self.assertEqual(fq3_list, [])
+
+        fq4_list = make_list_from_file('{}/demux_{}.fastq.gz'.format(self.dir, 'nomatch'))
+        expected4 = [
             ['@header3'],
             [data[2][1]],
             ['+'],
             [data[2][3]],
         ]
-        self.assertEqual(fq3_list, expected3)
+        self.assertEqual(fq4_list, expected4)
 
     def test_run_ok_no_adapter(self):
         barcodes = ['NNAAAN', 'NNACTN']

@@ -145,6 +145,7 @@ def _extract(reads, barcodes, mismatches=1, minimum_length=15):
     all_barcodes = len(barcodes)
     # Precompute barcode length for each barcode
     barcode_len = {i: len(brc) for i, brc in enumerate(barcodes)}
+    longest_barcode = max(barcode_len.values())
     # Precompute max possible votes for each barcode. Equals to the number of valid nucleotides
     max_votes = {i: len(brc.replace('N', '')) for i, brc in enumerate(barcodes)}
     # Precompute positions of randomer nucleotides for each barcode
@@ -156,6 +157,10 @@ def _extract(reads, barcodes, mismatches=1, minimum_length=15):
     # `pos` there is nucleotide X. Check which experiments (=barcodes) have X
     # at position `pos`. Increment votes for them.
     for read in iCount.files.fastq.FastqFile(reads).read():
+
+        if len(read.seq) < longest_barcode:
+            continue
+
         votes = [0] * all_barcodes
         for pos, n2i in p2n2i.items():
             for exp_id in n2i.get(read.seq[pos], []):

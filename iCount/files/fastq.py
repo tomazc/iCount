@@ -56,8 +56,8 @@ def get_qual_encoding(fname):
             if encoding:
                 return encoding
 
-    encoding = get_encoding(quals, check_count=False)
-    return encoding
+    if quals:
+        return get_encoding(quals, check_count=False)
 
 
 class FastqEntry:

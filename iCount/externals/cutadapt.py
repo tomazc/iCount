@@ -49,7 +49,7 @@ def run(reads, reads_trimmed, adapter, qual_trim=None, minimum_length=None):
         '--quiet',
         '-a', adapter,
     ]
-    qual_base = ENCODING_TO_OFFSET[get_qual_encoding(reads)]
+    qual_base = ENCODING_TO_OFFSET.get(get_qual_encoding(reads), 33)
     args.extend(['--quality-base={}'.format(qual_base)])
 
     if qual_trim is not None:
