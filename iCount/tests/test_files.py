@@ -84,6 +84,11 @@ class TestFilesFastq(unittest.TestCase):
         fq_file = make_file_from_list(data, bedtool=False, extension='.fq')
         self.assertEqual(None, iCount.files.fastq.get_qual_encoding(fq_file))
 
+    def test_get_qual_encoding_empty(self):
+        data = []
+        fq_file = make_file_from_list(data, bedtool=False, extension='.fq')
+        self.assertEqual(None, iCount.files.fastq.get_qual_encoding(fq_file))
+
     def test_fastq_entry(self):
         fq_entry = iCount.files.fastq.FastqEntry('header12345', 'ACTGCTGCAT', '+', 'ABCDEFFBBA')
         self.assertEqual(fq_entry.id, 'header12345')
