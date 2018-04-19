@@ -72,13 +72,6 @@ scores can be assigned to start (actually, to cross-link position), midlle or
 end position of read. By default, score is of course assigned to cross-link
 location. But for diagnostic purpuses, scores can also be assigned to middle or
 end coordinate of the read.
-
-
-
-TODO: check overlap between unique and multimap BED files, should be small,
-otherwise, we should think of a more approapriate quantification of (division
-of randomers among) unique mapped sites that overlap with multimapped reads
-
 """
 import re
 import os
@@ -634,7 +627,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, 
                 'reported in file: %s', metrics.strange_recs, skipped)
 
 
-def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
+def run(bam, sites_single, sites_multi, skipped, group_by='start', quant='cDNA',
         segmentation=None, mismatches=1, mapq_th=0, multimax=50, gap_th=4, ratio_th=0.1,
         report_progress=False):
     """
@@ -647,16 +640,16 @@ def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
     the mapq_th to 0 to include all reads. Mapq score is very useful,
     because values coming from STAR are from a very limited set: 0 (5 or
     more multiple hits), 1 (4 or 3 multiple hits), 3 (2 multiple hits),
-    255 (unique hit)
+    255 (single hit)
 
     Parameters
     ----------
     bam : str
         Input BAM file with mapped reads.
-    sites_unique : str
-        Output BED6 file to store data from uniquely mapped reads.
+    sites_single : str
+        Output BED6 file to store data from single mapped reads.
     sites_multi : str
-        Output BED6 file to store data from multi-mapped reads.
+        Output BED6 file to store data from single and multi-mapped reads.
     skipped : str
         Output BAM file to store reads that do not map as expected by segmentation and
         reference genome sequence. If read's second start does not fall on any of
@@ -694,7 +687,7 @@ def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
     """
     iCount.log_inputs(LOGGER, level=logging.INFO)  # pylint: disable=protected-access
 
-    assert sites_unique.endswith(('.bed', '.bed.gz'))
+    assert sites_single.endswith(('.bed', '.bed.gz'))
     assert sites_multi.endswith(('.bed', '.bed.gz'))
     assert skipped.endswith(('.bam'))
     assert quant in ['cDNA', 'reads']
@@ -702,7 +695,7 @@ def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
 
     metrics = iCount.Metrics()
 
-    unique, multi = {}, {}
+    single, multi = {}, {}
     progress = 0
     for (chrom, strand), new_progress, by_pos in _processs_bam_file(
             bam, metrics, mapq_th, skipped, segmentation, gap_th):
@@ -710,24 +703,24 @@ def run(bam, sites_unique, sites_multi, skipped, group_by='start', quant='cDNA',
             # pylint: disable=protected-access
             progress = iCount._log_progress(new_progress, progress, LOGGER)
 
-        unique_by_pos = {}
+        single_by_pos = {}
         multi_by_pos = {}
         for xlink_pos, by_bc in by_pos.items():
 
             _merge_similar_randomers(by_bc, mismatches, ratio_th=ratio_th)
 
-            # count uniquely mapped reads only
-            _update(unique_by_pos, _collapse(xlink_pos, by_bc, group_by, multimax=1))
+            # count single mapped reads only
+            _update(single_by_pos, _collapse(xlink_pos, by_bc, group_by, multimax=1))
             # count all reads mapped les than multimax times
             _update(multi_by_pos, _collapse(xlink_pos, by_bc, group_by, multimax=multimax))
 
-        unique.setdefault((chrom, strand), {}).update(unique_by_pos)
+        single.setdefault((chrom, strand), {}).update(single_by_pos)
         multi.setdefault((chrom, strand), {}).update(multi_by_pos)
 
     # Write output
     val_index = ['cDNA', 'reads'].index(quant)
-    _save_dict(unique, sites_unique, val_index=val_index)
-    LOGGER.info('Saved to BED file (uniquely mapped reads): %s', sites_unique)
+    _save_dict(single, sites_single, val_index=val_index)
+    LOGGER.info('Saved to BED file (single mapped reads): %s', sites_single)
     _save_dict(multi, sites_multi, val_index=val_index)
     LOGGER.info('Saved to BED file (multi-mapped reads): %s', sites_multi)
 
