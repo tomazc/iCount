@@ -491,7 +491,7 @@ def _get_read_data(read, metrics, mapq_th, segmentation=None, gap_th=4):
             num_mapped, second_start)
 
 
-def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, gap_th=4):
+def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, gap_th=1000000):
     """
     Extract data from BAM file into chunks of genome.
 
