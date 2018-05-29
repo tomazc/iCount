@@ -1,39 +1,24 @@
-group: deprecated-2017Q2
 sudo: required
-# sudo: false   # use container-based infrastructure
-
 dist: trusty
-
 language: python
 
-# XXX: APT packages cannot be instaled with apt addon, because they are not
-#      whitelisted by Travis:
-#      https://github.com/travis-ci/apt-package-whitelist#package-approval-process
-# After whitelisting them, remove them from install section and change sudo
-# from `required` to `false` to enable builds on new Travis infrastructure which
-# (among other good things) supports caching.
+addons:
+    apt:
+        packages:
+            - gfortran
+            - libblas-dev
+            - liblapack-dev
+            - samtools
 
-# addons:
-#     apt:
-#         packages:
-#             - gfortran
-#             - libblas-dev
-#             - liblapack-dev
-#             - samtools
-#             - rna-star
+before_cache:   # prevent logs from caching
+    - rm -f $HOME/.cache/pip/log/debug.log
 
-# cache:
-#     - ccache
-#     - pip
-
-# before_cache:   # prevent logs from caching
-#     - rm -f $HOME/.cache/pip/log/debug.log
+cache:
+    - ccache
+    - pip
 
 install:
     - pip install tox
-    # install apt packages
-    - sudo apt-get update
-    - sudo apt-get install gfortran libblas-dev liblapack-dev samtools
     # install bedtools
     - wget https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2.26.0.tar.gz
     - tar -zxvf bedtools-2.26.0.tar.gz
@@ -46,16 +31,16 @@ install:
 
 matrix:
   include:
-    - env: TOX_ENV=py34
-      python: "3.4"
     - env: TOX_ENV=py35
       python: "3.5"
+    - env: TOX_ENV=py36
+      python: "3.6"
     - env: TOX_ENV=linters
-      python: "3.5"
+      python: "3.6"
     - env: TOX_ENV=docs
-      python: "3.5"
+      python: "3.6"
     - env: TOX_ENV=packaging
-      python: "3.5"
+      python: "3.6"
 
 script:
   - tox -e $TOX_ENV

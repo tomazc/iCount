@@ -96,3 +96,5 @@ ENV/
 
 iCount/_version.py
 
+# Ignore pytest cache dir.
+.pytest_cache
