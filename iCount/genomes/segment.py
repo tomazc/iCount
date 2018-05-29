@@ -1034,7 +1034,7 @@ def get_segments(annotation, segmentation, fai, report_progress=False):
     LOGGER.info('Segmentation stored in %s', file3.fn)
 
     LOGGER.info('Making also gene level segmentation...')
-    make_regions(segmentation, out_dir=os.path.dirname(segmentation))
+    make_regions(segmentation, out_dir=os.path.dirname(os.path.abspath(segmentation)))
     return metrics
 
 
