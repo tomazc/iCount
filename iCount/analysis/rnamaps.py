@@ -391,7 +391,7 @@ def _process_read_group(xlink, chrom, strand, read, data, segmentation, metrics,
 
 
 def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handling='closest',
-        mismatches=2, mapq_th=0, holesize_th=4):
+        mismatches=2, mapq_th=0, holesize_th=4, max_barcodes=10000):
     """
     Compute distribution of cross-links relative to genomic landmarks.
 
@@ -419,6 +419,10 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
     holesize_th : int
         Raeads with size of holes less than holesize_th are treted as if they
         would have no holes.
+    max_barcodes : int
+        Skip merging similar barcodes if number of distinct barcodes at
+        position is higher that this.
+
 
     Returns
     -------
@@ -460,7 +464,7 @@ def run(bam, segmentation, out_file, strange, cross_transcript, implicit_handlin
 
         for xlink_pos, by_bc in sorted(by_pos.items()):
             # pylint: disable=protected-access
-            iCount.mapping.xlsites._merge_similar_randomers(by_bc, mismatches)
+            iCount.mapping.xlsites._merge_similar_randomers(by_bc, mismatches, max_barcodes)
             # by_bc is modified in place in _merge_similar_randomers
 
             # reads is a list of reads belonging to given barcode in by_bc
