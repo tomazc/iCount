@@ -410,14 +410,19 @@ class TestCLI(unittest.TestCase):
 
     def test_bed2bedgraph(self):
         command_basic = [
-            'iCount', 'bedgraph', self.cross_links, self.tmp1,
+            'iCount', 'bedgraph', self.cross_links, get_temp_file_name(extension='bedgraph'),
             '-S', '40',  # Supress lower than ERROR messages.
         ]
 
         command_full = [
-            'iCount', 'bedgraph', self.cross_links, self.tmp1,
+            'iCount', 'bedgraph', self.cross_links, get_temp_file_name(extension='bedgraph'),
             '--name', 'Name.',
             '--description', 'Description.',
+            '--visibility', 'full',
+            '--priority', '20',
+            '--color', '256,0,0',
+            '--alt_color', '0,256,0',
+            '--max_height_pixels', '100:50:0',
             '-S', '40',  # Supress lower than ERROR messages.
         ]
 

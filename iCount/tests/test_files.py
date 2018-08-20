@@ -211,14 +211,22 @@ class TestBedGraph(unittest.TestCase):
 
     def test_bed2bedgraph_params(self):
         """
-        Test with custom ``name`` and ``description`` parameters.
-
-        Note that ``name`` is too long and is trimmed to 15 characters.
+        Test with custom parameters.
         """
         iCount.files.bedgraph.bed2bedgraph(
-            self.bed, self.bedgraph, name='Longer than 15 chars.', description='Custom text.')
+            self.bed,
+            self.bedgraph,
+            name='Sample name',
+            description='A long and detailed description.',
+            visibility='full',
+            priority=20,
+            color='256,0,0',
+            alt_color='0,256,0',
+            max_height_pixels='100:50:0',
+        )
         expected = [
-            ['track type=bedGraph name="Longer than 15 " description="Custom text."'],
+            ['track type=bedGraph name="Sample name" description="A long and detailed description."'
+             ' visibility=full priority=20 color=256,0,0 altColor=0,256,0 maxHeightPixels=100:50:0'],
             ['1', '4', '5', '+5'],
             ['1', '5', '6', '+1'],
             ['1', '5', '6', '-1'],
