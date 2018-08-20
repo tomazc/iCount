@@ -92,7 +92,7 @@ class TestMergeSimilarRandomers(unittest.TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_merge(self):
-        # hit1, hit2, should be a 4-tuple, but for this test it is ok as is
+        # hit1, hit2, ... should all be a 4-tuple, but for this test it is ok as is
         by_bc = {
             'AAAAA': ['hit1', 'hit2'],
             'AAAAG': ['hit3'],
@@ -106,11 +106,11 @@ class TestMergeSimilarRandomers(unittest.TestCase):
             'AAAAG': ['hit3'],
             'TTTTN': ['hit42'],
         }
-        xlsites._merge_similar_randomers(by_bc, mismatches=2, ratio_th=0.1)  # 1/10
+        xlsites._merge_similar_randomers(by_bc, mismatches=2, max_barcodes=10000, ratio_th=0.1)  # 1/10
         self.assertEqual(by_bc, expected)
 
     def test_merge_ratio_th(self):
-        # hit1, hit2, should be a 4-tuple, but for this test it is ok as is
+        # hit1, hit2, ... should all be a 4-tuple, but for this test it is ok as is
         by_bc = {
             'AAAAA': ['hit1', 'hit2', 'hit4', 'hit5', 'hit6'],
             'GGGGG': ['hit7', 'hit8'],
@@ -128,8 +128,30 @@ class TestMergeSimilarRandomers(unittest.TestCase):
             'GAAAG': ['hit11'],
             'CCCCG': ['hit13', 'hit12'],
         }
-        xlsites._merge_similar_randomers(by_bc, mismatches=1, ratio_th=0.4)  # 2/5
+        xlsites._merge_similar_randomers(by_bc, mismatches=1, max_barcodes=10000, ratio_th=0.4)  # 2/5
         self.assertEqual(by_bc, expected)
+
+    def test_max_barcodes(self):
+        # hit1, hit2, ... should all be a 4-tuple, but for this test it is ok as is
+        by_bc = {
+            'AAAAA': ['hit1', 'hit2', 'hit3', 'hit4'],
+            'AAAAG': ['hit5', 'hit6'],
+            'AAAAT': ['hit7'],
+        }
+        expected_max_barcodes_1 = {
+            'AAAAA': ['hit1', 'hit2', 'hit3', 'hit4'],
+            'AAAAG': ['hit5', 'hit6'],
+            'AAAAT': ['hit7'],
+        }
+        xlsites._merge_similar_randomers(by_bc, mismatches=2, max_barcodes=1, ratio_th=0.5)
+        self.assertEqual(by_bc, expected_max_barcodes_1)
+
+        expected_max_barcodes_10 = {
+            'AAAAA': ['hit1', 'hit2', 'hit3', 'hit4', 'hit7'],
+            'AAAAG': ['hit5', 'hit6'],
+        }
+        xlsites._merge_similar_randomers(by_bc, mismatches=2, max_barcodes=10, ratio_th=0.5)
+        self.assertEqual(by_bc, expected_max_barcodes_10)
 
     @unittest.skip
     def test_todo(self):
@@ -145,7 +167,7 @@ class TestMergeSimilarRandomers(unittest.TestCase):
             'AACGG': ['hit2', 'hit3'],
             'NAAAN': ['hit4'],
         }
-        xlsites._merge_similar_randomers(by_bc, mismatches=2)
+        xlsites._merge_similar_randomers(by_bc, mismatches=2, max_barcodes=10000)
         expected = {
             'AACGG': ['hit2', 'hit3'],
             'AAAAA': ['hit1', 'hit4'],

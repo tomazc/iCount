@@ -302,6 +302,7 @@ class TestCLI(unittest.TestCase):
             '--multimax', '50',
             '--gap_th', '4',
             '--ratio_th', '0.1',
+            '--max_barcodes', '10000',
             '-S', '40',  # Supress lower than ERROR messages.
         ]
 

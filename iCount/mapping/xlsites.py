@@ -181,7 +181,7 @@ def _update(cur_vals, to_add):
         cur_vals[pos] = [p + n for p, n in zip(prev_vals, vals_to_add)]
 
 
-def _merge_similar_randomers(by_bc, mismatches, ratio_th=0.1):
+def _merge_similar_randomers(by_bc, mismatches, max_barcodes, ratio_th=0.1):
     """
     Merge randomers on same site that are max ``mismatches`` different.
 
@@ -269,6 +269,10 @@ def _merge_similar_randomers(by_bc, mismatches, ratio_th=0.1):
     order_bcs = [(len(hits), bc) for bc, hits in by_bc.items()]
     order_bcs = sorted(order_bcs, reverse=True)
     min_hit_count = max(1, math.floor(order_bcs[0][0] * ratio_th))
+
+    # If number of barcodes exceeds ``max_barcodes`` parameter, just skip the last step
+    if len(by_bc) > max_barcodes:
+        return
 
     # Step #3: merge remaining
     # For each barcode with number of reads below the threshold, identify if there
@@ -629,7 +633,7 @@ def _processs_bam_file(bam_fname, metrics, mapq_th, skipped, segmentation=None, 
 
 def run(bam, sites_single, sites_multi, skipped, group_by='start', quant='cDNA',
         segmentation=None, mismatches=1, mapq_th=0, multimax=50, gap_th=4, ratio_th=0.1,
-        report_progress=False):
+        max_barcodes=10000, report_progress=False):
     """
     Identify and quantify cross-linked sites.
 
@@ -678,6 +682,9 @@ def run(bam, sites_single, sites_multi, skipped, group_by='start', quant='cDNA',
         number of reads supporting the most frequent randomer. All randomers
         above this threshold are accepted as unique. Remaining are merged
         with the rest, allowing for the specified number of mismatches.
+    max_barcodes : int
+        Skip merging similar barcodes if number of distinct barcodes at
+        position is higher that this.
 
     Returns
     -------
@@ -707,7 +714,7 @@ def run(bam, sites_single, sites_multi, skipped, group_by='start', quant='cDNA',
         multi_by_pos = {}
         for xlink_pos, by_bc in by_pos.items():
 
-            _merge_similar_randomers(by_bc, mismatches, ratio_th=ratio_th)
+            _merge_similar_randomers(by_bc, mismatches, max_barcodes, ratio_th=ratio_th)
 
             # count single mapped reads only
             _update(single_by_pos, _collapse(xlink_pos, by_bc, group_by, multimax=1))

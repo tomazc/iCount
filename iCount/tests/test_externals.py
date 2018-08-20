@@ -3,8 +3,7 @@
 import warnings
 import unittest
 
-import iCount.externals.cutadapt as cutadapt
-import iCount.externals.star as star
+from iCount.externals import cutadapt, star
 
 from iCount.tests.utils import make_fasta_file, make_fastq_file, get_temp_dir, \
     get_temp_file_name, make_file_from_list
