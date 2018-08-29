@@ -1,4 +1,4 @@
-FROM ubuntu:14.04.3
+FROM ubuntu:16.04
 MAINTAINER Tomaz Curk <tomazc@gmail.com>
 
 # thanks to https://github.com/bschiffthaler/ngs/blob/master/base/Dockerfile
@@ -7,6 +7,7 @@ MAINTAINER Tomaz Curk <tomazc@gmail.com>
 RUN useradd -m -d /home/icuser icuser
 
 # update system
+RUN sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
     build-essential \
@@ -15,6 +16,7 @@ RUN apt-get update && apt-get upgrade -y && \
     wget \
     g++ \
     make \
+    binutils \
     python3 \
     python3-pip \
     python3-setuptools \
@@ -41,8 +43,8 @@ RUN apt-get install -y \
 ### bedtools, need at least version 2.26, where merge command reports strand
 # RUN apt-get install -y bedtools
 WORKDIR /tmp/bedtools
-RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2.26.0.tar.gz
-RUN tar -zxvf bedtools-2.26.0.tar.gz
+RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.27.1/bedtools-2.27.1.tar.gz
+RUN tar -zxvf bedtools-2.27.1.tar.gz
 WORKDIR /tmp/bedtools/bedtools2
 RUN make
 RUN make install
@@ -52,9 +54,9 @@ RUN rm -rfv bedtools
 #################
 ### RNA-star
 WORKDIR /tmp/STAR
-RUN wget https://github.com/alexdobin/STAR/archive/STAR_2.4.2a.tar.gz
-RUN tar -xvzf STAR_2.4.2a.tar.gz
-WORKDIR /tmp/STAR/STAR-STAR_2.4.2a/source
+RUN wget https://github.com/alexdobin/STAR/archive/2.6.1a.tar.gz
+RUN tar -xvzf 2.6.1a.tar.gz
+WORKDIR /tmp/STAR/STAR-2.6.1a/source
 RUN make STAR
 RUN mkdir -p /home/icuser/bin && cp STAR /home/icuser/bin
 WORKDIR /tmp
@@ -79,8 +81,7 @@ RUN chown -R icuser.icuser /home/icuser
 USER icuser
 WORKDIR /home/icuser/iCount_src
 
-RUN ../.icountenv/bin/pip install -e .
-RUN ../.icountenv/bin/pip install -e .[docs,tests]
+RUN ../.icountenv/bin/pip install -e .[docs,test]
 
 USER root
 RUN echo "source /home/icuser/.icountenv/bin/activate" >> /etc/bash.bashrc

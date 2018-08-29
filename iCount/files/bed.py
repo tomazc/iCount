@@ -105,7 +105,7 @@ def merge_bed(sites_grouped, sites):
     # c=5, o='sum' - when merging intervals, make operation 'sum' on column 5 (score)
     LOGGER.info('Merging files...')
     merged = pybedtools.BedTool(joined.name).sort().merge(
-        s=True, d=-1, c=5, o='sum').sort().saveas()
+        s=True, d=-1, c=(5, 6), o=('sum', 'distinct')).sort().saveas()
 
     # Columns are now shuffled to: chrom-start-stop-strand-score
     # Reorder to: chrom-start-stop-empty_name-score-strand
@@ -113,7 +113,7 @@ def merge_bed(sites_grouped, sites):
 
     LOGGER.info('Saving results...')
     result = pybedtools.BedTool(pybedtools.create_interval_from_list(
-        i[:3] + ['.', i[4], i[3]]) for i in merged).saveas()
+        i[:3] + ['.'] + i[3:]) for i in merged).saveas()
     result.saveas(sites_grouped)
 
     LOGGER.info('Done. Results saved to: %s', os.path.abspath(result.fn))

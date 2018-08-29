@@ -15,11 +15,25 @@ class TestClusters(unittest.TestCase):
     def setUp(self):
         warnings.simplefilter("ignore", ResourceWarning)
 
-    def test_fix_proper_bed6_format(self):
-        feature = create_interval_from_list(['1', '1', '10', '+', '5'])
+    def test_fix_bed6_empytname(self):
+        feature = create_interval_from_list(['1', '1', '10', '.', '5', '+'])
 
-        converted = clusters._fix_bed6(feature)
+        converted = clusters._fix_bed6_emptyname(feature)
         expected = create_interval_from_list(['1', '1', '10', '', '5', '+'])
+        self.assertEqual(expected, converted)
+
+    def test_fix_bed6_empytname2(self):
+        feature = create_interval_from_list(['1', '1', '10', '.,a', '5', '+'])
+
+        converted = clusters._fix_bed6_emptyname(feature)
+        expected = create_interval_from_list(['1', '1', '10', 'a', '5', '+'])
+        self.assertEqual(expected, converted)
+
+    def test_fix_bed6_empytname3(self):
+        feature = create_interval_from_list(['1', '1', '10', 'b,.,a', '5', '+'])
+
+        converted = clusters._fix_bed6_emptyname(feature)
+        expected = create_interval_from_list(['1', '1', '10', 'b,a', '5', '+'])
         self.assertEqual(expected, converted)
 
     def test_clusters(self):

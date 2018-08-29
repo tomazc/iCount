@@ -20,14 +20,14 @@ cache:
 install:
     - pip install tox
     # install bedtools
-    - wget https://github.com/arq5x/bedtools2/releases/download/v2.26.0/bedtools-2.26.0.tar.gz
-    - tar -zxvf bedtools-2.26.0.tar.gz
+    - wget https://github.com/arq5x/bedtools2/releases/download/v2.27.1/bedtools-2.27.1.tar.gz
+    - tar -zxvf bedtools-2.27.1.tar.gz
     - pushd bedtools2 && make && popd
     - export PATH=$PATH:$PWD/bedtools2/bin/
     # install STAR
-    - wget https://github.com/alexdobin/STAR/archive/2.5.2b.tar.gz
-    - tar -xzf 2.5.2b.tar.gz
-    - export PATH=$PATH:$PWD/STAR-2.5.2b/bin/Linux_x86_64/
+    - wget https://github.com/alexdobin/STAR/archive/2.6.1a.tar.gz
+    - tar -xzf 2.6.1a.tar.gz
+    - export PATH=$PATH:$PWD/STAR-2.6.1a/bin/Linux_x86_64/
 
 matrix:
   include:

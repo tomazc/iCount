@@ -31,7 +31,7 @@ def _strip_empty_names(name):
     return name
 
 
-def _fix_bed6(feature):
+def _fix_bed6_emptyname(feature):
     """
     Take a feature and convert it to BED6 format.
 
@@ -40,15 +40,15 @@ def _fix_bed6(feature):
     chrom = feature.chrom
     start = feature.start
     end = feature.stop
-    name = feature.strand
+    name = feature.name
     score = feature.score
-    strand = feature.name
+    strand = feature.strand
     name = _strip_empty_names(name)
     return pybedtools.create_interval_from_list(
         [chrom, start, end, name, score, strand])
 
 
-def _fix_bed6_zeroscore(feature):
+def _fix_bed6_zeroscore_emptyname(feature):
     """
     Take a feature and convert it to BED6 format. Set score to zero.
 
@@ -57,9 +57,9 @@ def _fix_bed6_zeroscore(feature):
     chrom = feature.chrom
     start = feature.start
     end = feature.stop
-    name = feature.score
+    name = feature.name
     score = 0
-    strand = feature.name
+    strand = feature.score
     name = _strip_empty_names(name)
     return pybedtools.create_interval_from_list(
         [chrom, start, end, name, score, strand])
@@ -121,8 +121,8 @@ def run(sites, peaks, clusters, dist=20, slop=3):
     bt_peaks = pybedtools.BedTool(peaks).sort().saveas()
 
     LOGGER.info('Merging peaks to form clusters')
-    merged = bt_peaks.merge(s=True, d=dist, c=[4], o='distinct').saveas()
-    bt_merged = merged.each(_fix_bed6_zeroscore).sort().saveas()
+    merged = bt_peaks.merge(s=True, d=dist, c=(4, 6), o='distinct,distinct').saveas()
+    bt_merged = merged.each(_fix_bed6_zeroscore_emptyname).sort().saveas()
 
     LOGGER.info('Summing sites within identified clusters')
     # for each site, find closest cluster to which assign the site to
@@ -132,8 +132,8 @@ def run(sites, peaks, clusters, dist=20, slop=3):
 
     # merge selected sites and previously identified clusters
     merged = bt_selected_sites.cat(bt_merged, postmerge=True,
-                                   s=True, d=slop, c=[5, 4], o='sum,distinct').saveas()
-    out = merged.each(_fix_bed6).sort().saveas(clusters)
+                                   s=True, d=slop, c=[4, 5, 6], o='distinct,sum,distinct').saveas()
+    out = merged.each(_fix_bed6_emptyname).sort().saveas(clusters).saveas()
 
     LOGGER.info('Done. Results saved to: %s', os.path.abspath(out.fn))
     return metrics
