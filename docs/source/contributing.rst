@@ -26,7 +26,7 @@ directory::
 
 Prepare iCount for development::
 
-    pip install -e .[tests]
+    pip install -e .[test]
 
 .. note::
 
@@ -179,7 +179,7 @@ Tests for iCount python package and corresponding CLI.
 ------------------------------------------------------
 
 There are two types of tests: *unit* and *functional* (regression) tests.
-Continious development testing supported on GitHub is also explained in the
+Continuous development testing supported on GitHub is also explained in the
 corresponding section.
 
 
