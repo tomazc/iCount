@@ -67,3 +67,56 @@ SUBTYPE_GROUPS = OrderedDict([
     ('tRNA', ['tRNA_pseudogene']),
     ('intergenic', ['intergenic']),
 ])
+
+RNAMAP_TYPES = {
+    'exon-intron': {
+        'upstream-type': ['CDS', 'UTR5'],
+        'upstream-size-limit': 50,
+        'downstream-type': ['intron'],
+        'downstream-size-limit': 150,
+        'downstream-plot-width': 100,
+    },
+    'intron-exon': {
+        'upstream-type': ['intron'],
+        'upstream-size-limit': 150,
+        'upstream-plot-width': 100,
+        'downstream-type': ['CDS', 'UTR3'],
+        'downstream-size-limit': 50,
+    },
+    'gene-start': {
+        'upstream-type': ['intergenic'],
+        'upstream-size-limit': 200,
+        'downstream-type': ['UTR5', 'CDS'],
+        'downstream-size-limit': 50,
+    },
+    'gene-end': {
+        'upstream-type': ['CDS', 'UTR3'],
+        'upstream-size-limit': 200,
+        'downstream-type': ['intergenic'],
+        'downstream-size-limit': 200,
+    },
+    'translation-start': {
+        'upstream-type': ['UTR5'],
+        'upstream-size-limit': 50,
+        'downstream-type': ['CDS'],
+        'downstream-size-limit': 50,
+    },
+    'translation-end': {
+        'upstream-type': ['CDS'],
+        'upstream-size-limit': 50,
+        'downstream-type': ['UTR3'],
+        'downstream-size-limit': 200,
+    },
+    'noncoding-gene-start': {
+        'upstream-type': ['intergenic'],
+        'upstream-size-limit': 200,
+        'downstream-type': ['ncRNA'],
+        'downstream-size-limit': 100,
+    },
+    'noncoding-gene-end': {
+        'upstream-type': ['ncRNA'],
+        'upstream-size-limit': 100,
+        'downstream-type': ['intergenic'],
+        'downstream-size-limit': 200,
+    },
+}

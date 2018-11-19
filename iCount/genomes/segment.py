@@ -24,8 +24,8 @@ level of transcript1 is shown)::
     Segment level: |-CDS-||-intron-||-CDS-||-UTR3-|
 
 
-Two "versions" of genome partitioning are produced: transcript-wise
-and genome-wise:
+Three "versions" of genome partitioning are produced: transcript-wise
+and genome-wise and landmarks files:
 
     * In transcript-wide partitioning, each transcript is split into
       intervals. Intervals must span the whole transcript, but should
@@ -40,6 +40,12 @@ and genome-wise:
       intersect with each other (neither the ones from different
       genes/transcripts). Intervals in genome-wise partition are called
       regions and the file is also called regions.
+
+    * The point where one region ends and other starts (for example end
+      of exon and start of intron) is of special importance. This
+      position, where certain type or upstream region (e.g. exon) and
+      certain type of downstream region (e.g. intron) meet is called a
+      landmark (of type exon-itron).
 
 It is best to present all above partitions and their relation to
 annotation visualy. Example of annotation::
@@ -73,6 +79,12 @@ is taken into account: CDS > UTR3 > UTR5 > ncRNA > intron > intergenic::
     ----------------------------------------------------------------->
       |-intergenic-||--UTR5-||--UTR5-||-----CDS-----||-CDS-||-intron-||-UTR3-||-intergenic-|
 
+Finally, this is how landamrks look like. Note that for example landmark
+"c" is of type "exon-intron" and landmark "d" is of type "exon-intron"::
+
+    ----------------------------------------------------------------->
+                    a                 b                     c         d       e
+
 """
 import logging
 import os
@@ -83,7 +95,8 @@ from collections import Counter
 from pybedtools import BedTool, create_interval_from_list
 
 import iCount
-from .region import make_regions
+from .region import make_regions, REGIONS_FILE
+from .landmark import make_landmarks
 
 LOGGER = logging.getLogger(__name__)
 
@@ -725,7 +738,13 @@ def get_segments(annotation, segmentation, fai, report_progress=False):
     LOGGER.info('Segmentation stored in %s', file3.fn)
 
     LOGGER.info('Making also gene level segmentation...')
-    make_regions(segmentation, out_dir=os.path.dirname(os.path.abspath(segmentation)))
+    out_dir = os.path.dirname(os.path.abspath(segmentation))
+    make_regions(segmentation, out_dir=out_dir)
+
+    landmarks_name = os.path.join(out_dir, 'landmarks.bed.gz')
+    regions_name = os.path.join(out_dir, REGIONS_FILE)
+    make_landmarks(regions_name, landmarks_name)
+
     return metrics
 
 

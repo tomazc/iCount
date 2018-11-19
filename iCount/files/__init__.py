@@ -143,3 +143,14 @@ def _f2s(number, dec=4):
     if not isinstance(number, (int, float)):
         return number
     return '{{:.{:d}f}}'.format(dec).format(number).rstrip('0').rstrip('.')
+
+
+def remove_extension(fname, extensions):
+    """Remove filename extension."""
+    name = os.path.basename(fname)
+
+    for extension in sorted(extensions, key=lambda x: len(x), reverse=True):  # pylint: disable=unnecessary-lambda
+        if extension and name.endswith(extension):
+            name = name[:-len(extension)]
+            break
+    return name

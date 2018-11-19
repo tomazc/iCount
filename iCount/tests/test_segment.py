@@ -1,4 +1,5 @@
 # pylint: disable=missing-docstring, protected-access
+import os
 import warnings
 import unittest
 from unittest.mock import patch  # pylint: disable=unused-import
@@ -6,7 +7,7 @@ from unittest.mock import patch  # pylint: disable=unused-import
 from pybedtools import create_interval_from_list
 
 import iCount  # pylint: disable=unused-import
-from iCount.genomes import segment
+from iCount.genomes import segment, region
 from iCount.tests.utils import list_to_intervals, intervals_to_list, reverse_strand, make_file_from_list, \
     make_list_from_file, get_temp_file_name
 
@@ -665,6 +666,10 @@ class TestGetSegment(unittest.TestCase):
         ])
 
         self.assertEqual(expected, gtf_out_data)
+
+        out_dir = os.path.dirname(os.path.abspath(gtf_out))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, region.REGIONS_FILE)))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'landmarks.bed.gz')))
 
 
 if __name__ == '__main__':

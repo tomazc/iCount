@@ -4,349 +4,148 @@ import unittest
 import warnings
 
 from iCount.analysis import rnamaps
-from iCount.tests.utils import get_temp_file_name, make_bam_file, make_file_from_list, \
-    list_to_intervals, intervals_to_list, make_list_from_file, attrs
+from iCount.files import remove_extension
+from iCount.tests.utils import get_temp_file_name, make_file_from_list, make_list_from_file
+
+
+class TestComputeDistances(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
+        self.landmarks = make_file_from_list([
+            ['chr1', '10', '11', 'G1', '.', '+'],
+            ['chr1', '20', '21', 'G1', '.', '+'],
+            ['chr1', '20', '21', 'G2', '.', '-'],
+            ['chr2', '10', '11', 'G3', '.', '+'],
+        ])
+
+    def test_basic(self):
+        xlinks = make_file_from_list([
+            ['chr1', '12', '13', '.', '3', '+'],
+        ])
+        distances, total_cdna = rnamaps.compute_distances(self.landmarks, xlinks, 'exon-intron')
+        self.assertEqual(total_cdna, 3)
+        self.assertEqual(distances, {
+            'chr1__+__10__G1': {2: 3},
+        })
+
+    def test_scores_sum(self):
+        xlinks = make_file_from_list([
+            ['chr1', '12', '13', '.', '3', '+'],
+            ['chr1', '12', '13', '.', '1', '+'],
+        ])
+        distances, total_cdna = rnamaps.compute_distances(self.landmarks, xlinks, 'exon-intron')
+        self.assertEqual(total_cdna, 4)
+        self.assertEqual(distances, {
+            'chr1__+__10__G1': {2: 4},
+        })
+
+    def test_strands_not_mixed(self):
+        xlinks = make_file_from_list([
+            ['chr1', '12', '13', '.', '3', '+'],
+            ['chr1', '12', '13', '.', '1', '-'],
+        ])
+        distances, total_cdna = rnamaps.compute_distances(self.landmarks, xlinks, 'exon-intron')
+        self.assertEqual(total_cdna, 4)
+        self.assertEqual(distances, {
+            'chr1__+__10__G1': {2: 3},
+            'chr1__-__20__G2': {8: 1},
+        })
+
+    def test_chroms_not_mixed(self):
+        xlinks = make_file_from_list([
+            ['chr1', '12', '13', '.', '3', '+'],
+            ['chr2', '12', '13', '.', '1', '+'],
+        ])
+        distances, total_cdna = rnamaps.compute_distances(self.landmarks, xlinks, 'exon-intron')
+        self.assertEqual(total_cdna, 4)
+        self.assertEqual(distances, {
+            'chr1__+__10__G1': {2: 3},
+            'chr2__+__10__G3': {2: 1},
+        })
+
+    def test_size_limit(self):
+        xlinks = make_file_from_list([
+            ['chr1', '22', '23', '.', '3', '+'],
+            ['chr2', '222', '223', '.', '1', '+'],
+        ])
+        distances, total_cdna = rnamaps.compute_distances(self.landmarks, xlinks, 'exon-intron')
+        self.assertEqual(total_cdna, 4)
+        self.assertEqual(distances, {
+            'chr1__+__20__G1': {2: 3},
+        })
+
+    def test_no_landmark(self):
+        """Landmark is missing on this chromosome / stramd."""
+        xlinks = make_file_from_list([
+            ['chrX', '22', '23', '.', '3', '+'],
+        ])
+        distances, total_cdna = rnamaps.compute_distances(self.landmarks, xlinks, 'exon-intron')
+        self.assertEqual(total_cdna, 3)
+        self.assertEqual(distances, {})
+
+
+class TestMakeFullResultsFile(unittest.TestCase):
+
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+        self.fname = get_temp_file_name()
+
+    def test_make_full_results_file(self):
+        distances = {
+            'chr1__+__10__G1': {2: 3},
+            'chr2__+__20__G2': {-3: 3, 1: 5},
+        }
+        rnamaps.make_results_raw_file(distances, self.fname, total_cdna=11, maptype='exon-intron')
+
+        result = make_list_from_file(self.fname, fields_separator='\t')
+        self.assertEqual(result[0], ['total_cdna:11'])
+        self.assertEqual(result[1], ['.'] + list(map(str, range(-50, 151))))
+        self.assertEqual(result[2][0], 'chr1__+__10__G1')
+        self.assertEqual(result[2][45:55], ['0', '0', '0', '0', '0', '0', '0', '0', '3', '0'])
+        self.assertEqual(result[3][45:55], ['0', '0', '0', '3', '0', '0', '0', '5', '0', '0'])
 
 
 class TestRun(unittest.TestCase):
 
     def setUp(self):
-        warnings.simplefilter("ignore", (ResourceWarning, ImportWarning))
+        warnings.simplefilter("ignore", ResourceWarning)
+        self.outdir = get_temp_file_name()
 
-        self.gtf_data = list_to_intervals([
-            ['1', '.', 'intergenic', '1', '799', '.', '-', '.', attrs(tid='.', iid='interN00000')],
-            ['1', '.', 'intergenic', '1', '99', '.', '+', '.', attrs(tid='.', iid='interP00000')],
-            # Gene #1:
-            ['1', '.', 'gene', '100', '499', '.', '+', '.', attrs('G1', bio='.')],
-            # Transcript #1
-            ['1', '.', 'transcript', '100', '249', '.', '+', '.', attrs('G1', 'T1', bio='.')],
-            ['1', '.', 'UTR5', '100', '149', '.', '+', '.', attrs('G1', 'T1', 1, bio='.')],
-            ['1', '.', 'intron', '150', '199', '.', '+', '.', attrs('G1', 'T1', bio='.')],
-            ['1', '.', 'CDS', '200', '229', '.', '+', '.', attrs('G1', 'T1', 2, bio='.')],
-            ['1', '.', 'intron', '230', '239', '.', '+', '.', attrs('G1', 'T1', bio='.')],
-            ['1', '.', 'UTR3', '240', '249', '.', '+', '.', attrs('G1', 'T1', 3, bio='.')],
-
-            # Transcript #2
-            ['1', '.', 'transcript', '240', '499', '.', '+', '.', attrs('G1', 'T2', bio='.')],
-            ['1', '.', 'CDS', '240', '299', '.', '+', '.', attrs('G1', 'T2', 1, bio='.')],
-            ['1', '.', 'intron', '300', '399', '.', '+', '.', attrs('G1', 'T1', bio='.')],
-            ['1', '.', 'CDS', '400', '499', '.', '+', '.', attrs('G1', 'T2', 2, bio='.')],
-
-            # intergenic
-            ['1', '.', 'intergenic', '500', '599', '.', '+', '.',
-             attrs(tid='.', iid='interP00001')],
-
-            # Gene #1:
-            ['1', '.', 'gene', '600', '799', '.', '+', '.', attrs('G2', bio='.')],
-
-            # Transcript #3
-            ['1', '.', 'transcript', '600', '799', '.', '+', '.', attrs('G2', 'T3', bio='.')],
-            ['1', '.', 'CDS', '600', '649', '.', '+', '.', attrs('G2', 'T3', 1, bio='.')],
-            ['1', '.', 'intron', '650', '749', '.', '+', '.', attrs('G2', 'T3', bio='.')],
-            ['1', '.', 'CDS', '750', '799', '.', '+', '.', attrs('G2', 'T3', 2, bio='.')],
-
-            ['1', '.', 'intergenic', '800', '999', '.', '+', '.',
-             attrs(tid='.', iid='interP00002')],
-
-            # Gene #3:
-            ['1', '.', 'gene', '800', '899', '.', '-', '.', attrs('G3', bio='.')],
-
-            # Transcript #3
-            ['1', '.', 'transcript', '800', '899', '.', '-', '.', attrs('G3', 'T4', bio='.')],
-            ['1', '.', 'CDS', '800', '899', '.', '-', '.', attrs('G3', 'T4', 1, bio='.')],
-
-            ['1', '.', 'intergenic', '900', '999', '.', '-', '.',
-             attrs(tid='.', iid='interN00001')],
+    def test_run(self):
+        landmarks = make_file_from_list(sort=True, data=[
+            ['chr1', '210', '211', 'gene-start;A', '.', '+'],
+            ['chr1', '270', '271', 'translation-start;A', '.', '+'],
+            ['chr1', '299', '300', 'noncoding-gene-end;B', '.', '-'],
+            ['chr1', '330', '331', 'exon-intron;A', '.', '+'],
+            ['chr1', '490', '491', 'intron-exon;A', '.', '+'],
+            ['chr1', '550', '551', 'translation-end;A', '.', '+'],
+            ['chr1', '749', '750', 'noncoding-gene-start;B', '.', '-'],
+            ['chr1', '760', '761', 'gene-end;A', '.', '+'],
         ])
 
-        self.gtf = make_file_from_list(intervals_to_list(self.gtf_data), extension='gtf')
-        self.strange = get_temp_file_name(extension='bam')
-        self.cross_tr = get_temp_file_name(extension='tsv')
-        self.out = get_temp_file_name(extension='tsv')
-
-    def test_explicit_whole_in(self):
-        """
-        Whole read is in single transcript and is crossing the exon-intron
-        landmark (it is explicit). Provide three reads, with two different
-        cross-links. One cross-link has two distinct randomers.
-        """
-        bam = make_bam_file({
-            'chromosomes': [('1', 1000)],
-            'segments': [
-                # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 0, 0, 140, 255, [(0, 50)], {'NH': 1}),
-                ('name2:rbc:AAAA', 0, 0, 142, 255, [(0, 50)], {'NH': 1}),
-                ('name2:rbc:CCCC', 0, 0, 142, 255, [(0, 50)], {'NH': 1}),
-            ]
-        }, rnd_seed=0)
-
-        expected = [
-            ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['UTR5-intron', '-10', '1', '1'],
-            ['UTR5-intron', '-8', '2', '2'],
-        ]
-
-        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1)
-        self.assertEqual(expected, make_list_from_file(self.out))
-
-    def test_explicit_intergenic_left(self):
-        """
-        Read is half in intergenic region and half in transcript.
-        """
-        bam = make_bam_file({
-            'chromosomes': [('1', 1000)],
-            'segments': [
-                # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 0, 0, 80, 255, [(0, 50)], {'NH': 1}),
-            ]
-        }, rnd_seed=0)
-
-        expected = [
-            ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['intergenic-UTR5', '-20', '1', '1'],
-        ]
-
-        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1)
-        self.assertEqual(expected, make_list_from_file(self.out))
-
-    def test_explicit_intergenic_right(self):
-        """
-        Read is half in transcript region and half in intergenic.
-        """
-        bam = make_bam_file({
-            'chromosomes': [('1', 1000)],
-            'segments': [
-                # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 0, 0, 480, 255, [(0, 50)], {'NH': 1}),
-            ]
-        }, rnd_seed=0)
-
-        expected = [
-            ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['CDS-intergenic', '-20', '1', '1'],
-        ]
-
-        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1)
-        self.assertEqual(expected, make_list_from_file(self.out))
-
-    def test_cross_transcript_read(self):
-        """
-        Read is half in transcript region and half in intergenic.
-        """
-        bam = make_bam_file({
-            'chromosomes': [('1', 1000)],
-            'segments': [
-                # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 0, 0, 235, 255, [(0, 50)], {'NH': 1}),
-            ]
-        }, rnd_seed=0)
-
-        expected = [
-            ['chrom', 'strand', 'xlink', 'second-start', 'end-position', 'read_len'],
-            ['1', '+', '234', '236', '284', '50'],
-        ]
-
-        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1)
-        self.assertEqual(expected, make_list_from_file(self.cross_tr))
-
-    def test_implicit_whole_in(self):
-        """
-        Whole read is in single transcript and in single segment. Also, this
-        segment is the "middle" segment in transcript. Provide three reads, with
-        two different cross-links. One cross-link has two distinct randomers.
-        """
-        bam = make_bam_file({
-            'chromosomes': [('1', 1000)],
-            'segments': [
-                # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 0, 0, 160, 255, [(0, 30)], {'NH': 1}),
-                ('name2:rbc:CCCC', 0, 0, 163, 255, [(0, 30)], {'NH': 1}),
-                ('name2:rbc:GGGG', 0, 0, 163, 255, [(0, 30)], {'NH': 1}),
-            ]
-        }, rnd_seed=0)
-
-        expected = [
-            ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['UTR5-intron', '10', '1', '0'],
-            ['UTR5-intron', '13', '2', '0'],
-        ]
-
-        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1)
-        self.assertEqual(expected, make_list_from_file(self.out))
-
-    def test_implicit_exons(self):
-        """
-        Whole read is in single transcript and in single segment. Also, this
-        segment is of EXON_TYPE in the "middle" segment in transcript. Only one read.
-        """
-        bam = make_bam_file({
-            'chromosomes': [('1', 1000)],
-            'segments': [
-                # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 0, 0, 205, 255, [(0, 20)], {'NH': 1}),
-            ]
-        }, rnd_seed=0)
-
-        expected = [
-            ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['CDS-UTR3', '-25', '0.25', '0'],
-            ['CDS-intron', '-25', '0.25', '0'],
-            ['UTR5-CDS', '5', '0.25', '0'],
-            ['intron-CDS', '5', '0.25', '0'],
-        ]
-
-        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1,
-                    implicit_handling='split')
-        self.assertEqual(expected, make_list_from_file(self.out))
-
-    def test_implicit_inter_tr(self):
-        """
-        Whole read is in single transcript, single segment. But the segment
-        borders on intergenic (downstream).
-        """
-        bam = make_bam_file({
-            'chromosomes': [('1', 1000)],
-            'segments': [
-                # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 0, 0, 610, 255, [(0, 30)], {'NH': 1}),
-            ]
-        }, rnd_seed=0)
-
-        expected = [
-            ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['CDS-CDS', '-40', '0.3333', '0'],
-            ['CDS-intron', '-40', '0.3333', '0'],
-            ['intergenic-CDS', '10', '0.3333', '0'],
-        ]
-
-        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1,
-                    implicit_handling='split')
-        self.assertEqual(expected, make_list_from_file(self.out))
-
-    def test_implicit_intergenic(self):
-        """
-        Whole read is in intergenic.
-        """
-        bam = make_bam_file({
-            'chromosomes': [('1', 1000)],
-            'segments': [
-                # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 0, 0, 530, 255, [(0, 30)], {'NH': 1}),
-            ]
-        }, rnd_seed=0)
-
-        expected = [
-            ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['CDS-intergenic', '30', '0.5', '0'],
-            ['intergenic-CDS', '-70', '0.5', '0'],
-        ]
-
-        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1,
-                    implicit_handling='split')
-        self.assertEqual(expected, make_list_from_file(self.out))
-
-    def test_negative_strand(self):
-        """
-        Whole read is in single transcript, single segment. But the segment
-        borders on intergenic (downstream).
-        """
-        bam = make_bam_file({
-            'chromosomes': [('1', 1000)],
-            'segments': [
-                # (qname, flag, refname, pos, mapq, cigar, tags)
-                ('name2:rbc:CCCC', 16, 0, 819, 255, [(0, 30)], {'NH': 1}),
-            ]
-        }, rnd_seed=0)
-
-        expected = [
-            ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['CDS-intergenic', '-50', '0.5', '0'],
-            ['intergenic-CDS', '50', '0.5', '0'],
-        ]
-
-        rnamaps.run(bam, self.gtf, self.out, self.strange, self.cross_tr, mismatches=1,
-                    implicit_handling='split')
-        self.assertEqual(expected, make_list_from_file(self.out))
-
-
-class TestNormalisation(unittest.TestCase):
-
-    def setUp(self):
-        warnings.simplefilter("ignore", (ResourceWarning, ImportWarning))
-        self.gtf_data = list_to_intervals([
-            ['1', '.', 'intergenic', '1', '2', '.', '+', '.',
-             'gene_id "."; transcript_id ".";'],
-            # Gene #1:
-            ['1', '.', 'gene', '3', '7', '.', '+', '.',
-             'gene_id "G1";'],
-            # Transcript #1
-            ['1', '.', 'transcript', '3', '6', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1";'],
-            ['1', '.', 'CDS', '3', '3', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1"; exon_number "2";'],
-            ['1', '.', 'intron', '4', '6', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1";'],
-            ['1', '.', 'UTR3', '5', '6', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T1"; exon_number "3";'],
-
-            # Transcript #2
-            ['1', '.', 'transcript', '4', '7', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2";'],
-            ['1', '.', 'ncRNA', '4', '5', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2"; exon_number "1";'],
-            ['1', '.', 'intron', '6', '6', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2";'],
-            ['1', '.', 'ncRNA', '7', '7', '.', '+', '.',
-             'gene_id "G1"; transcript_id "T2"; exon_number "2";'],
-
-            # intergenic
-            ['1', '.', 'intergenic', '8', '9', '.', '+', '.',
-             'gene_id "."; transcript_id ".";'],
+        sites = make_file_from_list([
+            ['chr1', '220', '221', '.', '1', '+'],
+            ['chr1', '350', '351', '.', '1', '+'],
+            ['chr1', '350', '351', '.', '1', '-'],
+            ['chr1', '550', '551', '.', '1', '+'],
+            ['chr1', '740', '741', '.', '1', '+'],
+            ['chr1', '750', '751', '.', '1', '-'],
         ])
-        self.gtf = make_file_from_list(intervals_to_list(self.gtf_data))
 
-    def test_normalisation(self):
-        norm_file = get_temp_file_name(extension='txt')
-        rnamaps.make_normalization(self.gtf, norm_file)
+        rnamaps.run(sites, landmarks, outdir=self.outdir)
 
-        expected = [
-            ['RNAmap_type', 'distance', 'segments'],
-            ['CDS-UTR3', '-1', '1'],
-            ['CDS-UTR3', '0', '1'],
-            ['CDS-UTR3', '1', '1'],
-            ['CDS-intron', '-1', '1'],
-            ['CDS-intron', '0', '1'],
-            ['CDS-intron', '1', '1'],
-            ['CDS-intron', '2', '1'],
-            ['integrenic-CDS', '-2', '1'],
-            ['integrenic-CDS', '-1', '1'],
-            ['integrenic-CDS', '0', '1'],
-            ['intron-UTR3', '-3', '1'],
-            ['intron-UTR3', '-2', '1'],
-            ['intron-UTR3', '-1', '1'],
-            ['intron-UTR3', '0', '1'],
-            ['intron-UTR3', '1', '1'],
-            ['intron-ncRNA', '-1', '1'],
-            ['intron-ncRNA', '0', '1'],
-            ['ncRNA-integrenic', '-1', '1'],
-            ['ncRNA-integrenic', '0', '1'],
-            ['ncRNA-integrenic', '1', '1'],
-            ['ncRNA-intron', '-2', '1'],
-            ['ncRNA-intron', '-1', '1'],
-            ['ncRNA-intron', '0', '1'],
-            ['ncRNA-ncRNA', '-2', '1'],
-            ['ncRNA-ncRNA', '-1', '1'],
-            ['ncRNA-ncRNA', '0', '1'],
-        ]
+        self.assertTrue(os.path.isdir(self.outdir))
 
-        self.assertEqual(expected, make_list_from_file(norm_file))
-
-    def test_plot(self):
-        image_file = get_temp_file_name(extension='png')
-        norm_file = get_temp_file_name(extension='txt')
-        rnamaps.make_normalization(self.gtf, norm_file)
-        rnamaps.plot_rna_map(norm_file, 'CDS-intron', normalization=norm_file, outfile=image_file)
-        self.assertTrue(os.path.isfile(image_file))
+        sites_name = remove_extension(sites, ['.bed', '.bed.gz'])
+        for maptype in rnamaps.RNAMAP_TYPES:
+            basename = os.path.join(self.outdir, '{}_{}'.format(sites_name, maptype))
+            # for extension in ['.tsv', '.png', '_plot_data.txt']:
+            for extension in ['.tsv', '.png']:
+                fname = basename + extension
+                self.assertTrue(os.path.isfile(fname))
+                self.assertGreater(os.path.getsize(fname), 1)
 
 
 if __name__ == '__main__':

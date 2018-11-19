@@ -19,8 +19,8 @@ def get_temp_file_name(tmp_dir=None, extension=''):
     tmp_name = next(tempfile._get_candidate_names())
     if not tmp_dir:
         tmp_dir = tempfile._get_default_tempdir()
-    if extension is not None:
-        tmp_name = tmp_name + '.' + extension
+    if extension:
+        tmp_name += '.' + extension
     return os.path.join(tmp_dir, tmp_name)
 
 
