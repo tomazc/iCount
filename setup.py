@@ -73,7 +73,7 @@ setup(
             'sphinx_rtd_theme',
         ],
         'package': [
-            'pypandoc'
+            'pypandoc',
             'twine',
             'wheel',
         ],
