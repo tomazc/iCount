@@ -1,5 +1,5 @@
 sudo: required
-dist: trusty
+dist: xenial
 language: python
 
 addons:
@@ -35,12 +35,14 @@ matrix:
       python: "3.5"
     - env: TOX_ENV=py36
       python: "3.6"
+    - env: TOX_ENV=py37
+      python: "3.7"
     - env: TOX_ENV=linters
-      python: "3.6"
+      python: "3.7"
     - env: TOX_ENV=docs
-      python: "3.6"
+      python: "3.7"
     - env: TOX_ENV=packaging
-      python: "3.6"
+      python: "3.7"
 
 script:
   - tox -e $TOX_ENV
