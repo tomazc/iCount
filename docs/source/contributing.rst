@@ -230,15 +230,16 @@ waiting for Travis to do the checks, tox can run on local machine::
 
     # Run all tox tests
     tox
-    # Run only a single environment (for example unittests in Python 3.5)
-    tox -e py35
+    # Run only a single environment (for example unittests in Python 3.7)
+    tox -e py37
 
 Tox enables to test code against different versions of Python and also perform
 code-style checks. This is achieved by different *environments*. Currently, we
 test three of them:
 
+    * py37 (Python 3.7)
+    * py36 (Python 3.6)
     * py35 (Python 3.5)
-    * py34 (Python 3.4)
     * linters (wraps pylint, PEP8/pycodestyle and PEP257/pydocstyle)
 
 For more info check ``tox.ini`` and ``.travis.yml`` in packyge root directory.
