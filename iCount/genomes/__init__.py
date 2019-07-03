@@ -26,6 +26,7 @@ import ftplib
 
 from . import ensembl
 from . import gencode
+from . import region
 from . import segment
 
 

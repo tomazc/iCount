@@ -4,7 +4,7 @@ import unittest
 import warnings
 
 from iCount.analysis import summary
-from iCount.genomes import segment
+from iCount.genomes import region
 from iCount.tests.utils import make_file_from_list, make_list_from_file, get_temp_dir
 
 
@@ -22,12 +22,12 @@ class TestMakeSummaryReport(unittest.TestCase):
         annotation_file = make_file_from_list(annotation)
         cross_links_file = make_file_from_list(cross_links)
 
-        segment.summary_templates(annotation_file, self.out_dir)
+        region.summary_templates(annotation_file, self.out_dir)
         summary.summary_reports(annotation_file, cross_links_file, self.out_dir, self.out_dir)
         return [
-            make_list_from_file(os.path.join(self.out_dir, segment.SUMMARY_TYPE), '\t'),
-            make_list_from_file(os.path.join(self.out_dir, segment.SUMMARY_SUBTYPE), '\t'),
-            make_list_from_file(os.path.join(self.out_dir, segment.SUMMARY_GENE), '\t'),
+            make_list_from_file(os.path.join(self.out_dir, region.SUMMARY_TYPE), '\t'),
+            make_list_from_file(os.path.join(self.out_dir, region.SUMMARY_SUBTYPE), '\t'),
+            make_list_from_file(os.path.join(self.out_dir, region.SUMMARY_GENE), '\t'),
         ]
 
     def test_diff_chromosome_naming(self):
