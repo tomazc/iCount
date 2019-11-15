@@ -1,16 +1,18 @@
 """.. Line to protect from pydocstyle D205, D400.
 
-Segmentation
-------------
+Segment
+-------
 
-Parse annotation file into internal iCount structure - segmentation, which is used in almost all further analyses.
+Parse annotation file into internal iCount structures, which are used in
+further analyses.
 
 Currently, only annotations from ENSEMBl and GENCODE are supported.
 http://www.gencodegenes.org/
 http://www.ensembl.org
 
-Annotation is composed of three levels (gene level, transcript level and segment level).
-Example of annotation (for simplicity, only interval level of transcript1 is shown)::
+Annotation is composed of three levels (gene level, transcript level and
+segment level). Example of annotation (for simplicity, only segment
+level of transcript1 is shown)::
 
     Gene level:    |--------------gene1--------------|   |-intergenic-|
                                  |---------gene2--------|
@@ -22,379 +24,81 @@ Example of annotation (for simplicity, only interval level of transcript1 is sho
     Segment level: |-CDS-||-intron-||-CDS-||-UTR3-|
 
 
-Two "versions" of segmentation are produced: transcript-wise-segmentation and genome-wise-segmentation:
+Three "versions" of genome partitioning are produced: transcript-wise
+and genome-wise and landmarks files:
 
-    * In transcript-wide segmentation, each transcript is partitioned into intervals. Intervals must span the whole
-      transcript, but should not intersect with each other inside transcript. However, higher hierarchy levels:
-      transcripts and genes can still intersect each other. As a result, intervals from different genes/transcripts can
-      intersect. Intervals in transcript wise segmentation are called segments and the file is called segmentation.
+    * In transcript-wide partitioning, each transcript is split into
+      intervals. Intervals must span the whole transcript, but should
+      not intersect with each other inside transcript. However, higher
+      hierarchy levels: transcripts and genes can still intersect each
+      other. As a result, intervals from different genes/transcripts can
+      intersect. Intervals in transcript wise partition are called
+      segments and the file is called segmentation.
 
-    * In genome-wide segmentation, whole genome is partitioned into intervals. Such intervals must span the whole
-      genome, and should also not intersect with each other (neither the ones from different genes/transcripts).
-      Intervals in genome wise segmentation are called regions and the file is also called regions.
+    * In genome-wide partition, whole genome is split into intervals.
+      Such intervals must span the whole genome, and should also not
+      intersect with each other (neither the ones from different
+      genes/transcripts). Intervals in genome-wise partition are called
+      regions and the file is also called regions.
 
-It is best to present both segmentations and their relation to annotation visualy. Example of annotation::
+    * The point where one region ends and other starts (for example end
+      of exon and start of intron) is of special importance. This
+      position, where certain type or upstream region (e.g. exon) and
+      certain type of downstream region (e.g. intron) meet is called a
+      landmark (of type exon-itron).
 
-            ------------------------------------------------------------------------------------->
-                          |-----------gene1(G1)-----------|
-                          |--------transcript1(A)---------|
-                          |-exon--|         |----exon-----|
-                                   |------------------gene2(G2)--------------------|
-                                   |-----------------transcript2(B)----------------|
-                                   |-exon--|        |----exon----|          |-exon-|
+It is best to present all above partitions and their relation to
+annotation visualy. Example of annotation::
 
-Example of (transcript-wise) segmentation. Intron and intergenic intervals are made. Also, exons are converted in
-CDS/UTR3/UTR5 or ncRNA::
+    ----------------------------------------------------------------->
+                    |-----------gene1(G1)-----------|
+                    |--------transcript1(A)---------|
+                    |-exon--|         |----exon-----|
+                            |------------------gene2(G2)--------------------|
+                            |-----------------transcript2(B)----------------|
+                            |-exon--|        |----exon----|          |-exon-|
 
-            ------------------------------------------------------------------------------------->
-            |-intergenic-|
-                          |-----------gene1(G1)-----------|
-                          |--------transcript1(A)---------|
-                          |-UTR5--||-intron||-----CDS-----|
-                                   |------------------gene2(G2)--------------------|
-                                   |-----------------transcript2(B)----------------|
-                                   |-UTR5--||intron||-----CDS----||-intron-||-UTR3-|
-                                                                                    |-intergenic-|
+Example of transcript-wise partition. Intron and intergenic intervals
+are made. Also, exons are converted in CDS/UTR3/UTR5 or ncRNA::
 
-Example of regions (genome-wise segmentation). Now the annotation is "flat": each nuclotide has one and only one
-region. How does one decide which region to keep if there are more overlaping segments? The following hierarchy is
-taken into account: CDS > UTR3 > UTR5 > ncRNA > intron > intergenic::
+    ----------------------------------------------------------------->
+      |-intergenic-|
+                    |-----------gene1(G1)-----------|
+                    |--------transcript1(A)---------|
+                    |-UTR5--||-intron||-----CDS-----|
+                            |------------------gene2(G2)--------------------|
+                            |-----------------transcript2(B)----------------|
+                            |-UTR5--||intron||-----CDS----||-intron-||-UTR3-|
+                                                                             |-intergenic-|
 
-            ------------------------------------------------------------------------------------->
-            |-intergenic-||--UTR5-||--UTR5-||-----CDS-----||-CDS-||-intron-||-UTR3-||-intergenic-|
+Example of genome-wise partition. Now the annotation is "flat": each
+nuclotide has one and only one region. How does one decide which region
+to keep if there are more overlaping segments? The following hierarchy
+is taken into account: CDS > UTR3 > UTR5 > ncRNA > intron > intergenic::
+
+    ----------------------------------------------------------------->
+      |-intergenic-||--UTR5-||--UTR5-||-----CDS-----||-CDS-||-intron-||-UTR3-||-intergenic-|
+
+Finally, this is how landamrks look like. Note that for example landmark
+"c" is of type "exon-intron" and landmark "d" is of type "exon-intron"::
+
+    ----------------------------------------------------------------->
+                    a                 b                     c         d       e
 
 """
-import itertools
 import logging
-import math
 import os
-import re
 import shutil
 import tempfile
-from collections import Counter, OrderedDict
+from collections import Counter
 
 from pybedtools import BedTool, create_interval_from_list
 
 import iCount
+from .region import make_regions, REGIONS_FILE
+from .landmark import make_landmarks
 
 LOGGER = logging.getLogger(__name__)
-
-REGIONS_FILE = 'regions.gtf.gz'
-TEMPLATE_TYPE = 'template_type.tsv'
-TEMPLATE_SUBTYPE = 'template_subtype.tsv'
-TEMPLATE_GENE = 'template_gene.tsv'
-SUMMARY_TYPE = 'summary_type.tsv'
-SUMMARY_SUBTYPE = 'summary_subtype.tsv'
-SUMMARY_GENE = 'summary_gene.tsv'
-
-TYPE_HIERARCHY = [
-    'CDS',
-    'UTR3',
-    'UTR5',
-    'ncRNA',
-    'intron',
-    'intergenic',
-]
-SUBTYPE_GROUPS = OrderedDict([
-    ('mRNA', [
-        'IG_C_gene',
-        'IG_D_gene',
-        'IG_J_gene',
-        'IG_LV_gene',
-        'IG_V_gene',
-        'TR_C_gene',
-        'TR_D_gene',
-        'TR_J_gene',
-        'TR_V_gene',
-        'non_stop_decay',
-        'nonsense_mediated_decay',
-        'polymorphic_pseudogene',
-        'protein_coding',
-        'retained_intron',
-        'sense_intronic',
-        'sense_overlapping',
-        '3prime_overlapping_ncRNA',
-    ]),
-    ('lncRNA', [
-        'IG_C_pseudogene',
-        'IG_J_pseudogene',
-        'IG_V_pseudogene',
-        'IG_pseudogene',
-        'TR_J_pseudogene',
-        'TR_V_pseudogene',
-        'TEC',
-        'antisense',
-        'antisense_RNA',
-        'bidirectional_promoter_lncRNA',
-        'lincRNA',
-        'ncRNA sRNA',
-        'non_coding',
-        'macro_lncRNA',
-        'misc_RNA',
-        'misc_RNA_pseudogene',
-        'processed_pseudogene',
-        'processed_transcript',
-        'pseudogene',
-        'transcribed_processed_pseudogene',
-        'transcribed_unitary_pseudogene',
-        'transcribed_unprocessed_pseudogene',
-        'translated_processed_pseudogene',
-        'unitary_pseudogene',
-        'unprocessed_pseudogene',
-    ]),
-    ('miRNA', ['miRNA', 'miRNA_pseudogene']),
-    ('mt_tRNA', ['Mt_tRNA', 'Mt_tRNA_pseudogene']),
-    ('mt_rRNA', ['Mt_rRNA']),
-    ('rRNA', ['rRNA', 'rRNA_pseudogene']),
-    ('sRNA', ['sRNA', 'ribozyme', 'scRNA', 'scRNA_pseudogene', 'vaultRNA']),
-    ('snRNA', ['snRNA', 'snRNA_pseudogene']),
-    ('snoRNA', ['snoRNA', 'snoRNA_pseudogene', 'scaRNA']),
-    ('tRNA', ['tRNA_pseudogene']),
-    ('intergenic', ['intergenic']),
-])
-
-
-def construct_borders(seg_filtered):
-    """
-    Make BED6 file with all possible borders in ``seg_filtered``.
-
-    Image is best explanation. This functions creates "boxes"::
-
-                |-intergenic-|
-                |            ||-----------gene1(G1)-----------|
-                |            ||--------transcript1(A)---------|
-                |            ||-UTR5--||-intron||-----CDS-----|
-                |            ||       ||------------------gene2(G2)--------------------|
-                |            ||       ||-----------------transcript2(B)----------------|
-                |            ||       ||-UTR5--||intron||-----CDS----||-intron-||-UTR3-|
-                ----------------------------------------------------------------------->
-        boxes:  |            ||       ||       ||      ||     ||     ||        ||      |
-
-
-    Parameters
-    ----------
-    seg_filtered : pybedtools.BedTool
-        Segmentation as pybedtools.BedTool object. Should exclude entries of type "gene" and
-        "transcript".
-
-    Returns
-    -------
-    str
-        Absolute path to BED6 file with borders.
-
-    """
-    borders_data = {}
-    for seg in BedTool(seg_filtered):
-        borders_data.setdefault((seg.chrom, seg.strand), set()).update([seg.start, seg.stop])
-
-    intervals = []
-    for (chrom, strand), borders in borders_data.items():
-        borders = list(sorted(borders))
-        for start, stop in zip(borders, borders[1:]):
-            intervals.append(create_interval_from_list([chrom, start, stop, '.', '.', strand]))
-
-    borders_bed = BedTool(interval for interval in intervals).sort().saveas()
-    return os.path.abspath(borders_bed.fn)
-
-
-def simplify_biotype(type_, biotype):
-    """Return generalized (broader category) biotype."""
-    # First handle 'special' cases:
-    if biotype in SUBTYPE_GROUPS['mRNA'] and type_ == 'ncRNA':
-        return 'lncRNA'
-    if biotype in SUBTYPE_GROUPS['mRNA'] and type_ == 'intron':
-        return 'pre-mRNA'
-
-    for group, biotypes in SUBTYPE_GROUPS.items():
-        if biotype in biotypes:
-            return group
-
-    return biotype
-
-
-def make_uniq_region(seg, types, biotypes, genes):
-    """Make pybedtools.Interval representing unique region."""
-    assert len(types) == len(biotypes) == len(genes)
-
-    # In case biotype is '3prime_overlapping_ncRNA', make sure type is UTR3
-    for i, biotype in enumerate(biotypes):
-        if biotype == '3prime_overlapping_ncRNA':
-            types[i] = 'UTR3'
-
-    idxs = None
-    # Only consider segments with highest rated type:
-    for region_type in TYPE_HIERARCHY:
-        if region_type in types:
-            idxs = [i for i, typ in enumerate(types) if typ == region_type]
-            break
-    assert idxs
-
-    # Simplify biotypes and pick unique ones
-    biotype_groups = set()
-    for i, item in enumerate(biotypes):
-        if i in idxs and item is not None:
-            # pylint: disable=undefined-loop-variable
-            biotype_groups.add(simplify_biotype(region_type, item))
-            # pylint: enable=undefined-loop-variable
-
-    # Note that each entry in `genes` is a tuple of form (gene_id, gene_name, gene_size)
-    genes = list(set([item for i, item in enumerate(genes) if i in idxs]))
-    if len(genes) > 1:
-        # In case there are two or more genes, pick the longest one:
-        gene_sizes = [gsize for (_, _, gsize) in genes]
-        max_index = gene_sizes.index(max(gene_sizes))
-        genes = [genes[max_index]]
-    assert len(genes) == 1
-
-    attrs = 'gene_id "{}"; gene_name "{}"; biotype "{}";'.format(
-        genes[0][0],
-        genes[0][1],
-        ','.join(sorted(biotype_groups)),
-    )
-    # pylint: disable=undefined-loop-variable
-    return create_interval_from_list(
-        [seg.chrom, '.', region_type, seg.start + 1, seg.stop, '.', seg.strand, '.', attrs])
-    # pylint: enable=undefined-loop-variable
-
-
-def merge_regions(nonmerged, out_file):
-    """Merge adjacent regions if they have same name (e.g. type, gene and biotypes)."""
-    # Sort by chrom, strand, start
-    nonmerged_data = sorted([itr for itr in BedTool(nonmerged)], key=lambda x: (x.chrom, x.strand, x.start))
-    merged_data = []
-
-    def check_merge(itr):
-        """Extract data needed to decide if intervals can be merged."""
-        return (itr.chrom, itr.strand, itr[2], itr.attrs.get('biotype'), itr.attrs.get('gene_id'))
-
-    # But merge if the name is the same (type, biotypes and gene are all stored in name):
-    for _, group in itertools.groupby(nonmerged_data, key=check_merge):
-        # Sort all intervals with same (chrom, strand and name) by start
-        ints = sorted(list(group), key=lambda x: x.start)
-        # Create "merged" interval: take start of first element in `ints` and stop from the last
-        # element, copy other content:
-        merged_data.append(create_interval_from_list(ints[0][:4] + [ints[-1][4]] + ints[0][5:]))
-
-    BedTool(itr for itr in merged_data).sort().saveas(out_file)
-
-
-def get_gene_sizes(segmentation):
-    """Calculate gene size for each gene in segmentation."""
-    gene_sizes = {'.': 0}  # Fill '.' as this is 'gene_id' for intergenic regions
-    for seg in BedTool(segmentation).filter(lambda x: x[2] == 'gene'):
-        gene_id = seg.attrs.get('gene_id', None)
-        gene_sizes[gene_id] = len(seg)
-    return gene_sizes
-
-
-def make_subtype(type_, biotype):
-    """Make subtype from type and biotype."""
-    if not biotype:
-        return type_
-    return '{} {}'.format(type_, biotype)
-
-
-def sort_types_subtypes(entry):
-    """Sort (sub)type by the order defined in TYPE_HIERARCHY and SUBTYPE_GROUPS."""
-    def get_index(element, list_):
-        """Get index of element in list."""
-        if element in list_:
-            return [list_.index(element)]
-        return [len(list_)]
-
-    entry = entry.strip()
-    if ' ' not in entry:  # Assume entries without spaces are just types:
-        return [get_index(entry, TYPE_HIERARCHY)]
-
-    # This is subtype
-    type_, biotype = entry.split(' ')[:2]
-    if biotype == 'pre-mRNA':
-        biotype = 'mRNA'
-    return [get_index(type_, TYPE_HIERARCHY), get_index(biotype, list(SUBTYPE_GROUPS.keys()))]
-
-
-def summary_templates(annotation, templates_dir):
-    """Make summary templates."""
-    type_template, subtype_template, gene_template = {}, {}, {}
-    for interval in BedTool(annotation):
-        length = len(interval)
-
-        type_ = interval[2]
-        type_template[type_] = type_template.get(type_, 0) + length
-
-        biotypes = interval.attrs.get('biotype', '').split(',')
-        for biotype in biotypes:
-            sbtyp = make_subtype(type_, biotype)
-            subtype_template[sbtyp] = subtype_template.get(sbtyp, 0) + length / len(biotypes)
-
-        gene_id = interval.attrs.get('gene_id', '')
-        gene_name = interval.attrs.get('gene_name', '')
-        current_size = gene_template.get(gene_id, ['', 0])[1]
-        gene_template[gene_id] = [gene_name, current_size + length]
-
-    # Write type template
-    with open(os.path.join(templates_dir, TEMPLATE_TYPE), 'wt') as outfile:
-        for type_, length in sorted(type_template.items(), key=lambda x: sort_types_subtypes(x[0])):
-            outfile.write('{}\t{}\n'.format(type_, math.floor(length)))
-
-    # Write subtype template
-    with open(os.path.join(templates_dir, TEMPLATE_SUBTYPE), 'wt') as outfile:
-        for subtype, length in sorted(subtype_template.items(), key=lambda x: sort_types_subtypes(x[0])):
-            outfile.write('{}\t{}\n'.format(subtype, math.floor(length)))
-
-    # Write gene template
-    with open(os.path.join(templates_dir, TEMPLATE_GENE), 'wt') as outfile:
-        for gene_id, (gene_name, length) in sorted(gene_template.items()):
-            line = [gene_id, gene_name, str(math.floor(length))]
-            outfile.write('\t'.join(map(str, line)) + '\n')
-
-
-def make_regions(segmentation, out_dir=None):
-    """Make regions file (regions.gtf.gz) and summary templates."""
-    if out_dir is None:
-        out_dir = os.getcwd()
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir, exist_ok=True)
-
-    seg_filtered = BedTool(segmentation).filter(lambda x: x[2] not in ['transcript', 'gene']).saveas()
-
-    borders = construct_borders(seg_filtered)
-    # pylint: disable=unexpected-keyword-arg, too-many-function-args
-    overlaps = BedTool(borders).intersect(
-        seg_filtered, sorted=True, s=True, wa=True, wb=True, nonamecheck=True).saveas()
-    # pylint: enable=unexpected-keyword-arg, too-many-function-args
-
-    intervals, types, biotypes, genes = [], [], [], []
-    gene_sizes = get_gene_sizes(segmentation)
-    pseg = overlaps[0]  # Set initial value for "previous segment"
-    for seg in overlaps:
-        if seg.start != pseg.start or seg.stop != pseg.stop or seg.strand != pseg.strand:
-            intervals.append(make_uniq_region(pseg, types, biotypes, genes))
-            types, biotypes, genes = [], [], []
-
-        types.append(seg[8])  # In overlaps, this is 3rd column of GTF file
-
-        biotype = re.match(r'.*biotype "(.*?)";', seg[-1])
-        biotype = biotype.group(1) if biotype else None
-        biotypes.append(biotype)
-
-        gene_id = re.match(r'.*gene_id "(.*?)";', seg[-1])
-        gene_id = gene_id.group(1) if gene_id else None
-        gene_name = re.match(r'.*gene_name "(.*?)";', seg[-1])
-        gene_name = gene_name.group(1) if gene_name else None
-        genes.append((gene_id, gene_name, gene_sizes[gene_id]))
-
-        pseg = seg
-
-    intervals.append(make_uniq_region(pseg, types, biotypes, genes))
-    nonmerged = BedTool(interval for interval in intervals).saveas()
-
-    # Merge intervals where possible
-    merged = os.path.join(out_dir, REGIONS_FILE)
-    merge_regions(nonmerged, merged)
-
-    # Finally, make templates
-    summary_templates(merged, out_dir)
 
 
 def _first_two_columns(input_file):
@@ -1034,7 +738,13 @@ def get_segments(annotation, segmentation, fai, report_progress=False):
     LOGGER.info('Segmentation stored in %s', file3.fn)
 
     LOGGER.info('Making also gene level segmentation...')
-    make_regions(segmentation, out_dir=os.path.dirname(os.path.abspath(segmentation)))
+    out_dir = os.path.dirname(os.path.abspath(segmentation))
+    make_regions(segmentation, out_dir=out_dir)
+
+    landmarks_name = os.path.join(out_dir, 'landmarks.bed.gz')
+    regions_name = os.path.join(out_dir, REGIONS_FILE)
+    make_landmarks(regions_name, landmarks_name)
+
     return metrics
 
 

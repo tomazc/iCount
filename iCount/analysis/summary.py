@@ -14,8 +14,10 @@ import tempfile
 from pybedtools import BedTool
 
 import iCount
-from iCount.genomes.segment import summary_templates, sort_types_subtypes, TEMPLATE_TYPE, TEMPLATE_SUBTYPE, \
-    TEMPLATE_GENE, SUMMARY_TYPE, SUMMARY_SUBTYPE, SUMMARY_GENE
+from iCount.genomes.region import (
+    summary_templates, sort_types_subtypes, TEMPLATE_TYPE, TEMPLATE_SUBTYPE, TEMPLATE_GENE, SUMMARY_TYPE,
+    SUMMARY_SUBTYPE, SUMMARY_GENE
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -78,7 +80,7 @@ def summary_reports(annotation, sites, out_dir, templates_dir=None):
         biotype = biotype.group(1) if biotype else ''
         biotypes = biotype.split(',')
         for biotype in biotypes:
-            sbtyp = iCount.genomes.segment.make_subtype(type_, biotype)
+            sbtyp = iCount.genomes.region.make_subtype(type_, biotype)
             subtype_counter[sbtyp] = subtype_counter.get(sbtyp, 0) + score / len(biotypes)
 
         gene_id = re.match(r'.*gene_id "(.*?)";', segment[-1])

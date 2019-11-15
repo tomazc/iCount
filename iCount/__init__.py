@@ -31,6 +31,7 @@ from . import demultiplex
 from . import mapping
 from . import genomes
 from . import examples
+from . import plotting
 from .logger import log_to_stdout, log_to_file, log_inputs, _log_progress
 from .metrics import Metrics
 

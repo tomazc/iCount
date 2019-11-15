@@ -63,7 +63,7 @@ setup(
         'pysam',
         'pybedtools',
         'numpydoc',
-        'sphinx>=1.4',
+        'sphinx>=1.4, <1.8',
         'matplotlib',
     ],
     extras_require={

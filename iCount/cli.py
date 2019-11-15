@@ -255,7 +255,8 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
         name = function.__name__
         # Take only the docstring until the 'Parameters' section:
         desc = inspect.getdoc(function).split('\n')
-        idx = [i for i, d in enumerate(desc) if d == 'Parameters' or d == 'Returns'][0]
+        idx = [i for i, d in enumerate(desc) if d == 'Parameters' or d == 'Returns']
+        idx = 0 if not idx else idx[0]
         description = '\n'.join(desc[:idx])
         description = remove_comments(description)
     else:
@@ -365,6 +366,14 @@ def main():
         iCount.analysis.rnamaps.run, subparsers)
     make_parser_from_function(
         iCount.analysis.summary.summary_reports, subparsers)
+
+    # Plotting:
+    make_parser_from_function(
+        iCount.plotting.rnamap.plot_rnamap, subparsers)
+    make_parser_from_function(
+        iCount.plotting.rnaheatmap.plot_rnaheatmap, subparsers)
+    make_parser_from_function(
+        iCount.plotting.rnacombined.plot_combined, subparsers)
 
     # File converters:
     make_parser_from_function(iCount.files.bedgraph.bed2bedgraph, subparsers)

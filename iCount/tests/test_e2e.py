@@ -3,12 +3,11 @@ import os
 import unittest
 import warnings
 
-import pysam
 from numpy import random
 
 import iCount
 from iCount.tests.utils import get_temp_file_name, get_temp_dir, make_file_from_list, \
-    make_list_from_file, make_fasta_file, make_sequence, make_quality_scores, attrs
+    make_fasta_file, make_sequence, make_quality_scores, attrs
 
 
 class TestEndToEnd(unittest.TestCase):
@@ -44,20 +43,19 @@ class TestEndToEnd(unittest.TestCase):
             ['1', '.', 'CDS', '400', '499', '.', '+', '.', attrs(gid='G1', tid='T2', exn=2)],
 
             # Gene #2, positive strand:
-            ['1', '.', 'gene', '600', '799', '.', '+', '.', attrs(gid='G2')],
+            ['1', '.', 'gene', '600', '899', '.', '+', '.', attrs(gid='G2')],
             # Transcript #3
-            ['1', '.', 'transcript', '600', '799', '.', '+', '.', attrs(gid='G2', tid='T3')],
-            ['1', '.', 'exon', '600', '649', '.', '+', '.', attrs(gid='G2', tid='T3', exn=1)],
-            ['1', '.', 'CDS', '600', '649', '.', '+', '.', attrs(gid='G2', tid='T3', exn=1)],
-            ['1', '.', 'exon', '750', '799', '.', '+', '.', attrs(gid='G2', tid='T3', exn=2)],
-            ['1', '.', 'CDS', '750', '799', '.', '+', '.', attrs(gid='G2', tid='T3', exn=2)],
+            ['1', '.', 'transcript', '600', '899', '.', '+', '.', attrs(gid='G2', tid='T3')],
+            ['1', '.', 'exon', '600', '659', '.', '+', '.', attrs(gid='G2', tid='T3', exn=1)],
+            ['1', '.', 'CDS', '600', '659', '.', '+', '.', attrs(gid='G2', tid='T3', exn=1)],
+            ['1', '.', 'exon', '840', '899', '.', '+', '.', attrs(gid='G2', tid='T3', exn=2)],
+            ['1', '.', 'CDS', '840', '899', '.', '+', '.', attrs(gid='G2', tid='T3', exn=2)],
 
             # Gene #3, negative strand:
             ['1', '.', 'gene', '800', '899', '.', '-', '.', 'gene_id "G3";'],
             # Transcript #4
             ['1', '.', 'transcript', '800', '899', '.', '-', '.', attrs(gid='G3', tid='T4')],
             ['1', '.', 'exon', '800', '899', '.', '-', '.', attrs(gid='G3', tid='T4', exn=1)],
-            ['1', '.', 'CDS', '800', '899', '.', '-', '.', attrs(gid='G3', tid='T4', exn=1)],
         ])
 
         # Define positions of cross-links:
@@ -108,9 +106,12 @@ class TestEndToEnd(unittest.TestCase):
         From raw reads and ENSEMBL annotation to rnamaps.
         """
 
-        # Make segmentation
+        # Make segmentation & regions file
         seg = get_temp_file_name(extension='gtf')
+        out_dir = get_temp_dir()
         iCount.genomes.segment.get_segments(self.gtf, seg, self.fai)
+        iCount.genomes.region.make_regions(seg, out_dir)
+        regions = os.path.join(out_dir, iCount.genomes.region.REGIONS_FILE)
 
         # Build STAR index:
         genome_index = get_temp_dir()
@@ -126,50 +127,12 @@ class TestEndToEnd(unittest.TestCase):
         bam = [fname for fname in os.listdir(map_dir) if fname.startswith('Aligned')][0]
         bam = os.path.join(map_dir, bam)
 
-        # Make all sorts of analysis and save it:
-        normal_out = get_temp_file_name(extension='tsv')
-        strange_out = get_temp_file_name(extension='bam')
-        cross_tr_out = get_temp_file_name(extension='tsv')
-        iCount.analysis.rnamaps.run(bam, seg, normal_out, strange_out, cross_tr_out,
-                                    implicit_handling='split')
-        # Normal output:
-        expected_out = [
-            ['RNAmap', 'type', 'position', 'all', 'explicit'],
-            ['CDS-CDS', '-40', '0.3333', '0'],
-            ['CDS-UTR3', '-25', '0.25', '0'],
-            ['CDS-intergenic', '-20', '1', '1'],
-            ['CDS-intergenic', '30', '0.5', '0'],
-            ['CDS-intergenic', '250', '1', '0'],
-            ['CDS-intron', '-40', '0.3333', '0'],
-            ['CDS-intron', '-25', '0.25', '0'],
-            ['UTR5-CDS', '5', '0.25', '0'],
-            ['UTR5-intron', '-10', '1', '1'],
-            ['UTR5-intron', '-8', '2', '2'],
-            ['UTR5-intron', '10', '0.5', '0'],
-            ['UTR5-intron', '13', '1', '0'],
-            ['intergenic-CDS', '-70', '0.5', '0'],
-            ['intergenic-CDS', '10', '0.3333', '0'],
-            ['intergenic-UTR5', '-20', '1', '1'],
-            ['intron-CDS', '-40', '0.5', '0'],
-            ['intron-CDS', '-37', '1', '0'],
-            ['intron-CDS', '5', '0.25', '0'],
-        ]
-        self.assertEqual(expected_out, make_list_from_file(normal_out))
+        sites_single = get_temp_file_name(extension='bed.gz')
+        sites_multi = get_temp_file_name(extension='bed.gz')
+        skipped = get_temp_file_name(extension='bam')
+        iCount.mapping.xlsites.run(bam, sites_single, sites_multi, skipped)
 
-        # Cross transcript:
-        expected_cross_transcript = [
-            ['chrom', 'strand', 'xlink', 'second-start', 'end-position', 'read_len'],
-            ['1', '+', '234', '236', '284', '50'],
-        ]
-        self.assertEqual(expected_cross_transcript, make_list_from_file(cross_tr_out))
-
-        # Strange:
-        strange_reads = list(pysam.AlignmentFile(strange_out, 'rb'))  # pylint: disable=no-member
-        self.assertEqual(len(strange_reads), 1)
-        strange_read = strange_reads[0]
-        self.assertEqual(strange_read.query_name, 'name_strange:rbc:GGGG')
-        self.assertEqual(strange_read.reference_start, 250)
-        self.assertEqual(strange_read.cigar, [(0, 45), (2, 15), (0, 70)])
+        iCount.analysis.rnamaps.run(sites_single, regions)
 
 
 if __name__ == '__main__':
