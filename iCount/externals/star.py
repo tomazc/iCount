@@ -199,9 +199,8 @@ def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatch
         '--outSAMprimaryFlag', 'AllBestScore',
         '--outFilterMultimapNmax', '{:d}'.format(multimax),
         '--outFilterMismatchNmax', '{:d}'.format(mismatches),
-        '--alignEndsType', 'EndToEnd',
-        # otherwise soft-clipping of the starts and ends may produce too
-        # many multiple hits
+        '--alignEndsType', 'EndToEnd',    # soft-clipping of starts and ends may produce multiple hits
+        '--genomeLoad', 'LoadAndRemove',  # load genome into shared memory
         '--outSAMtype', 'BAM', 'SortedByCoordinate',
         '--outSAMunmapped', 'Within', 'KeepPairs',
     ])
