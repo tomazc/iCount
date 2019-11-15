@@ -78,6 +78,7 @@ setup(
             'wheel',
         ],
         'test': [
+            'tox',
             'check-manifest',
             'pylint>=1.6.4',
             'pycodestyle>=2.1.0',

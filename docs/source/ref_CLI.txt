@@ -275,8 +275,8 @@ optional arguments:
 mapstar
 =======
 
-usage: iCount mapstar [-h] [-a] [--multimax] [-mis] [--threads] [-S] [-F] [-P]
-                      [-M]
+usage: iCount mapstar [-h] [-a] [--multimax] [-mis] [--threads]
+                      [--genome_load] [-S] [-F] [-P] [-M]
                       reads genome_index out_dir
 
 Map reads to genome with STAR.
@@ -292,6 +292,8 @@ optional arguments:
   --multimax            Number of allowed multiple hits (default: 10)
   -mis , --mismatches   Number of allowed mismatches (default: 2)
   --threads             Number of threads that STAR can use for generating index (default: 1)
+  --genome_load         Load genome into shared memory
+                        Shared memory must be available in the system. See Chapter 3.3 in STAR manual (default: False)
   -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
   -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
   -P , --file_logpath   Path to log file.

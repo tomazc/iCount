@@ -311,11 +311,7 @@ def make_parser_from_function(function, subparsers, module=None, only_func=False
 
 
 def main():
-    """
-    Main.
-
-    TODO
-    """
+    """Define all CLI commands."""
     #####################
     # Define root parser:
     #####################
