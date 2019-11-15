@@ -82,7 +82,7 @@ def reverse_strand(data):
             data[i][:6] + [rstrands[i]] + data[i][7:] for i in range(len(data))]
 
 
-def make_sequence(size, include_n=False, rnd_seed=None):
+def make_sequence(size, include_n=False, rnd_seed=42):
     """Make random DNA segment of length `size`."""
     random.seed(rnd_seed)  # pylint:disable=no-member
     if include_n:
@@ -92,7 +92,7 @@ def make_sequence(size, include_n=False, rnd_seed=None):
     return ''.join(random.choice(bases, size))  # pylint: disable=no-member
 
 
-def make_quality_scores(size, min_chr=33, max_chr=74, rnd_seed=None):
+def make_quality_scores(size, min_chr=33, max_chr=74, rnd_seed=42):
     """Make random DNA segment of length `size`."""
     random.seed(rnd_seed)  # pylint:disable=no-member
     scores = [chr(i) for i in range(min_chr, max_chr + 1)]
