@@ -1,0 +1,127 @@
+
+#==============================================================================#
+#                     iCount snakemake Configuration file
+#                          Generated at (system time)
+#==============================================================================#
+
+
+#===============================     Samples     ==============================#
+# Define which samples to map and which species to map to.
+#
+# Note that the path to the sample can be absolute or relative to the directory 
+# where the Snakefile is run. 
+
+
+# path or URL to sample sheet (tsv format, TAB separated columns: sample_name,	method,	protein,	cells/tissue,	condition,	mapto,	5_barcode,	3_adapter,	linker,	comments)
+samples: samples.tsv
+# If the column "group" is present (which is optional),
+# samples will be merged and output for the group calculated.
+
+samples: "data/hnRNPC_reduced.tsv"
+
+#========================    Raw sequencing data   =============================#
+
+# Raw fastq file to demultiplex and analyse
+raw_fastq_file: "data/hnRNPC.fq.gz"
+
+
+#=============================     Parameters     =============================#
+# Set the parameters for each step.
+# These are set to defaults that are widely applicable to iCLIP analysis.
+
+
+## Project directory
+project: "hnRNPC_CLIP"
+
+# Capture this from annotation. Regex to remove non characters
+adapter3: "AGATCGGAAGAGCGGTTCAG"    # original name "3'adapter"
+
+
+#~~~~~~~~~~~~~~~~ iCount genomes ~~~~~~~~~~~~~~~~#
+## iCount genomes will be automatically downloaded from NCBI if any of the following accepted species terms are used:
+# Accepted species terms are: ailuropoda_melanoleuca,anas_platyrhynchos,ancestral_alleles,anolis_carolinensis,astyanax_mexicanus,bos_taurus,caenorhabditis_elegans,callithrix_jacchus,canis_familiaris,cavia_porcellus,chlorocebus_sabaeus,choloepus_hoffmanni,ciona_intestinalis,ciona_savignyi,danio_rerio,dasypus_novemcinctus,dipodomys_ordii,drosophila_melanogaster,echinops_telfairi,equus_caballus,erinaceus_europaeus,fasta,felis_catus,ficedula_albicollis,gadus_morhua,gallus_gallus,gasterosteus_aculeatus,gorilla_gorilla,homo_sapiens,ictidomys_tridecemlineatus,latimeria_chalumnae,lepisosteus_oculatus,loxodonta_africana,macaca_mulatta,macropus_eugenii,meleagris_gallopavo,microcebus_murinus,monodelphis_domestica,mus_musculus,mus_musculus_129s1svimj,mus_musculus_aj,mus_musculus_akrj,mus_musculus_balbcj,mus_musculus_c3hhej,mus_musculus_c57bl6nj,mus_musculus_casteij,mus_musculus_cbaj,mus_musculus_dba2j,mus_musculus_fvbnj,mus_musculus_lpj,mus_musculus_nodshiltj,mus_musculus_nzohlltj,mus_musculus_pwkphj,mus_musculus_wsbeij,mus_spretus_spreteij,mustela_putorius_furo,myotis_lucifugus,nomascus_leucogenys,ochotona_princeps,oreochromis_niloticus,ornithorhynchus_anatinus,oryctolagus_cuniculus,oryzias_latipes,otolemur_garnettii,ovis_aries,pan_troglodytes,papio_anubis,pelodiscus_sinensis,petromyzon_marinus,poecilia_formosa,pongo_abelii,procavia_capensis,pteropus_vampyrus,rattus_norvegicus,saccharomyces_cerevisiae,sarcophilus_harrisii,sorex_araneus,sus_scrofa,taeniopygia_guttata,takifugu_rubripes,tarsius_syrichta,tetraodon_nigroviridis,tupaia_belangeri,tursiops_truncatus,vicugna_pacos,xenopus_tropicalis,xiphophorus_maculatus
+
+# Update releases script and Icount annotation and genome doesn't accept "--releases" word
+
+# iCount species --source ensembl -r 88
+# There are 87 species available: ailuropoda_melanoleuca,anas_platyrhynchos,ancestral_alleles,anolis_carolinensis,astyanax_mexicanus,bos_taurus,caenorhabditis_elegans,callithrix_jacchus,canis_familiaris,cavia_porcellus,chlorocebus_sabaeus,choloepus_hoffmanni,ciona_intestinalis,ciona_savignyi,danio_rerio,dasypus_novemcinctus,dipodomys_ordii,drosophila_melanogaster,echinops_telfairi,equus_caballus,erinaceus_europaeus,fasta,felis_catus,ficedula_albicollis,gadus_morhua,gallus_gallus,gasterosteus_aculeatus,gorilla_gorilla,homo_sapiens,ictidomys_tridecemlineatus,latimeria_chalumnae,lepisosteus_oculatus,loxodonta_africana,macaca_mulatta,macropus_eugenii,meleagris_gallopavo,microcebus_murinus,monodelphis_domestica,mus_musculus,mus_musculus_129s1svimj,mus_musculus_aj,mus_musculus_akrj,mus_musculus_balbcj,mus_musculus_c3hhej,mus_musculus_c57bl6nj,mus_musculus_casteij,mus_musculus_cbaj,mus_musculus_dba2j,mus_musculus_fvbnj,mus_musculus_lpj,mus_musculus_nodshiltj,mus_musculus_nzohlltj,mus_musculus_pwkphj,mus_musculus_wsbeij,mus_spretus_spreteij,mustela_putorius_furo,myotis_lucifugus,nomascus_leucogenys,ochotona_princeps,oreochromis_niloticus,ornithorhynchus_anatinus,oryctolagus_cuniculus,oryzias_latipes,otolemur_garnettii,ovis_aries,pan_troglodytes,papio_anubis,pelodiscus_sinensis,petromyzon_marinus,poecilia_formosa,pongo_abelii,procavia_capensis,pteropus_vampyrus,rattus_norvegicus,saccharomyces_cerevisiae,sarcophilus_harrisii,sorex_araneus,sus_scrofa,taeniopygia_guttata,takifugu_rubripes,tarsius_syrichta,tetraodon_nigroviridis,tupaia_belangeri,tursiops_truncatus,vicugna_pacos,xenopus_tropicalis,xiphophorus_maculatus
+# Note:
+# Current version of iCount is tested to work with human and rat genomes only.
+
+
+# Directory where all the genomes, STAR index and iCount segment files will be stored
+genomes_path: "iCount_genomes"
+
+# Annotation release on NCBI !!! Update to latest ones
+release: "88"
+
+# Alternatively you can use you custom genome including acronym name, fasta sequence and gtf file paths
+custom_genome:
+  hg19:
+    # Genomic fasta sequence
+    genome_fasta: "custom/custom.fa.gz"
+    # gtf file with transcripts
+    annotation: "custom/custom.gtf.gz"
+    # Overhang for STAR index
+  hg38:
+    # Genomic fasta sequence
+    genome_fasta: "custom/custom2.fa.gz"
+    # gtf file with transcripts
+    annotation: "custom/custom2.gtf.gz"
+    # Overhang for STAR index
+#    # Custom genome example annotation. Name directory, fasta sequence and annotation using the same acromyn ("hg19") as in the example
+#    name: "hg19"
+#    genome_fasta: "iCount_genomes/hg19/hg19.fa.gz"
+#    # gtf file with transcripts
+#    annotation: "iCount_genomes/hg19/hg19.gtf.gz"
+
+
+#~~~~~~~~~~~~~~~~ iCount demultiplex  ~~~~~~~~~~~~~~~~#
+# Demultiplex
+barcode_mismatches: 0               # number of mismatches allowed in sample barcode (default: 0)
+
+
+#~~~~~~~~~~~~~~~~ iCount STAR aligner ~~~~~~~~~~~~~~~~#
+# Overhang for STAR index
+overhang: "100"
+
+# STAR mapp reads
+mismatches: "2"                     # Number of allowed mismatches in STAR mapping (default: 2)
+multimax: "10"                      # Number of allowed multiple hits (default: 10)
+
+
+#~~~~~~~~~~~~~~~~ iCount reads quality trimm  ~~~~~~~~~~~~~~~~#
+# Quality trimm
+qual_trim: "20"                     # Check if Trimming is accurate to quality and length!!!!!!!!
+minimum_length: "17"
+
+
+#~~~~~~~~~~~~~~~~ iCount cross links  ~~~~~~~~~~~~~~~~#
+# Calculate cross links !! groupby should be selected in base of the CLIP technique
+groupby: "start"
+quant: "cDNA"
+
+
+
+#~~~~~~~~~~~~~~~~ iCount significant cross links  ~~~~~~~~~~~~~~~~#
+# Peaks configuration
+#Find positions with high density of cross-linked sites.
+#
+#There are two typical variants of this analysis, depending on the parameters:
+#
+#* Gene-wise analysis, where:
+#    * features = gene
+#    * group_by = gene_id
+#
+#* Transcript-wise analysis where:
+#    * features = CDS, intron, UTR3, UTR5, ncRNA, intergenic
+#    * group_by = transcript_id
+#  [--merge_features] [--half_window] [--fdr]
+
+
+
+
+#=============================     Cluster     =============================#
+
+# Log directory to store invidual jobs output and error when run on a cluster
+logdir: "logs_cluster"
