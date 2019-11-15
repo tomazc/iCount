@@ -144,11 +144,9 @@ def build_index(genome, genome_index, annotation='', overhang=100, overhang_min=
     return ret_code
 
 
-def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatches=2, threads=1):
+def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatches=2, threads=1, genome_load=False):
     """
     Map FASTQ file reads to reference genome.
-
-    TODO
 
     Parameters
     ----------
@@ -166,6 +164,9 @@ def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatch
         Number of allowed mismatches.
     threads : int
         Number of threads that STAR can use for generating index.
+    genome_load: bool
+        Load genome into shared memory.
+        Shared memory must be available in the system. See Chapter 3.3 in STAR manual.
 
     Returns
     -------
@@ -200,10 +201,14 @@ def map_reads(reads, genome_index, out_dir, annotation='', multimax=10, mismatch
         '--outFilterMultimapNmax', '{:d}'.format(multimax),
         '--outFilterMismatchNmax', '{:d}'.format(mismatches),
         '--alignEndsType', 'EndToEnd',    # soft-clipping of starts and ends may produce multiple hits
-        '--genomeLoad', 'LoadAndRemove',  # load genome into shared memory
         '--outSAMtype', 'BAM', 'SortedByCoordinate',
         '--outSAMunmapped', 'Within', 'KeepPairs',
     ])
+    if genome_load:
+        args.extend([
+            '--genomeLoad', 'LoadAndRemove',  # load genome into shared memory
+        ])
+
     if annotation:
         annotation2 = iCount.files.decompress_to_tempfile(annotation, 'starmap')
         args.extend([
