@@ -154,14 +154,23 @@ rule all:
 
         expand("{project}/clusters/{barcode}/{barcode}.clusters.bed", project=config['project'], barcode=samples.index),
 
-        expand("{project}/groups/{group}/{group}.group.unique.xl.bed", project=config['project'], group=samples["group"].dropna().unique()),
-        expand("{project}/groups/{group}/{group}.unique.xl.annotated_group_biotype.tab", project=config['project'], group=samples["group"].dropna().unique()),
-        expand("{project}/groups/{group}/{group}.unique.xl.annotated_group_gene_id.tab", project=config['project'], group=samples["group"].dropna().unique()),
-        expand("{project}/groups/{group}/{group}.unique.xl.summary_gene.tsv", project=config['project'], group=samples["group"].dropna().unique()),
-        expand("{project}/groups/{group}/{group}.unique.xl.summary_type.tsv", project=config['project'], group=samples["group"].dropna().unique()),
-        expand("{project}/groups/{group}/{group}.unique.xl.summary_subtype.tsv", project=config['project'], group=samples["group"].dropna().unique()),
-        expand("{project}/groups/{group}/{group}.group.unique.xl.bedgraph", project=config['project'], group=samples["group"].dropna().unique()),
+        expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed", project=config['project'], group=samples["group"].dropna().unique()),
+        expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.annotated_group_biotype.tab", project=config['project'], group=samples["group"].dropna().unique()),
+        expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.annotated_group_gene_id.tab", project=config['project'], group=samples["group"].dropna().unique()),
+        expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.summary_gene.tsv", project=config['project'], group=samples["group"].dropna().unique()),
+        # expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.summary_type.tsv", project=config['project'], group=samples["group"].dropna().unique()),
+        # expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.summary_subtype.tsv", project=config['project'], group=samples["group"].dropna().unique()),
+        expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.bedgraph", project=config['project'], group=samples["group"].dropna().unique()),
         expand("{project}/groups/{group}/rnamaps/", project=config['project'], group=samples["group"].dropna().unique()),
+
+        expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.bed", project=config['project'], group=samples["group"].dropna().unique()),
+        expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.biotype.tab", project=config['project'], group=samples["group"].dropna().unique()),
+        expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.gene_id.tab", project=config['project'], group=samples["group"].dropna().unique()),
+        expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_gene.tsv", project=config['project'], group=samples["group"].dropna().unique()),
+        # expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_type.tsv", project=config['project'], group=samples["group"].dropna().unique()),
+        # expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_subtype.tsv", project=config['project'], group=samples["group"].dropna().unique()),
+
+        expand("{project}/groups/{group}/clusters/{group}.group.clusters.bed", project=config['project'], group=samples["group"].dropna().unique()),
 
 
 #==============================================================================#
@@ -640,7 +649,6 @@ rule summary_sig:
 #             Create clusters
 #==============================================================================#
 
-# Implement empty file!!!
 rule clusters:
     input:
         xlsites="{project}/xlsites/{barcode}/{barcode}.unique.xl.bed",
@@ -653,12 +661,13 @@ rule clusters:
         distance=config['distance'],
         slop=config['slop'],
     run:
-        if is_empty(input.sig_xlsites):
+        if is_empty(input.xlsites) or is_empty(input.sig_xlsites):
             print ("File", input.sig_xlsites, "is empty. Creating empty output file:", output.clusters, \
                    " to continue snakemake pipeline")
             createNewFile(output.clusters)
         else:
-            shell("iCount clusters --dist {params.distance} --slop {params.slop} {input.xlsites} {input.sig_xlsites} {output.clusters}")
+            shell("iCount clusters --dist {params.distance} --slop {params.slop} {input.xlsites} {input.sig_xlsites} \
+            {output.clusters}")
 
 
 #==============================================================================#
@@ -739,7 +748,7 @@ rule group:
     input:
         files2group,
     output:
-        group="{project}/groups/{group}/{group}.group.unique.xl.bed",
+        group="{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed",
     benchmark:
         "{project}/benchmarks/{group}.group.unique.xl.benchmark.txt"
     shell:
@@ -753,9 +762,9 @@ def bedgraph_group_description(wildcards):
 
 rule group_bedgraph:
     input:
-        group_xlsites="{project}/groups/{group}/{group}.group.unique.xl.bed",
+        group_xlsites="{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed",
     output:
-        group_bedgraph="{project}/groups/{group}/{group}.group.unique.xl.bedgraph",
+        group_bedgraph="{project}/groups/{group}/xlsites/{group}.group.unique.xl.bedgraph",
     params:
         name=bedgraph_group_description,
         description=bedgraph_group_description,
@@ -775,13 +784,12 @@ def get_group_segment_path(wildcards):
 def get_group_templates_dir(wildcards):
     return ("{0}/{1}/segment/".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
 
-
 rule annotate_group_xlsites:
     input:
-        group_xlsites="{project}/groups/{group}/{group}.group.unique.xl.bed"
+        group_xlsites="{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed"
     output:
-        group_biotype="{project}/groups/{group}/{group}.unique.xl.annotated_group_biotype.tab",
-        group_gene_id="{project}/groups/{group}/{group}.unique.xl.annotated_group_gene_id.tab",
+        group_biotype="{project}/groups/{group}/xlsites/{group}.group.unique.xl.annotated_group_biotype.tab",
+        group_gene_id="{project}/groups/{group}/xlsites/{group}.group.unique.xl.annotated_group_gene_id.tab",
     params:
         templates_dir = get_group_templates_dir,
         segment = get_group_segment_path,
@@ -794,18 +802,18 @@ rule annotate_group_xlsites:
 
 rule summary_group:
     input:
-        group_xlsites="{project}/groups/{group}/{group}.group.unique.xl.bed"
+        group_xlsites="{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed"
     output:
-        group_gene="{project}/groups/{group}/{group}.unique.xl.summary_gene.tsv",
-        group_type="{project}/groups/{group}/{group}.unique.xl.summary_type.tsv",
-        group_subtype="{project}/groups/{group}/{group}.unique.xl.summary_subtype.tsv"
+        group_gene="{project}/groups/{group}/xlsites/{group}.group.unique.xl.summary_gene.tsv",
+        group_type="{project}/groups/{group}/xlsites/{group}.group.unique.xl.summary_type.tsv",
+        group_subtype="{project}/groups/{group}/xlsites/{group}.group.unique.xl.summary_subtype.tsv"
     params:
         templates_dir=get_group_templates_dir,
         segment = get_group_segment_path,
-        out_dir="{project}/groups/{group}/",
-        group_rename_gene="{project}/groups/{group}/summary_gene.tsv",
-        group_rename_type="{project}/groups/{group}/summary_type.tsv",
-        group_rename_subtype="{project}/groups/{group}/summary_subtype.tsv",
+        out_dir="{project}/groups/{group}/xlsites/",
+        group_rename_gene="{project}/groups/{group}/xlsites/summary_gene.tsv",
+        group_rename_type="{project}/groups/{group}/xlsites/summary_type.tsv",
+        group_rename_subtype="{project}/groups/{group}/xlsites/summary_subtype.tsv",
     shell:
         """
         iCount summary --templates_dir {params.templates_dir} {params.segment} {input.group_xlsites} {params.out_dir}
@@ -814,13 +822,99 @@ rule summary_group:
         mv {params.group_rename_subtype} {output.group_subtype}
         """
 
+def get_group_segment_path(wildcards):
+    return ("{0}/{1}/segment/{1}_segment.gtf".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
+
+rule group_sig_xlsites:
+    input:
+        group_xlsites = "{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed",
+        segment_file=get_group_segment_path,
+    output:
+        group_sigxls="{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.bed",
+        group_scores="{project}/groups/{group}/sig_xlsites/{group}.group.scores.tsv"
+    benchmark:
+        "{project}/benchmarks/{group}.group.sig_xlsites.benchmark.txt"
+    shell:
+        """
+        iCount peaks {input.segment_file} {input.group_xlsites} {output.group_sigxls} --scores {output.group_scores}
+        """
+
+rule annotate_group_sig_xlsites:
+    input:
+        group_sig_xlsites="{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.bed"
+    output:
+        group_biotype="{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.biotype.tab",
+        group_gene_id="{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.gene_id.tab"
+    params:
+        templates_dir = get_group_templates_dir,
+        segment = get_group_segment_path,
+        #out_dir = "{project}/sig_xlsites/{barcode}/",
+    run:
+        if is_empty(input.group_sig_xlsites):
+            print ("File", input.group_sig_xlsites, "is empty. Creating empty output files:", output.group_biotype, \
+                   output.group_gene_id, " to continue snakemake pipeline")
+            createNewFile(output.group_biotype)
+            createNewFile(output.group_gene_id)
+        else:
+            shell("iCount annotate --subtype biotype {params.segment} {input.group_sig_xlsites} {output.group_biotype}")
+            shell("iCount annotate --subtype gene_id {params.segment} {input.group_sig_xlsites} {output.group_gene_id}")
+
+
+rule summary_group_sig:
+    input:
+        group_sig_xlsites="{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.bed"
+    output:
+        group_gene="{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_gene.tsv",
+        group_type="{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_type.tsv",
+        group_subtype="{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_subtype.tsv",
+    params:
+        templates_dir = get_group_templates_dir,
+        segment = get_group_segment_path,
+        out_dir = "{project}/groups/{group}/sig_xlsites/",
+        group_rename_gene = "{project}/groups/{group}/sig_xlsites/summary_gene.tsv",
+        group_rename_type = "{project}/groups/{group}/sig_xlsites/summary_type.tsv",
+        group_rename_subtype = "{project}/groups/{group}/sig_xlsites/summary_subtype.tsv",
+    run:
+        if is_empty(input.group_sig_xlsites):
+            print ("File", input.group_sig_xlsites, "is empty. Creating empty output file:", output.group_gene, \
+                   output.group_type , output.group_subtype, " to continue snakemake pipeline")
+            createNewFile(output.group_gene)
+            createNewFile(output.group_type)
+            createNewFile(output.group_subtype)
+        else:
+            shell("iCount summary --templates_dir {params.templates_dir} {params.segment} {input.sig_xlsites} {params.out_dir}")
+            shell("mv {params.group_rename_gene} {output.group_gene}")
+            shell("mv {params.group_rename_type} {output.group_type}")
+            shell("mv {params.group_rename_subtype} {output.group_subtype}")
+
+
 def get_group_landmark_path(wildcards):
     return ("{0}/{1}/segment/landmarks.bed.gz".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
+
+rule group_clusters:
+    input:
+        group_xlsites="{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed",
+        group_sigxls="{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.bed",
+    output:
+        group_clusters="{project}/groups/{group}/clusters/{group}.group.clusters.bed",
+    benchmark:
+        "{project}/benchmarks/{group}.group.clusters.benchmark.txt"
+    params:
+        distance=config['distance'],
+        slop=config['slop'],
+    run:
+        if is_empty(input.group_xlsites) or is_empty(input.group_sigxls):
+            print ("File", input.group_sigxls, "is empty. Creating empty output file:", output.group_clusters, \
+                   " to continue snakemake pipeline")
+            createNewFile(output.group_clusters)
+        else:
+            shell("iCount clusters --dist {params.distance} --slop {params.slop} {input.group_xlsites} \
+            {input.group_sigxls} {output.group_clusters}")
 
 
 rule RNAmaps_group:
     input:
-        group_xlsites="{project}/groups/{group}/{group}.group.unique.xl.bed",
+        group_xlsites="{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed",
         landmarks=get_group_landmark_path,
     output:
         directory("{project}/groups/{group}/rnamaps/")
@@ -834,7 +928,8 @@ rule RNAmaps_group:
         imgfmt=config['imgfmt'],
     shell:
         """
-        iCount rnamaps {input.group_xlsites} {input.landmarks} --outdir {output} --top_n {params.top_n} --smoothing {params.smoothing} --colormap {params.colormap} --imgfmt {params.imgfmt} --nbins {params.nbins} 
+        iCount rnamaps {input.group_xlsites} {input.landmarks} --outdir {output} --top_n {params.top_n} --smoothing \
+        {params.smoothing} --colormap {params.colormap} --imgfmt {params.imgfmt} --nbins {params.nbins} 
         # --binsize {params.binsize}
         """
 
