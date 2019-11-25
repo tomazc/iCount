@@ -98,33 +98,11 @@ configfile:"config_synthetic.yaml"
 samples = pd.read_table(config["samples"])
 #validate(samples, schema="schemas/samples.schema.yaml")
 
-#
-# samples=samples.fillna("")
-# array_3_barcode=samples["3_barcode"].unique()
-#
-#
-# if len(array_3_barcode) == 1 and array_3_barcode == ".":
-#     demultiplexing_3_barcode=False
-#     samples["full_barcode"]=samples["5_barcode"].astype(str)
-#     samples = samples.set_index(["full_barcode"], drop = False)
-# elif len(array_3_barcode) != 1:
-#     samples["full_barcode"]=samples["5_barcode"].astype(str)+ str("_") + samples["3_barcode"].astype(str)
-#     samples=samples.set_index(["full_barcode"], drop = False)
-#     demultiplexing_3_barcode=True
-# else:
-#     print ("Please check your '3_barcode' column on the samples table")
-#     exit
-#
-# print ("demultiplexing_3_barcode", demultiplexing_3_barcode)
-# print (samples)
-# print (samples.index)
 
-
+# Merge 5'barcode and 3'barcode to create a table index (full barcode)
 cols = ['5_barcode', '3_barcode']
 samples["full_barcode"] = samples[cols].apply(lambda x: '_'.join(x.dropna()), axis=1)
 samples=samples.set_index(["full_barcode"], drop = False)
-
-print (samples)
 
 
 #~~~~~~~~~~~~~~~~~~~~~* Create log folder for cluster run *~~~~~~~~~~~~~~~~~~~~#
@@ -211,27 +189,6 @@ rule demultiplex:
         """
         iCount demultiplex --mismatches {params.barcode_mismatches} --min_adapter_overlap {params.min_adapter_overlap} --minimum_length {params.minimum_length} {input.fastq_file} {params.adapter3} {params.all_5barcodes} --barcodes3 {params.all_3barcodes} --out_dir {params.dir}
         """
-
-
-
-    # run:
-    #     if demultiplexing_3_barcode:
-    #         shell("iCount demultiplex --mismatches {params.barcode_mismatches} --min_adapter_overlap {params.min_adapter_overlap} --minimum_length {params.minimum_length} {input.fastq_file} {params.adapter3} {params.all_5barcodes} --barcodes3 {params.all_3barcodes} --out_dir {params.dir}")
-    #     else:
-    #         shell("iCount demultiplex --mismatches {params.barcode_mismatches} --min_adapter_overlap {params.min_adapter_overlap} --minimum_length {params.minimum_length} {input.fastq_file} {params.adapter3} {params.all_5barcodes} --out_dir {params.dir}")
-    #
-
-# iCount demultiplex --mismatches 0 --min_adapter_overlap 7 --minimum_length 17 data/hnRNPC.fq.gz AGATCGGAAGAGCGGTTCAG NNNGGTTNN NNNTTGTNN NNNCAATNN NNNACCTNN --out_dir demultiplexed --barcodes3 . . . .
-
-
-
-        # """
-        #  iCount demultiplex --mismatches {params.barcode_mismatches} --min_adapter_overlap {params.min_adapter_overlap} \
-        #  --minimum_length {params.minimum_length} {input.fastq_file} {params.adapter3} {params.all_5barcodes} \
-        #  --out_dir {params.dir}
-        # """
-
-## iCount demultiplex ../merge_my_script.fq.gz AGATCGGAAGAGCGGTTCAG NNNNGTAACNNN NNNNGTAACNNN NNNNGTAACNNN NNNNGTAACNNN NNNNGTAACNNN NNNNGTAACNNN NNNNGTAACNNN NNNNGTAACNNN NNNNCCGGANNN NNNCTGCNN --mismatches 0 --barcodes3 NNATT NNAGG NNTTA NNTGC NNCTG NNCGT NNGTC NNGGA . .
 
 # rule move_demultiplex:
 #     input:
