@@ -1,30 +1,48 @@
 # pylint: disable=missing-docstring, protected-access
 
-import warnings
+import os
 import unittest
+import warnings
 
 from iCount.externals import cutadapt, star
 
 from iCount.tests.utils import make_fasta_file, make_fastq_file, get_temp_dir, \
-    get_temp_file_name, make_file_from_list
+    get_temp_file_name, make_file_from_list, make_list_from_file
 
 
 class TestCutadapt(unittest.TestCase):
 
     def setUp(self):
         self.adapter = 'AAAATTTTCCCCGGGG'
-        self.reads = make_fastq_file(adapter=self.adapter, num_sequences=100,
+        self.reads = make_fastq_file(adapter=self.adapter, num_sequences=1,
                                      out_file=get_temp_file_name(extension='fastq'), rnd_seed=0)
         self.tmp = get_temp_file_name(extension='fastq')
         warnings.simplefilter("ignore", ResourceWarning)
+
+    def tearDown(self):
+        if os.path.exists(self.tmp):
+            os.remove(self.tmp)
 
     def test_get_version_ok(self):
         version = cutadapt.get_version()
         self.assertRegex(version, r'\d\.\d+')
 
-    def test_run(self):
+    def test_simple(self):
         return_code = cutadapt.run(
-            self.reads, self.tmp, self.adapter, qual_trim=30, minimum_length=70)
+            self.reads, self.adapter, reads_trimmed=self.tmp, qual_trim=0, minimum_length=20)
+        original_seq = make_list_from_file(self.reads)[1][0]
+        trimmed_seq = make_list_from_file(self.tmp)[1][0]
+        self.assertTrue(original_seq.endswith(self.adapter))
+        self.assertEqual(original_seq[:-(len(self.adapter))], trimmed_seq)
+        self.assertEqual(return_code, 0)
+
+    def test_overwrite(self):
+        original_seq = make_list_from_file(self.reads)[1][0]
+        return_code = cutadapt.run(self.reads, self.adapter, overwrite=True)
+        trimmed_seq = make_list_from_file(self.reads)[1][0]
+        self.assertTrue(original_seq.endswith(self.adapter))
+        self.assertEqual(original_seq[:-(len(self.adapter))], trimmed_seq)
+        self.assertEqual(return_code, 0)
         self.assertEqual(return_code, 0)
 
 

@@ -19,8 +19,8 @@ def get_temp_file_name(tmp_dir=None, extension=''):
     tmp_name = next(tempfile._get_candidate_names())
     if not tmp_dir:
         tmp_dir = tempfile._get_default_tempdir()
-    if extension is not None:
-        tmp_name = tmp_name + '.' + extension
+    if extension:
+        tmp_name += '.' + extension
     return os.path.join(tmp_dir, tmp_name)
 
 
@@ -82,7 +82,7 @@ def reverse_strand(data):
             data[i][:6] + [rstrands[i]] + data[i][7:] for i in range(len(data))]
 
 
-def make_sequence(size, include_n=False, rnd_seed=None):
+def make_sequence(size, include_n=False, rnd_seed=42):
     """Make random DNA segment of length `size`."""
     random.seed(rnd_seed)  # pylint:disable=no-member
     if include_n:
@@ -92,7 +92,7 @@ def make_sequence(size, include_n=False, rnd_seed=None):
     return ''.join(random.choice(bases, size))  # pylint: disable=no-member
 
 
-def make_quality_scores(size, min_chr=33, max_chr=74, rnd_seed=None):
+def make_quality_scores(size, min_chr=33, max_chr=74, rnd_seed=42):
     """Make random DNA segment of length `size`."""
     random.seed(rnd_seed)  # pylint:disable=no-member
     scores = [chr(i) for i in range(min_chr, max_chr + 1)]
@@ -266,7 +266,7 @@ def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
     num_barcodes = len(barcodes)
 
     def make_fastq_entry(ofile, rseed):  # pylint: disable=missing-docstring
-        description = 'artificial header {}'.format(random.random())
+        description = 'artificial header {}'.format(random.random())  # pylint: disable=no-member
 
         # Select random barcode and transform 'N'-s to nucleotids:
         pre_barcode = barcodes[random.randint(0, num_barcodes)]  # pylint: disable=no-member
@@ -274,14 +274,14 @@ def make_fastq_file(genome=None, barcodes=None, adapter='', out_file=None,
         for letter in pre_barcode:
             if letter == 'N':
                 # Randomly select one of bases:
-                barcode += BASES[random.randint(0, 4)]  # pylint: disable=no-member
+                barcode += BASES[random.randint(0, 4)]  # pylint: disable=no-member,invalid-sequence-index
             else:
                 barcode += letter
 
         if genome:
             int1 = random.randint(0, high=len(genome_data))  # pylint: disable=no-member
-            int2 = random.randint(0, high=len(genome_data[int1][1]))  # pylint: disable=no-member
-            random_piece = genome_data[int1][1][int2:int2 + seq_len_reduced]
+            int2 = random.randint(0, high=len(genome_data[int1][1]))  # pylint: disable=no-member,E1126
+            random_piece = genome_data[int1][1][int2:int2 + seq_len_reduced]  # pylint: disable=invalid-sequence-index
             seq = barcode + random_piece + adapter
         else:
             seq = barcode + make_sequence(seq_len_reduced, rnd_seed=rseed) + adapter

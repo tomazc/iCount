@@ -142,7 +142,7 @@ html_sidebars = {
 }
 
 html_theme_options = {
-    'description': "protein-RNA interaction analytics",
+    'description': "protein-RNA interaction analysis",
     'github_user': 'tomazc',
     'github_repo': 'iCount',
     'fixed_sidebar': True,

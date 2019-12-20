@@ -219,15 +219,14 @@ class TestCLI(unittest.TestCase):
         command_basic = [
             'iCount', 'cutadapt',
             fastq,
-            self.tmp1,
             adapter,
             '-S', '40',  # Supress lower than ERROR messages.
         ]
         command_full = [
             'iCount', 'cutadapt',
             fastq,
-            self.tmp1,
             adapter,
+            '--reads_trimmed', self.tmp1,
             '--qual_trim', '20',
             '--minimum_length', '15',
             '-S', '40',  # Supress lower than ERROR messages.
@@ -380,13 +379,20 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(subprocess.call(command_full), 0)
 
     def test_rnamaps(self):
+        landmarks = make_file_from_list(sort=True, data=[
+            ['1', '210', '211', 'gene-start;A', '.', '+'],
+            ['1', '270', '271', 'translation-start;A', '.', '+'],
+        ])
+
+        cross_links = make_file_from_list([
+            ['1', '200', '201', '.', '1', '+'],
+            ['1', '280', '281', '.', '1', '+'],
+        ])
+
         command_basic = [
             'iCount', 'rnamaps',
-            self.bam,
-            self.gtf,
-            self.tmp1,
-            get_temp_file_name(extension='.bam'),
-            self.tmp2,
+            cross_links,
+            landmarks,
             '-S', '40',  # Supress lower than ERROR messages.
         ]
 

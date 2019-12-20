@@ -94,6 +94,9 @@ ENV/
 # pycharm
 .idea
 
+# Visual Studio Code
+.vscode
+
 iCount/_version.py
 
 # Ignore pytest cache dir.

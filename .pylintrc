@@ -103,7 +103,7 @@ ignore-imports=no
 bad-functions=apply,input,file
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,j,k,ex,Run,_,pk,fn
+good-names=i,j,k,ex,Run,_,pk,fn,ax,df
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,baz,toto,tutu,tata

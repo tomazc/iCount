@@ -63,7 +63,7 @@ setup(
         'pysam',
         'pybedtools',
         'numpydoc',
-        'sphinx>=1.4',
+        'sphinx>=1.4, <1.8',
         'matplotlib',
     ],
     extras_require={
@@ -78,6 +78,7 @@ setup(
             'wheel',
         ],
         'test': [
+            'tox',
             'check-manifest',
             'pylint>=1.6.4',
             'pycodestyle>=2.1.0',
