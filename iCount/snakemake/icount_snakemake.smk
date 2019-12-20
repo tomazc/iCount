@@ -91,7 +91,8 @@ import yaml
 
 
 #~~~~~~~~~~~~~~~~~~~~~* Import config file and samples annotation *~~~~~~~~~~~~~~~~~~~~#
-configfile:"config_synthetic.yaml"
+# Config file can be specified here or on the snakemake call (--configfile config_synthetic.yaml)
+# configfile:"config_synthetic.yaml"
 # validate(config, schema="schemas/config.schema.yaml")
 
 #samples = pd.read_table(config["samples"]).set_index("5_barcode", drop=False)

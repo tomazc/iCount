@@ -1,0 +1,5 @@
+sample_name	method	protein	cells/tissue	condition	mapto	5_barcode	3_barcode	3_adapter	linker	comments	group
+hnRNPC_1	iCLIP	hnRNPC	HEK293	A	homo_sapiens	NNNGGTTNN		AGATCGGAAGAGCGGTTCAG	L3-NNATT	L3-ATT	WildType
+hnRNPC_2	iCLIP	hnRNPC	HEK293	B	homo_sapiens	NNNTTGTNN		AGATCGGAAGAGCGGTTCAG	L3-NNAGG	L3-AGG	WildType
+hnRNPC_3	iCLIP	hnRNPC	HEK293	C	homo_sapiens	NNNCAATNN		AGATCGGAAGAGCGGTTCAG	L3-NNTTA	L3-TTA	Treatment
+hnRNPC_4	iCLIP	hnRNPC	HEK293	D	homo_sapiens	NNNGGCGNN		AGATCGGAAGAGCGGTTCAG	L3-NNTGC	L3-TGC	Treatment
