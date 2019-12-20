@@ -15,3 +15,6 @@ include iCount/tests/functional/*.txt
 recursive-exclude docs presentations
 recursive-exclude docs/presentations *
 recursive-exclude docs/presentations/images *
+recursive-exclude iCount/examples *
+recursive-include iCount/snakemake/ *.smk *.md
+recursive-include iCount/snakemake/envs/ *.yaml
