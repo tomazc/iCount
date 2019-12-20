@@ -25,7 +25,7 @@ iCount
 ## run locally
 To run locally use command:
 ```
-snakemake -k -p --cores 4 --snakefile iCount_snakefile.smk --use-conda
+~.../iCount/examples$ snakemake -k -p --cores 4 --snakefile ../snakemake/icount_snakemake.smk --use-conda --configfile config_synthetic.yaml 
 ```
 
 ## Run in SLURM
@@ -51,7 +51,7 @@ Todo
 
 ## Output directories stile
 
-![Results directories](data/tree_output.PNG)
+![Results directories](data/tree_output.png)
 
 ## Pipeline schema
 
