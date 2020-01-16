@@ -49,6 +49,15 @@ snakemake --unlock -k -p --snakefile iCount_snakefile.smk.smk
 Todo
 ```
 
+<<<<<<< HEAD
+## tox check
+
+```
+tox -e packaging
+```
+
+=======
+>>>>>>> origin/snakemake
 ## Output directories stile
 
 ![Results directories](data/tree_output.png)

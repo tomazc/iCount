@@ -183,11 +183,6 @@ properties:
     description: "Log directory to store invidual jobs output and error when run on a cluster"
     default: "logs_cluster"
 
-#    type: integer
-#    description: ""
-#    minimum: 0
-#    default:
-
 
 required:
   - project
@@ -195,56 +190,3 @@ required:
   - raw_fastq_file
   - genomes_path
   - barcode_mismatches
-
-
-
-
-
-
-
-
-#
-#  #~~~~~~~~~~~~~~~~ iCount significant cross links  ~~~~~~~~~~~~~~~~#
-#  # Peaks (significant crosslinks low FDR) configuration
-#  # Find positions with high density of cross-linked sites.
-#  #
-#  # There are two typical variants of this analysis, depending on the parameters:
-#  #
-#  #* Gene-wise analysis, where:
-#  #    * features = gene
-#  #    * group_by = gene_id
-#  #
-#  #* Transcript-wise analysis where:
-#  #    * features = CDS, intron, UTR3, UTR5, ncRNA, intergenic
-#  #    * group_by = transcript_id
-#  #  [--merge_features] [--half_window] [--fdr]
-#
-#
-#  #~~~~~~~~~~~~~~~~ iCount cluster of cross links  ~~~~~~~~~~~~~~~~#
-
-
-
-#
-#  #~~~~~~~~~~~~~~~~  iCount rnamaps generation     ~~~~~~~~~~~~~~~~#
-#  # Perform RNA-maps analysis.
-#
-#  # What kind of plot to make. Choices are distribution, heatmaps and combined (default: combined)
-#  plot_type: "combined"
-#  # Plot heatmap for top_n best covered landmarks (default: 100)
-#  top_n: "1000"
-#  # Smoothing half-window. Average smoothing is used (default: 1)
-#  smoothing: "1"
-#  # Number of bins. Either nbins or binsize can be defined, but not both (default: 50)
-#  nbins: "50"
-#  # Bin size. Either nbins or binsize can be defined, but not both (default: None)
-#  binsize: "0"
-#  # Colormap to use. Any matplotlib colormap can be used (default: Greys)
-#  colormap: "Greys"
-#  # Output image format (default: png)
-#  imgfmt: "png"
-#
-#
-#  #======================== Computing  Cluster     =============================#
-#
-#  # Log directory to store invidual jobs output and error when run on a cluster
-#  logdir: "logs_cluster"
