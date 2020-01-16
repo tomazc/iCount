@@ -1,0 +1,250 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+
+description: "iCount snakemake pipeline configuration file"
+properties:
+  project:
+    type: string
+    description: "Project directory name"
+  samples:
+    type: string
+    description: "Sample table input accepts tsv or txt"
+  raw_fastq_file:
+    type: string
+    description: "Raw fastq file to demultiplex and analyse"
+  completeness_output:
+    type: string
+    description: "If minimum is present only crosslinks, significant crosslinks and clusters will be calculated. On the other hand if marked as complete all the crosslinks and  significant crosslinks will be annotated (default)."
+    enum: ["minimum", "complete"]
+    default: "minimum"
+  grouped_completeness_output:
+    type: string
+    description: "If minimum is present only merged crosslinks, significant crosslinks and clusters will be calculated. On the other hand if marked as complete all merged the crosslinks and significant crosslinks will be annotated (default)."
+    enum": ["minimum", "complete"]
+    default: "complete"
+  bedgraph_UCSC:
+    type: boolean
+    description: "Transform crosslink 6bed to UCSC bedgraph (false or true; default false)"
+    default: false
+  genomes_path:
+    type: string
+    description: "Directory where all the genomes, STAR index and iCount segment files will be stored."
+    default: "iCount_genomes"
+  release:
+    type: integer
+    description: "Annotation release on ensembl"
+    minimum: 59
+    maximum: 88
+    default: 88
+  custom_genome:
+    type: object
+    description: "Alternatively, you can use you custom genome including acronym_name, fasta sequence (genome_fasta) and gtf file (annotation) paths"
+    minProperties: 1
+    additionalProperties: true
+  barcode_mismatches:
+    type: integer
+    description: "Number of tolerated mismatches when comparing barcodes (default: 1)"
+    minimum: 0
+    default: 1
+  demultiplex_minimum_length:
+    type: integer
+    description: "Minimum length of trimmed sequence to keep (default: 15)"
+    minimum: 10
+    default: 15
+  min_adapter_overlap:
+    type: integer
+    description: "Minimum length of adapter on 3' end if demultiplexing using 3' barcodes (default: 7)"
+    minimum: 5
+    default: 7
+  qual_trim:
+    type: ["null", "integer"]
+    description: "Trim low-quality bases before adapter removal (default: None)"
+    minimum: 0
+    default: 20
+  minimum_length:
+    type: ["null", "integer"]
+    description: "Discard trimmed reads that are shorter than `minimum_length` (default: None)"
+    minimum: 10
+    default: 17
+  overlap:
+    type: ["null", "integer"]
+    description: "Required overlap overlap between read and adapter for an adapter to be found (default: None)"
+  untrimmed_output:
+    type: ["null", "string"]
+    description: "Write reads that do not contain any adapter to this file path (default: None)"
+  error_rate:
+    type: ["null", "number"]
+    description: "Maximum allowed error rate (no. of errors divided by the length of the matching region) (default: None)"
+  overhang:
+    type: integer
+    description: "Overhang for STAR index. Length of the donor/acceptor sequence on each side of the junctions"
+    minimum: 0
+    default: 100
+  mismatches:
+    type: integer
+    description: "Maximum number of mismatches per pair, large number switches off this filter max number of mismatches per pair relative to read length"
+    minimum: 0
+    default: 2
+  star_multimax:
+    type: integer
+    description: "Maximum number of loci the read is allowed to map to. Alignments (all ofthem) will be output only if the read maps to no more loci than this value."
+    minimum: 0
+    default: 10
+  index_threads:
+    type: integer
+    description: "Number of threads that STAR can use for generating index (default: 1)"
+    minimum: 1
+    default: 1
+  group_by:
+    type: string
+    description: "Assign score of a read to either 'start', 'middle' or 'end' nucleotide (default: start)"
+    enum: ["start", "middle", "end"]
+    default: "start"
+  quant:
+    type: string
+    description: "Report number of 'cDNA' or number of 'reads' (default: cDNA)"
+    enum: ["cDNA", "reads"]
+    default: "cDNA"
+  mismatches:
+    type: integer
+    description: "Reads on same position with random barcode differing less than mismatches are merged together, if their ratio is below ratio_th (default: 1)"
+    minimum: 0
+    default: 1
+  mapq_th:
+    type: integer
+    description: "Ignore hits with MAPQ < mapq_th (default: 0)"
+    minimum: 0
+    default: 0
+  multimax:
+    type: integer
+    description: "Ignore reads, mapped to more than multimax places (default: 50)"
+    minimum: 0
+    default: 10
+  gap_th:
+    type: integer
+    description: "Reads with gaps less than gap_th are treated as if they have no gap (default: 4)"
+    minimum: 0
+    default: 4
+  ratio_th:
+    type: number
+    description: "Ratio between the number of reads supporting a randomer versus the number of reads supporting the most frequent randomer. All randomers above this threshold are accepted as unique. Remaining are merge with the rest, allowing for the specified number of mismatches (default: 0.1)"
+    minimum: 0
+    default: 0.1
+  max_barcodes:
+    type: integer
+    description: "Skip merging similar barcodes if number of distinct barcodes at position is higher that this (default: 10000)"
+    minimum: 0
+    default: 10000
+  distance:
+    type: integer
+    description: "Merge adjacent peaks into clusters and sum cross-links within clusters. Distance between two peaks to merge into same cluster (default: 20)"
+    minimum: 0
+    default: 20
+  slop:
+    type: integer
+    description: "Distance between site and cluster to assign site to cluster (default: 3)"
+    minimum: 0
+    default: 3
+  plot_type:
+    type: string
+    description: " What kind of plot to make. Choices are distribution, heatmaps and combined (default: combined)"
+    enum: ["distribution", "heatmaps", "combined"]
+    default: "combined"
+  top_n:
+    type: integer
+    description: "Plot heatmap for top_n best covered landmarks (default: 100)"
+    minimum: 0
+    default: 1000
+  smoothing:
+    type: integer
+    description: "Smoothing half-window. Average smoothing is used (default: 1)"
+    minimum: 0
+    default: 1
+  nbins:
+    type: integer
+    description: "Number of bins. Either nbins or binsize can be defined, but not both (default: 50)"
+    minimum: 0
+    default: 50
+  binsize:
+    type: ["null", "integer"]
+    description: "Bin size. Either nbins or binsize can be defined, but not both (default: None)"
+    minimum: 0
+    default: null
+  colormap:
+    type: string
+    description: "Colormap to use. Any matplotlib colormap can be used (default: Greys)"
+    default: "Greys"
+  imgfmt:
+    type: string
+    description: "Output image format (default: png)"
+    enum: ["png", "pdf"]
+    default: "png"
+  logdir:
+    type: string
+    description: "Log directory to store invidual jobs output and error when run on a cluster"
+    default: "logs_cluster"
+
+#    type: integer
+#    description: ""
+#    minimum: 0
+#    default:
+
+
+required:
+  - project
+  - samples
+  - raw_fastq_file
+  - genomes_path
+  - barcode_mismatches
+
+
+
+
+
+
+
+
+#
+#  #~~~~~~~~~~~~~~~~ iCount significant cross links  ~~~~~~~~~~~~~~~~#
+#  # Peaks (significant crosslinks low FDR) configuration
+#  # Find positions with high density of cross-linked sites.
+#  #
+#  # There are two typical variants of this analysis, depending on the parameters:
+#  #
+#  #* Gene-wise analysis, where:
+#  #    * features = gene
+#  #    * group_by = gene_id
+#  #
+#  #* Transcript-wise analysis where:
+#  #    * features = CDS, intron, UTR3, UTR5, ncRNA, intergenic
+#  #    * group_by = transcript_id
+#  #  [--merge_features] [--half_window] [--fdr]
+#
+#
+#  #~~~~~~~~~~~~~~~~ iCount cluster of cross links  ~~~~~~~~~~~~~~~~#
+
+
+
+#
+#  #~~~~~~~~~~~~~~~~  iCount rnamaps generation     ~~~~~~~~~~~~~~~~#
+#  # Perform RNA-maps analysis.
+#
+#  # What kind of plot to make. Choices are distribution, heatmaps and combined (default: combined)
+#  plot_type: "combined"
+#  # Plot heatmap for top_n best covered landmarks (default: 100)
+#  top_n: "1000"
+#  # Smoothing half-window. Average smoothing is used (default: 1)
+#  smoothing: "1"
+#  # Number of bins. Either nbins or binsize can be defined, but not both (default: 50)
+#  nbins: "50"
+#  # Bin size. Either nbins or binsize can be defined, but not both (default: None)
+#  binsize: "0"
+#  # Colormap to use. Any matplotlib colormap can be used (default: Greys)
+#  colormap: "Greys"
+#  # Output image format (default: png)
+#  imgfmt: "png"
+#
+#
+#  #======================== Computing  Cluster     =============================#
+#
+#  # Log directory to store invidual jobs output and error when run on a cluster
+#  logdir: "logs_cluster"

@@ -7,7 +7,7 @@
 #===============================     Project     ==============================#
 # Define name of the project. Output files will be saved under "project" folder.
 
-## Project directory
+## Project directory name
 project: "synthetic"
 
 
@@ -25,7 +25,7 @@ project: "synthetic"
 # If the column "group" is present (which is optional),
 # samples will be merged and output for the group calculated.
 
-# Table input accepts tsv or txt
+# Sample table input accepts tsv or txt
 #samples: "data/hnRNPC_reduced.tsv"
 samples: "data/samples_synthetic.txt"
 
@@ -35,6 +35,26 @@ samples: "data/samples_synthetic.txt"
 # Raw fastq file to demultiplex and analyse
 #raw_fastq_file: "data/hnRNPC.fq.gz"
 raw_fastq_file: "data/merge_my_script.fq.gz"
+
+#============================     Desired output     ===========================#
+# Set the desidred output of the pipeline.
+
+## Completeness output
+# If "minimum" is present only crosslinks, significant crosslinks and clusters
+# will be calculated.
+# On the other hand if marked as "complete" all the crosslinks and  significant
+# crosslinks will be annotated (default).
+completeness_output: "minimum"
+
+## Grouped replicates completeness output
+# If "minimum" is present only merged crosslinks, significant crosslinks and
+# clusters will be calculated.
+# On the other hand if marked as "complete" all merged the crosslinks and
+# significant crosslinks will be annotated (default).
+grouped_completeness_output: "minimum"
+
+# Transform crosslink 6bed to UCSC bedgraph (false or true; default false)
+bedgraph_UCSC: true
 
 #=============================     Parameters     =============================#
 # Set the parameters for each step.
@@ -68,14 +88,14 @@ raw_fastq_file: "data/merge_my_script.fq.gz"
 # Directory where all the genomes, STAR index and iCount segment files will be stored.
 genomes_path: "iCount_genomes"
 
-# Annotation release on NCBI !!! Update to latest ones
-release: "88"
+# Annotation release on ensembl !!! Update to latest release
+release: 88
 
 # Alternatively, you can use you custom genome including acronym_name, fasta sequence (genome_fasta) and gtf file (annotation) paths
 custom_genome:
   hg19:
-    # Genomic fasta sequence
-    genome_fasta: "custom/custom.fa.gz"
+    # Genomic fasta sequence "custom/custom.fa.gz"
+    genome_fasta:
     # gtf file with transcripts
     annotation: "custom/custom.gtf.gz"
     # Overhang for STAR index
@@ -106,15 +126,12 @@ custom_genome:
 # List of 3-prime end barcodes order as the 5' barcodes (default: None)
 # barcodes3  [ ...]
 # Number of tolerated mismatches when comparing barcodes (default: 1)
-barcode_mismatches: "0"
+barcode_mismatches: 0
 # Minimum length of trimmed sequence to keep (default: 15)
-minimum_length: "17"
+demultiplex_minimum_length: 17
 # Minimum length of adapter on 3' end if demultiplexing also on
 # 3' barcodes (default: 7)
-min_adapter_overlap: "7"
-
-# Capture this from annotation.
-adapter3: "AGATCGGAAGAGCGGTTCAG"    # original name "3'adapter"
+min_adapter_overlap: 7
 
 
 #~~~~~~~~~~~~~~~~ iCount reads quality trimm  ~~~~~~~~~~~~~~~~#
@@ -122,17 +139,17 @@ adapter3: "AGATCGGAAGAGCGGTTCAG"    # original name "3'adapter"
 
 # Optional arguments:
 # Trim low-quality bases before adapter removal (default: None)
-qual_trim: "20"
+qual_trim: 20
 # Discard trimmed reads that are shorter than `minimum_length` (default: None)
-minimum_length: "17"
+minimum_length: 17
 # Required ``overlap`` overlap between read and adapter for an
 # adapter to be found (default: None)
 overlap:
-# Write reads that do not contain any adapter to this file (default: None)
+# Write reads that do not contain any adapter to this file path (default: None)
 untrimmed_output:
 # Maximum allowed error rate (no. of errors divided by the length
 # of the matching region) (default: None)
-error_rate: "0.1"
+error_rate: 0.1
 
 
 
@@ -141,13 +158,13 @@ error_rate: "0.1"
 
 # Optional arguments:
 # Overhang for STAR index
-overhang: "100"
+overhang: 100
 # Number of allowed mismatches in STAR mapping (default: 2)   !!!Check iMAps!!!
-mismatches: "2"
+mismatches: 2
 # Number of allowed multiple hits (default: 10)
-multimax: "10"
+star_multimax: 10
 # Number of threads that STAR can use for generating index (default: 1)
-threads: "8"
+index_threads: 8
 
 
 #~~~~~~~~~~~~~~~~ iCount cross links  ~~~~~~~~~~~~~~~~#
@@ -160,21 +177,21 @@ quant: "cDNA"
 
 # Reads on same position with random barcode differing less than
 # ``mismatches`` are merged together, if their ratio is below ratio_th (default: 1)
-mismatches: "2"
+mismatches: 1
 # Ignore hits with MAPQ < mapq_th (default: 0)
-mapq_th: "0"
+mapq_th: 0
 # Ignore reads, mapped to more than ``multimax`` places (default: 50)
-multimax: "10"
+multimax: 10
 # Reads with gaps less than gap_th are treated as if they have no gap (default: 4)
-gap_th: "4"
+gap_th: 4
 # Ratio between the number of reads supporting a randomer versus the
 # number of reads supporting the most frequent randomer. All randomers
 # above this threshold are accepted as unique. Remaining are merge
 # with the rest, allowing for the specified number of mismatches (default: 0.1)
-ratio_th: "0.1"
+ratio_th: 0.1
 # Skip merging similar barcodes if number of distinct barcodes at
 # position is higher that this (default: 10000)
-max_barcodes: "10000"
+max_barcodes: 10000
 
 
 #~~~~~~~~~~~~~~~~ iCount significant cross links  ~~~~~~~~~~~~~~~~#
@@ -196,9 +213,9 @@ max_barcodes: "10000"
 #~~~~~~~~~~~~~~~~ iCount cluster of cross links  ~~~~~~~~~~~~~~~~#
 # Merge adjacent peaks into clusters and sum cross-links within clusters.
 # Distance between two peaks to merge into same cluster (default: 20)
-distance: "20"
+distance: 20
 # Distance between site and cluster to assign site to cluster (default: 3)
-slop: "3"
+slop: 3
 
 #~~~~~~~~~~~~~~~~  iCount rnamaps generation     ~~~~~~~~~~~~~~~~#
 # Perform RNA-maps analysis.
@@ -206,13 +223,13 @@ slop: "3"
 # What kind of plot to make. Choices are distribution, heatmaps and combined (default: combined)
 plot_type: "combined"
 # Plot heatmap for top_n best covered landmarks (default: 100)
-top_n: "1000"
+top_n: 1000
 # Smoothing half-window. Average smoothing is used (default: 1)
-smoothing: "1"
+smoothing: 1
 # Number of bins. Either nbins or binsize can be defined, but not both (default: 50)
-nbins: "50"
+nbins: 50
 # Bin size. Either nbins or binsize can be defined, but not both (default: None)
-binsize: "0"
+binsize: 0
 # Colormap to use. Any matplotlib colormap can be used (default: Greys)
 colormap: "Greys"
 # Output image format (default: png)
