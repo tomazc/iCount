@@ -86,18 +86,14 @@ import pysam
 import yaml
 
 # Validate config file!!!
-<<<<<<< HEAD
 from snakemake.utils import validate
-=======
-#from snakemake.utils import validate
->>>>>>> origin/snakemake
+
 
 
 
 #~~~~~~~~~~~~~~~~~~~~~* Import config file and samples annotation *~~~~~~~~~~~~~~~~~~~~#
 # Config file can be specified here or on the snakemake call (--configfile config_synthetic.yaml)
 # configfile:"config_synthetic.yaml"
-<<<<<<< HEAD
 validate(config, schema="schemas/config.schema.yaml")
 
 samples = pd.read_table(config["samples"]).set_index("barcode_5", drop=False)
@@ -115,17 +111,6 @@ if len(samples.index) != len(samples["sample_name"].unique().tolist()):
 
 # Merge 5'barcode and 3'barcode to create a table index (full barcode)
 cols = ['barcode_5', 'barcode_3']
-=======
-# validate(config, schema="schemas/config.schema.yaml")
-
-#samples = pd.read_table(config["samples"]).set_index("5_barcode", drop=False)
-samples = pd.read_table(config["samples"])
-#validate(samples, schema="schemas/samples.schema.yaml")
-
-
-# Merge 5'barcode and 3'barcode to create a table index (full barcode)
-cols = ['5_barcode', '3_barcode']
->>>>>>> origin/snakemake
 samples["full_barcode"] = samples[cols].apply(lambda x: '_'.join(x.dropna()), axis=1)
 samples=samples.set_index(["full_barcode"], drop = False)
 
@@ -140,7 +125,6 @@ os.makedirs(logdir, exist_ok=True)
 # print("Procesing project:", PROJECT)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~* Final outputs *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-<<<<<<< HEAD
 # Import set of rules
 include: "rules/common.smk"
 #include: "/Users/mozosi/Dropbox (UCL-MN Team)/GitHub/iCount/iCount/snakemake/rules/demultiplex.smk"
@@ -173,11 +157,6 @@ def all_input(wildcards):
 localrules: all
 
 
-
-=======
-localrules: all
-
->>>>>>> origin/snakemake
 rule all:
     input:
         expand("{genomes_path}/{genome}/{genome}.fa.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
@@ -205,11 +184,7 @@ rule all:
         expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.annotated_sites_biotype.tab", project=config['project'], barcode=samples.index),
         expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.annotated_sites_gene_id.tab", project=config['project'], barcode=samples.index),
         expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.bedgraph", project=config['project'], barcode=samples.index),
-<<<<<<< HEAD
         #expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.UCSC.bedgraph", project=config['project'], barcode=samples.index),
-=======
-        expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.UCSC.bedgraph", project=config['project'], barcode=samples.index),
->>>>>>> origin/snakemake
         expand("{project}/xlsites/{barcode}/rnamaps/", project=config['project'], barcode=samples.index),
 
         expand("{project}/sig_xlsites/{barcode}/{barcode}.sig_sites.bed", project=config['project'], barcode=samples.index),
@@ -236,11 +211,8 @@ rule all:
         # expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_subtype.tsv", project=config['project'], group=samples["group"].dropna().unique()),
 
         expand("{project}/groups/{group}/clusters/{group}.group.clusters.bed", project=config['project'], group=samples["group"].dropna().unique()),
-<<<<<<< HEAD
         all_input
-=======
 
->>>>>>> origin/snakemake
 
 #==============================================================================#
 #                       Demultiplex
@@ -255,17 +227,10 @@ rule demultiplex:
         # "{project}/demultiplexed/demux_{barcode}.fastq.gz",
         "demultiplexed/demux_nomatch5.fastq.gz"
     params:
-<<<<<<< HEAD
         adapter3=samples["adapter_3"].unique().tolist(),
         all_5barcodes=samples["barcode_5"].tolist(),
         # all_3barcodes=samples["barcode_3"].tolist(),
         all_3barcodes = samples["barcode_3"].fillna(".").tolist(),
-=======
-        adapter3=samples["3_adapter"].unique().tolist(),                        # Complain if there are more than one 3_adapter
-        all_5barcodes=samples["5_barcode"].tolist(),
-        # all_3barcodes=samples["3_barcode"].tolist(),
-        all_3barcodes = samples["3_barcode"].fillna(".").tolist(),
->>>>>>> origin/snakemake
         dir=directory("demultiplexed"),
         barcode_mismatches=config['barcode_mismatches'],
         minimum_length=config['minimum_length'],
@@ -326,12 +291,7 @@ rule quality_trim:
     params:
         qual_trim=config['qual_trim'],
         minimum_length=config['minimum_length'],
-<<<<<<< HEAD
         adapter=samples["adapter_3"].unique().tolist(),
-=======
-        # adapter=config['adapter3'],
-        adapter=samples["3_adapter"].unique().tolist(),
->>>>>>> origin/snakemake
         overlap=config['overlap'],
         untrimmed_output=config['untrimmed_output'],
         error_rate=config['error_rate'],
@@ -465,11 +425,7 @@ rule indexstar_genome:
         genome_fasta="{genomes_path}/{genome}/{genome}.fa.gz",
         gtf="{genomes_path}/{genome}/{genome}.gtf.gz",
     threads:
-<<<<<<< HEAD
         int(config['index_threads'])
-=======
-        int(config['threads'])
->>>>>>> origin/snakemake
     params:
         overhang=config['overhang'],
     output:
@@ -565,11 +521,7 @@ rule xlsites:
         """
 
 def bedgraph_description(wildcards):
-<<<<<<< HEAD
     return ("{project}_{sample_name}_{protein}_{method}_{mapto}".format(project=config['project'], sample_name=samples.loc[wildcards.barcode, "sample_name"], mapto=samples.loc[wildcards.barcode, "mapto"], method=samples.loc[wildcards.barcode, "method"],	protein=samples.loc[wildcards.barcode, "protein"],	cells_tissue=samples.loc[wildcards.barcode, "cells_tissue"],	condition=samples.loc[wildcards.barcode, "condition"],))
-=======
-    return ("{project}_{sample_name}_{protein}_{method}_{mapto}".format(project=config['project'], sample_name=samples.loc[wildcards.barcode, "sample_name"], mapto=samples.loc[wildcards.barcode, "mapto"], method=samples.loc[wildcards.barcode, "method"],	protein=samples.loc[wildcards.barcode, "protein"],	cells_tissue=samples.loc[wildcards.barcode, "cells/tissue"],	condition=samples.loc[wildcards.barcode, "condition"],))
->>>>>>> origin/snakemake
 
 
 rule bedgraph:
@@ -758,69 +710,8 @@ rule clusters:
             {output.clusters}")
 
 
-<<<<<<< HEAD
-=======
-#==============================================================================#
-#           Create bedgraphs to import on UCSC genome browser
-#==============================================================================#
-
-def bedgraph_header(wildcards):
-    # db=\"{mapto}\" removed
-    # return ("{project}_{sample_name}_{protein}_{method}_{mapto}".format(project=config['project'], sample_name=samples.loc[wildcards.barcode, "sample_name"], mapto=samples.loc[wildcards.barcode, "mapto"], method=samples.loc[wildcards.barcode, "method"],	protein=samples.loc[wildcards.barcode, "protein"],	cells_tissue=samples.loc[wildcards.barcode, "cells/tissue"],	condition=samples.loc[wildcards.barcode, "condition"],))
-    return ("track type=bedGraph name=\"{project}_{sample_name}_{protein}_{method}_{mapto}_unique.xl.bedgraph.bed\" description=\"{project}_{sample_name}_{protein}_{method}_{mapto}\" "
-            "color=\"120,101,172\"  mapped_to=\"{mapto}\" altColor=\"200,120,59\" lib_id=\"{project}\" maxHeightPixels=\"100:50:0\" visibility=\"full\" "
-            "tissue=\"{cells_tissue}\" protein=\"{protein}\" species=\"{mapto}\" condition=\"{condition}\" res_type=\"T\" priority=\"20\" \n".format(project=config['project'], sample_name=samples.loc[wildcards.barcode, "sample_name"], mapto=samples.loc[wildcards.barcode, "mapto"], method=samples.loc[wildcards.barcode, "method"],	protein=samples.loc[wildcards.barcode, "protein"],	cells_tissue=samples.loc[wildcards.barcode, "cells/tissue"],	condition=samples.loc[wildcards.barcode, "condition"],))
-
-# Export function
-def get_genome(wildcards):
-    return ("{0}".format(samples.loc[wildcards.barcode, "mapto"]))
 
 
-rule bedgraphUCSC:
-    input:
-        xlsites="{project}/xlsites/{barcode}/{barcode}.unique.xl.bed",
-    output:
-        bedgraph="{project}/xlsites/{barcode}/{barcode}.unique.xl.UCSC.bedgraph",
-    params:
-        header=bedgraph_header,
-        genome=get_genome,
-    run:
-        # Convert ENSMBL to UCSC. Thanks to Devon Ryan for creation of mapping tables
-        # If your genome is not included please check: https://github.com/dpryan79/ChromosomeMappings
-        d = {}
-        if params.genome == 'homo_sapiens':
-            f = open("data/GRCh38_ensembl2UCSC.txt")
-        elif params.genome == 'mus_musculus':
-            f = open("data/GRCm38_ensembl2UCSC.txt")
-        else:
-            print("Please add mapping file to trasnform your genome coordinates to UCSC compatible chromosomes")
-            f = ""
-
-        for line in f:
-            cols = line.strip().split("\t")
-            if len(cols) < 2 or cols[1] == "":
-                continue
-            d[cols[0]] = cols[1]
-
-        f.close()
-
-        fin = open(input.xlsites)
-        fout = open(output.bedgraph, "w")
-        fout.write(params.header)
-        line = fin.readline()
-        while line:
-            col = line.rstrip('\n').rsplit('\t')
-            chr = col[0]
-            count = col[4]
-            strand = col[5]
-            if strand == '-':
-                count = '-' + count
-            fout.write(d[chr] + '\t' + col[1] + '\t' + col[2] + '\t' + count + '\n')
-            line = fin.readline()
-
-        fin.close()
-        fout.close()
->>>>>>> origin/snakemake
 
 
 #==============================================================================#
@@ -848,11 +739,7 @@ rule group:
         """
 
 def bedgraph_group_description(wildcards):
-<<<<<<< HEAD
     return ("{project}_group_{group}_{protein}_{method}_{mapto}".format(project=config['project'], group=wildcards.group, mapto=samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0], method=samples.loc[samples['group'] == wildcards.group, "method"].unique()[0],	protein=samples.loc[samples['group'] == wildcards.group, "protein"].unique()[0],	cells_tissue=samples.loc[samples['group'] == wildcards.group, "cells_tissue"].unique()[0],	condition=samples.loc[samples['group'] == wildcards.group, "condition"].unique()[0]))
-=======
-    return ("{project}_group_{group}_{protein}_{method}_{mapto}".format(project=config['project'], group=wildcards.group, mapto=samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0], method=samples.loc[samples['group'] == wildcards.group, "method"].unique()[0],	protein=samples.loc[samples['group'] == wildcards.group, "protein"].unique()[0],	cells_tissue=samples.loc[samples['group'] == wildcards.group, "cells/tissue"].unique()[0],	condition=samples.loc[samples['group'] == wildcards.group, "condition"].unique()[0]))
->>>>>>> origin/snakemake
 
 
 rule group_bedgraph:
