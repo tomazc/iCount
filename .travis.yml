@@ -18,7 +18,7 @@ cache:
     - pip
 
 install:
-    - pip install tox
+    - pip install cython tox
     # install bedtools
     - wget https://github.com/arq5x/bedtools2/releases/download/v2.27.1/bedtools-2.27.1.tar.gz
     - tar -zxvf bedtools-2.27.1.tar.gz
