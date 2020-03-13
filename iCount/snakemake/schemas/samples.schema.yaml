@@ -1,0 +1,56 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: "An entry in the sample sheet"
+properties:
+  sample_name:
+    type: string
+    description: "Sample name or identifier (must be unique)."
+    uniqueItems: true
+  method:
+    type: string
+    description: "CLIP method used"
+  protein:
+    type: string
+    description: "Protein names should be according to the accepted gene symbol (check here: http://www.ncbi.nlm.nih.gov/gene/)"
+  cells_tissue:
+    type: string
+    description: "Cell or tissue type used to perform the CLIP experiment"
+  condition:
+    type: string
+    description: "Short explanation of the condition. Don't add here information that is already in other columns (such as protein, cell line, etc)."
+  mapto:
+    type: string
+    description: "Genome to align sequencing reads."
+  barcode_5:
+    type: string
+    pattern: "^[ACGTNacgtn]+$"
+    description: "This is the 5' barcode at the start of the first read. The Ns denote the UMI. Only allowed nuceotides (ACGTNacgtn)."
+  barcode_3:
+    type: string
+    description: "3' barcode used to multiplex and randomer nucleotides (UMIs) test different values error. Only allowed nuceotides (ACGTNacgtn)."
+    pattern: "^[ACGTNacgtn]+$"
+  adapter_3:
+    type: string
+    description: "This allows to remove the sequence of the P3 adapter in cases where our cDNAs are so short that the reads include also part of the adapter sequence. Only allowed nuceotides (ACGTacgt)"
+    pattern: "^[ACGTacgt]+$"
+    items:
+      properties:
+        uniqueItems: true
+  linker:
+    type: string
+    description: "If you use L3 adaptors add that here."
+  comments:
+    type: string
+    description: "Any comment are allowed here."
+  group:
+    type: string
+    description: "String name that will used to merge replicates and calculate downstream output."
+  New:
+    type: string
+
+required:
+  - sample_name
+  - protein
+  - mapto
+  - barcode_5
+  - adapter_3
