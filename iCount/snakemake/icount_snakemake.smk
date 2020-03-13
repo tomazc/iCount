@@ -91,9 +91,11 @@ from snakemake.utils import validate
 
 
 
+
 #~~~~~~~~~~~~~~~~~~~~~* Import config file and samples annotation *~~~~~~~~~~~~~~~~~~~~#
 # Config file can be specified here or on the snakemake call (--configfile config_synthetic.yaml)
 # configfile:"config_synthetic.yaml"
+
 validate(config, schema="schemas/config.schema.yaml")
 
 samples = pd.read_table(config["samples"]).set_index("barcode_5", drop=False)
@@ -125,6 +127,7 @@ os.makedirs(logdir, exist_ok=True)
 # print("Procesing project:", PROJECT)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~* Final outputs *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
 # Import set of rules
 include: "rules/common.smk"
 #include: "/Users/mozosi/Dropbox (UCL-MN Team)/GitHub/iCount/iCount/snakemake/rules/demultiplex.smk"
@@ -155,7 +158,6 @@ def all_input(wildcards):
 
 
 localrules: all
-
 
 rule all:
     input:
@@ -212,6 +214,7 @@ rule all:
 
         expand("{project}/groups/{group}/clusters/{group}.group.clusters.bed", project=config['project'], group=samples["group"].dropna().unique()),
         all_input
+
 
 
 #==============================================================================#
@@ -292,6 +295,7 @@ rule quality_trim:
         qual_trim=config['qual_trim'],
         minimum_length=config['minimum_length'],
         adapter=samples["adapter_3"].unique().tolist(),
+
         overlap=config['overlap'],
         untrimmed_output=config['untrimmed_output'],
         error_rate=config['error_rate'],
@@ -524,6 +528,7 @@ def bedgraph_description(wildcards):
     return ("{project}_{sample_name}_{protein}_{method}_{mapto}".format(project=config['project'], sample_name=samples.loc[wildcards.barcode, "sample_name"], mapto=samples.loc[wildcards.barcode, "mapto"], method=samples.loc[wildcards.barcode, "method"],	protein=samples.loc[wildcards.barcode, "protein"],	cells_tissue=samples.loc[wildcards.barcode, "cells_tissue"],	condition=samples.loc[wildcards.barcode, "condition"],))
 
 
+
 rule bedgraph:
     input:
         xlsites="{project}/xlsites/{barcode}/{barcode}.unique.xl.bed",
@@ -712,8 +717,6 @@ rule clusters:
 
 
 
-
-
 #==============================================================================#
 #                       Group analysis
 #==============================================================================#
@@ -740,6 +743,7 @@ rule group:
 
 def bedgraph_group_description(wildcards):
     return ("{project}_group_{group}_{protein}_{method}_{mapto}".format(project=config['project'], group=wildcards.group, mapto=samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0], method=samples.loc[samples['group'] == wildcards.group, "method"].unique()[0],	protein=samples.loc[samples['group'] == wildcards.group, "protein"].unique()[0],	cells_tissue=samples.loc[samples['group'] == wildcards.group, "cells_tissue"].unique()[0],	condition=samples.loc[samples['group'] == wildcards.group, "condition"].unique()[0]))
+
 
 
 rule group_bedgraph:

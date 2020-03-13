@@ -7,6 +7,7 @@
 #===============================     Project     ==============================#
 # Define name of the project. Output files will be saved under "project" folder.
 
+
 ## Project directory name
 project: "synthetic"
 
@@ -139,6 +140,7 @@ demultiplex_minimum_length: 17
 min_adapter_overlap: 7
 
 
+
 #~~~~~~~~~~~~~~~~ iCount reads quality trimm  ~~~~~~~~~~~~~~~~#
 # Remove adapter sequences and check quality from reads in FASTQ file.
 
@@ -172,6 +174,7 @@ star_multimax: 10
 index_threads: 8
 
 
+
 #~~~~~~~~~~~~~~~~ iCount cross links  ~~~~~~~~~~~~~~~~#
 # Calculate cross links. Groupby should be selected in base of the CLIP technique
 
@@ -182,6 +185,7 @@ quant: "cDNA"
 
 # Reads on same position with random barcode differing less than
 # ``mismatches`` are merged together, if their ratio is below ratio_th (default: 1)
+
 mismatches: 1
 # Ignore hits with MAPQ < mapq_th (default: 0)
 mapq_th: 0
@@ -189,6 +193,7 @@ mapq_th: 0
 multimax: 10
 # Reads with gaps less than gap_th are treated as if they have no gap (default: 4)
 gap_th: 4
+
 # Ratio between the number of reads supporting a randomer versus the
 # number of reads supporting the most frequent randomer. All randomers
 # above this threshold are accepted as unique. Remaining are merge
@@ -197,7 +202,6 @@ ratio_th: 0.1
 # Skip merging similar barcodes if number of distinct barcodes at
 # position is higher that this (default: 10000)
 max_barcodes: 10000
-
 
 
 #~~~~~~~~~~~~~~~~ iCount significant cross links  ~~~~~~~~~~~~~~~~#

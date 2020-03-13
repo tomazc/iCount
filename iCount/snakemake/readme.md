@@ -49,11 +49,13 @@ snakemake --unlock -k -p --snakefile iCount_snakefile.smk.smk
 Todo
 ```
 
+
 ## tox check
 
 ```
 tox -e packaging
 ```
+
 
 ## Output directories stile
 
