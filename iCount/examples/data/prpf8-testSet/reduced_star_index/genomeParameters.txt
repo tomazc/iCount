@@ -1,0 +1,16 @@
+### STAR   --runMode genomeGenerate   --runThreadN 8   --genomeDir reduced_star_index   --genomeFastaFiles GRCh38.primary_assembly.genome_chr6_34000000_35000000.fa      --genomeSAindexNbases 9   --outFileNamePrefix reduced_star_index
+### GstrandBit 32
+versionGenome	2.7.1a
+genomeFastaFiles	GRCh38.primary_assembly.genome_chr6_34000000_35000000.fa 
+genomeSAindexNbases	9
+genomeChrBinNbits	18
+genomeSAsparseD	1
+sjdbOverhang	0
+sjdbFileChrStartEnd	- 
+sjdbGTFfile	-
+sjdbGTFchrPrefix	-
+sjdbGTFfeatureExon	exon
+sjdbGTFtagExonParentTranscript	transcript_id
+sjdbGTFtagExonParentGene	gene_id
+sjdbInsertSave	Basic
+genomeFileSizes	1048576 8250012
