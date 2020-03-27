@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Create genome, annotation and read data for an iCLIP test data set
 # Charlotte Capitanchik 13.03.2020
 
