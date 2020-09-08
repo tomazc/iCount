@@ -175,13 +175,13 @@ def _extract(reads, barcodes, **kwargs):
 
 def add_randomer_to_header(randomer, fq_entry):
     """Add randomer info to FASTQ header."""
-    match = re.match(r'.*(:rbc:)([ACGT]+).*', fq_entry.id)
+    match = re.match(r'.*(:rbc:)([ACGTN]+).*', fq_entry.id)
     if match:
         # Handle the case where randomer is already in the header.
         rbc = match.group(2)
         randomer = randomer + rbc
 
-        fq_entry.id = re.sub(r':rbc:[ACGT]+', '', fq_entry.id)
+        fq_entry.id = re.sub(r':rbc:[ACGTN]+', '', fq_entry.id)
 
     if fq_entry.id[-2:] in ['/1', '/2']:
         # For early versions of Illumina, keep mate info at the end:
