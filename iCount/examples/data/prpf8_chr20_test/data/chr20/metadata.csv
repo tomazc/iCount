@@ -1,0 +1,7 @@
+sample_id,fastq
+exp1,test/data/chr20/reads/prpf8-hela-eif4a3-sirna-20190611-ju_trimmed_chr20_0_64444167.fq.gz
+exp2,test/data/chr20/reads/prpf8-hela-eif4a3-sirna-20190611-ju-2_trimmed_chr20_0_64444167.fq.gz
+exp3,test/data/chr20/reads/prpf8-hela-eif4a3-sirna-20190611-ju-4_trimmed_chr20_0_64444167.fq.gz
+exp4,test/data/chr20/reads/prpf8-hela-scramble-sirna-20190611-ju_trimmed_chr20_0_64444167.fq.gz
+exp5,test/data/chr20/reads/prpf8-hela-scramble-sirna-20190611-ju-2_trimmed_chr20_0_64444167.fq.gz
+exp6,test/data/chr20/reads/prpf8-hela-scramble-sirna-20190611-ju-4_trimmed_chr20_0_64444167.fq.gz
