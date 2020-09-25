@@ -13,12 +13,15 @@ properties:
     description: "Raw fastq file to demultiplex and analyse"
   completeness_output:
     type: string
-    description: "If minimum is present only crosslinks, significant crosslinks and clusters will be calculated. On the other hand if marked as complete all the crosslinks and  significant crosslinks will be annotated (default)."
+    description: "If minimum is present only crosslinks, significant crosslinks and clusters will be calculated.
+    On the other hand if marked as complete all the crosslinks and significant crosslinks will be annotated (default)."
     enum: ["minimum", "complete"]
     default: "minimum"
   grouped_completeness_output:
     type: string
-    description: "If minimum is present only merged crosslinks, significant crosslinks and clusters will be calculated. On the other hand if marked as complete all merged the crosslinks and significant crosslinks will be annotated (default)."
+    description: "If minimum is present only merged crosslinks, significant crosslinks and clusters will be calculated.
+    On the other hand if marked as complete all merged the crosslinks and significant crosslinks will be annotated
+    (default)."
     enum": ["minimum", "complete"]
     default: "complete"
   bedgraph_UCSC:
@@ -37,7 +40,8 @@ properties:
     default: 88
   custom_genome:
     type: object
-    description: "Alternatively, you can use you custom genome including acronym_name, fasta sequence (genome_fasta) and gtf file (annotation) paths"
+    description: "Alternatively, you can use you custom genome including acronym_name, fasta sequence (genome_fasta)
+    and gtf file (annotation) paths"
     minProperties: 1
     additionalProperties: true
   barcode_mismatches:
@@ -73,7 +77,8 @@ properties:
     description: "Write reads that do not contain any adapter to this file path (default: None)"
   error_rate:
     type: ["null", "number"]
-    description: "Maximum allowed error rate (no. of errors divided by the length of the matching region) (default: None)"
+    description: "Maximum allowed error rate (no. of errors divided by the length of the matching region)
+    (default: None)"
   overhang:
     type: integer
     description: "Overhang for STAR index. Length of the donor/acceptor sequence on each side of the junctions"
@@ -81,12 +86,14 @@ properties:
     default: 100
   mismatches:
     type: integer
-    description: "Maximum number of mismatches per pair, large number switches off this filter max number of mismatches per pair relative to read length"
+    description: "Maximum number of mismatches per pair, large number switches off this filter max number of mismatches
+    per pair relative to read length"
     minimum: 0
     default: 2
   star_multimax:
     type: integer
-    description: "Maximum number of loci the read is allowed to map to. Alignments (all ofthem) will be output only if the read maps to no more loci than this value."
+    description: "Maximum number of loci the read is allowed to map to. Alignments (all ofthem) will be output only if
+    the read maps to no more loci than this value."
     minimum: 0
     default: 10
   index_threads:
@@ -106,7 +113,8 @@ properties:
     default: "cDNA"
   mismatches:
     type: integer
-    description: "Reads on same position with random barcode differing less than mismatches are merged together, if their ratio is below ratio_th (default: 1)"
+    description: "Reads on same position with random barcode differing less than mismatches are merged together, if
+    their ratio is below ratio_th (default: 1)"
     minimum: 0
     default: 1
   mapq_th:
@@ -126,17 +134,21 @@ properties:
     default: 4
   ratio_th:
     type: number
-    description: "Ratio between the number of reads supporting a randomer versus the number of reads supporting the most frequent randomer. All randomers above this threshold are accepted as unique. Remaining are merge with the rest, allowing for the specified number of mismatches (default: 0.1)"
+    description: "Ratio between the number of reads supporting a randomer versus the number of reads supporting the
+    most frequent randomer. All randomers above this threshold are accepted as unique. Remaining are merge with the
+    rest, allowing for the specified number of mismatches (default: 0.1)"
     minimum: 0
     default: 0.1
   max_barcodes:
     type: integer
-    description: "Skip merging similar barcodes if number of distinct barcodes at position is higher that this (default: 10000)"
+    description: "Skip merging similar barcodes if number of distinct barcodes at position is higher that this
+    (default: 10000)"
     minimum: 0
     default: 10000
   distance:
     type: integer
-    description: "Merge adjacent peaks into clusters and sum cross-links within clusters. Distance between two peaks to merge into same cluster (default: 20)"
+    description: "Merge adjacent peaks into clusters and sum cross-links within clusters. Distance between two peaks
+    to merge into same cluster (default: 20)"
     minimum: 0
     default: 20
   slop:

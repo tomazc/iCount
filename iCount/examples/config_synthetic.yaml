@@ -7,25 +7,21 @@
 #===============================     Project     ==============================#
 # Define name of the project. Output files will be saved under "project" folder.
 
-
 ## Project directory name
 project: "synthetic"
 
 
 #===============================     Samples     ==============================#
 # Define which samples to map and which species to map to.
-#
 # Note that the path to the sample can be absolute or relative to the directory 
 # where the Snakefile is run. 
 
-
 # Path or URL to sample sheet (tsv format, TAB separated columns:
-# sample_name, method, protein, cells/tissue, condition, mapto,	5_barcode,
-# 3_barcode, 3_adapter,	linker,	comments, group)
+# sample_name, method, protein, cells/tissue, condition, mapto, 5_barcode,
+# 3_barcode, 3_adapter, linker, comments, group)
 
 # If the column "group" is present (which is optional),
 # samples will be merged and output for the group calculated.
-
 
 # Sample table input accepts tsv or txt
 #samples: "data/hnRNPC_reduced.tsv"
@@ -84,34 +80,36 @@ bedgraph_UCSC: true
 # takifugu_rubripes,tarsius_syrichta,tetraodon_nigroviridis,tupaia_belangeri,tursiops_truncatus,vicugna_pacos,xenopus_tropicalis,xiphophorus_maculatus
 
 # Update releases script and Icount annotation and genome doesn't accept "--releases" word
-
-
 # Current version of iCount is tested to work with human and mouse genomes only.
-
 
 # Directory where all the genomes, STAR index and iCount segment files will be stored.
 genomes_path: "iCount_genomes"
 
-
 # Annotation release on ensembl !!! Update to latest release
 release: 88
 
+# Processing the entire genome is computationally very expensive. For this reason, we are limiting the tutorial example
+# to chromosomes 21 and MT. !!!!! Include validation
+chromosomes: 21 MT
+# Source of data. Only ENSEMBL or GENCODE are available (default: gencode)!!!!! Include validation!! gencode doesn't work
+source: ensembl
 
-# Alternatively, you can use you custom genome including acronym_name, fasta sequence (genome_fasta) and gtf file (annotation) paths
+# Alternatively, you can use you custom genome including acronym_name, fasta sequence (genome_fasta) and gtf file
+#  (annotation) paths
 custom_genome:
   hg19:
     # Genomic fasta sequence
     genome_fasta: "custom/custom.fa.gz"
     # gtf file with transcripts
     annotation: "custom/custom.gtf.gz"
-    # Overhang for STAR index
   hg38:
     # Genomic fasta sequence
     genome_fasta: "custom/custom2.fa.gz"
     # gtf file with transcripts
     annotation: "custom/custom2.gtf.gz"
 
-##    Custom genome example annotation. Name directory, fasta sequence and annotation using the same acromyn ("hg19") as in the example
+# Custom genome example annotation. Name directory, fasta sequence and annotation using the same acromyn ("hg19")
+# as in the example:
 #custom_genome:
 #  hg19:
 #    # Genomic fasta sequence
@@ -183,8 +181,8 @@ group_by: "start"
 # Report number of 'cDNA' or number of 'reads' (default: cDNA)
 quant: "cDNA"
 
-# Reads on same position with random barcode differing less than
-# ``mismatches`` are merged together, if their ratio is below ratio_th (default: 1)
+# Reads on same position with random barcode differing less than ``mismatches``
+#  are merged together, if their ratio is below ratio_th (default: 1)
 
 mismatches: 1
 # Ignore hits with MAPQ < mapq_th (default: 0)
@@ -251,3 +249,23 @@ imgfmt: "png"
 
 # Log directory to store invidual jobs output and error when run on a cluster
 logdir: "logs_cluster"
+
+
+#=====================    Workflow integrity check   ==========================#
+
+# Create integrity and reproducibility test, boolean 'true' or 'false' (default: false).
+create_integrity_test: false
+# Check integrity and reproducibility test, boolean 'true' or 'false' (default: false).
+integrity_test_check: true
+
+
+### Project test directory name
+#project: "integrity_test"
+#
+## Sample table input accepts tsv or txt
+##samples: "data/hnRNPC_reduced.tsv"
+#samples: "data/samples_synthetic.txt"
+#
+## Raw fastq file to demultiplex and analyse
+##raw_fastq_file: "data/hnRNPC.fq.gz"
+#raw_fastq_file: "data/merge_my_script.fq.gz"

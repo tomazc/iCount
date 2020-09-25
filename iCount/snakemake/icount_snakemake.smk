@@ -2,7 +2,7 @@
 #                        iCount Snakemake workflow
 #==============================================================================#
 # Authors # Igor Ruiz de los Mozos, Charlotte Capitanchik, Tomaz Curk
-# Last updated: November 2019
+# Last updated: September 2020
 
 
 # Install Locally
@@ -30,7 +30,7 @@
 # Step two: To run locally use command:
 # snakemake -k -p --snakefile demultiplex_snakefile.smk --use-conda
 # snakemake -k -p --cores 4 --snakefile demultiplex_snakefile.smk --use-conda
-
+# snakemake -k -p --cores 4 --snakefile '/Users/mozosi/Dropbox (UCL-MN Team)/GitHub/iCount/iCount/snakemake/icount_snakemake.smk' --use-conda --configfile config_synthetic.yaml
 # dag workflow
 # snakemake --snakefile demultiplex_snakefile.smk --use-conda --dag 2> /dev/null | dot -T png > workflow_bysample.png
 # snakemake --snakefile demultiplex_snakefile.smk --use-conda --rulegraph 2> /dev/null | dot -T png > workflow.png
@@ -89,27 +89,26 @@ import yaml
 from snakemake.utils import validate
 
 
-
-
-
 #~~~~~~~~~~~~~~~~~~~~~* Import config file and samples annotation *~~~~~~~~~~~~~~~~~~~~#
 # Config file can be specified here or on the snakemake call (--configfile config_synthetic.yaml)
 # configfile:"config_synthetic.yaml"
+# Note that the path to the configfile can be absolute or relative to the directory
+# where the Snakefile is run.
 
+# Validate config file
 validate(config, schema="schemas/config.schema.yaml")
 
+# Import sample file and validate samples
 samples = pd.read_table(config["samples"]).set_index("barcode_5", drop=False)
 #samples = pd.read_table(config["samples"])
 validate(samples, schema="schemas/samples.schema.yaml")
 
-
-# Move to common rules
+# Validate adapter and samples integrity
 if len(samples["adapter_3"].unique().tolist()) > 1:
     sys.exit("iCount pipeline only accepts a unique 3' adapter")
 
 if len(samples.index) != len(samples["sample_name"].unique().tolist()):
     sys.exit("iCount pipeline only accepts a unique sample names")
-
 
 # Merge 5'barcode and 3'barcode to create a table index (full barcode)
 cols = ['barcode_5', 'barcode_3']
@@ -117,20 +116,15 @@ samples["full_barcode"] = samples[cols].apply(lambda x: '_'.join(x.dropna()), ax
 samples=samples.set_index(["full_barcode"], drop = False)
 
 
-#~~~~~~~~~~~~~~~~~~~~~* Create log folder for cluster run *~~~~~~~~~~~~~~~~~~~~#
-logdir = os.path.join(os.getcwd(), config["logdir"])
-os.makedirs(logdir, exist_ok=True)
-
-
-
-# PROJECT = config['project']
-# print("Procesing project:", PROJECT)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~* Final outputs *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-# Import set of rules
+##### load rules #####
 include: "rules/common.smk"
-#include: "/Users/mozosi/Dropbox (UCL-MN Team)/GitHub/iCount/iCount/snakemake/rules/demultiplex.smk"
+include: "rules/demultiplex.smk"
+include: "rules/qc.smk"
+include: "rules/prepare_genome.smk"
+include: "rules/map_reads.smk"
 include: "rules/bedgraph_UCSC.smk"
 
 
@@ -150,34 +144,26 @@ def all_input(wildcards):
     #     final_output.extend(
     #         expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.UCSC.bedgraph", project=config['project'], barcode=samples.index)
     #     )
+    if config["create_integrity_test"]:
+        final_output.extend(expand("{project}/shasum_files/demultiplex_shasum_file.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/qc_shasum_file.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/genome_shasum_file.txt", project=config['project']))
 
+    if config["integrity_test_check"]:
+        final_output.extend(expand("{project}/shasum_files/demultiplex_shasum_check.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/qc_shasum_check.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/genome_shasum_check.txt", project=config['project']))
 
     return final_output
 
 
-
+##### target rules #####
 
 localrules: all
 
 rule all:
     input:
-        expand("{genomes_path}/{genome}/{genome}.fa.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
-        expand("{genomes_path}/{genome}/{genome}.fa.gz.fai", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
-        expand("{genomes_path}/{genome}/{genome}.gtf.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
-        expand("{genomes_path}/{genome}/star_index/", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
-        expand("{genomes_path}/{genome}/segment/{genome}_segment.gtf", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
-        expand("{genomes_path}/{genome}/segment/landmarks.bed.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
-
         "demultiplexed/demux_nomatch5.fastq.gz",
-
-        expand("qc/fastqc/raw_fastq_file_fastqc.html"),
-        expand("qc/fastqc/raw_fastq_file_fastqc.zip"),
-        expand("{project}/qc/fastqc/{barcode}_fastqc.html", project=config['project'], barcode=samples.index),
-        expand("{project}/qc/fastqc/{barcode}_fastqc.zip", project=config['project'], barcode=samples.index,),
-
-        expand("{project}/trimmed/demux_{barcode}_trimmed.fastq.gz", project=config['project'], barcode=samples.index),
-        expand("{project}/qc/fastqc/{barcode}_trimmed_fastqc.html", project=config['project'], barcode=samples.index),
-        expand("{project}/qc/fastqc/{barcode}_trimmed_fastqc.zip", project=config['project'], barcode=samples.index),
 
         expand("{project}/mapped/{barcode}/Aligned.sortedByCoord.out.bam", project=config['project'], barcode=samples.index),
 
@@ -205,289 +191,99 @@ rule all:
         expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.bedgraph", project=config['project'], group=samples["group"].dropna().unique()),
         expand("{project}/groups/{group}/rnamaps/", project=config['project'], group=samples["group"].dropna().unique()),
 
-        expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.bed", project=config['project'], group=samples["group"].dropna().unique()),
-        expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.biotype.tab", project=config['project'], group=samples["group"].dropna().unique()),
-        expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.gene_id.tab", project=config['project'], group=samples["group"].dropna().unique()),
-        expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_gene.tsv", project=config['project'], group=samples["group"].dropna().unique()),
+        # expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.bed", project=config['project'], group=samples["group"].dropna().unique()),
+        # expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.biotype.tab", project=config['project'], group=samples["group"].dropna().unique()),
+        # expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.gene_id.tab", project=config['project'], group=samples["group"].dropna().unique()),
+        # expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_gene.tsv", project=config['project'], group=samples["group"].dropna().unique()),
         # expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_type.tsv", project=config['project'], group=samples["group"].dropna().unique()),
         # expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_subtype.tsv", project=config['project'], group=samples["group"].dropna().unique()),
 
         expand("{project}/groups/{group}/clusters/{group}.group.clusters.bed", project=config['project'], group=samples["group"].dropna().unique()),
         all_input
 
-
+# old rule all not used - remove
+# expand("{genomes_path}/{genome}/{genome}.fa.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+# expand("{genomes_path}/{genome}/{genome}.fa.gz.fai", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+# expand("{genomes_path}/{genome}/{genome}.gtf.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+# expand("{genomes_path}/{genome}/star_index/", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+# expand("{genomes_path}/{genome}/segment/{genome}_segment.gtf", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+# expand("{genomes_path}/{genome}/segment/landmarks.bed.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+#
+# expand("qc/fastqc/raw_fastq_file_fastqc.html"),
+# expand("qc/fastqc/raw_fastq_file_fastqc.zip"),
+# expand("{project}/qc/fastqc/{barcode}_fastqc.html", project=config['project'], barcode=samples.index),
+# expand("{project}/qc/fastqc/{barcode}_fastqc.zip", project=config['project'], barcode=samples.index, ),
+#
+# expand("{project}/trimmed/demux_{barcode}_trimmed.fastq.gz", project=config['project'], barcode=samples.index),
+# expand("{project}/qc/fastqc/{barcode}_trimmed_fastqc.html", project=config['project'], barcode=samples.index),
+# expand("{project}/qc/fastqc/{barcode}_trimmed_fastqc.zip", project=config['project'], barcode=samples.index),
 
 #==============================================================================#
-#                       Demultiplex
+#                       SHA Check
 #==============================================================================#
-#### Check if one of the barcodes OR nomatch is not created/found
 
-rule demultiplex:
+
+# print ("ALL_DEMULTIPLEXED", expand("demultiplexed/demux_{barcode}.fastq.gz", barcode=samples.index))
+#  demultiplexed/demux_NNNNGTAACNNN_NNATT.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNAGG.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNTTA.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNTGC.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNCTG.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNCGT.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNGTC.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNGGA.fastq.gz demultiplexed/demux_NNNNCCGGANNN.fastq.gz demultiplexed/demux_NNNCTGCNN.fastq.gz
+# cat  demultiplexed/demux_NNNNGTAACNNN_NNATT.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNAGG.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNTTA.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNTGC.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNCTG.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNCGT.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNGTC.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNGGA.fastq.gz demultiplexed/demux_NNNNCCGGANNN.fastq.gz demultiplexed/demux_NNNCTGCNN.fastq.gz | md5
+# 3ef0e4c8a7628d7333df3cc315f498ce
+# shasum demultiplexed/demux_NNNNGTAACNNN_NNATT.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNAGG.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNTTA.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNTGC.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNCTG.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNCGT.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNGTC.fastq.gz demultiplexed/demux_NNNNGTAACNNN_NNGGA.fastq.gz demultiplexed/demux_NNNNCCGGANNN.fastq.gz demultiplexed/demux_NNNCTGCNN.fastq.gz > demultiplex_md5.txt
+# shasum -c demultiplex_md5.txt
+
+# "qc/fastqc/raw_fastq_file_fastqc.html"
+#
+
+# "{project}/qc/fastqc/{barcode}_trimmed_fastqc.html"
+
+
+
+rule shasum_create:
     input:
-        fastq_file=config['raw_fastq_file']
+        demultiplex=expand("demultiplexed/demux_{barcode}.fastq.gz", barcode=samples.index),
+        qc=["qc/fastqc/raw_fastq_file_fastqc.html",
+            expand("{project}/qc/fastqc/{barcode}_fastqc.html", project=config['project'], barcode=samples.index),
+            expand("{project}/qc/fastqc/{barcode}_trimmed_fastqc.html", project=config['project'], barcode=samples.index)],
+        genome=[expand("{genomes_path}/{genome}/{genome}.fa.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+                expand("{genomes_path}/{genome}/{genome}.fa.gz.fai", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+                expand("{genomes_path}/{genome}/{genome}.gtf.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+                expand("{genomes_path}/{genome}/segment/{genome}_segment.gtf", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+                expand("{genomes_path}/{genome}/segment/landmarks.bed.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path'])],
+        mapped_reads=expand("{project}/mapped/{barcode}/Aligned.sortedByCoord.out.bam", project=config['project'], barcode=samples.index),
     output:
-        expand("demultiplexed/demux_{barcode}.fastq.gz", barcode=samples.index),
-        # "{project}/demultiplexed/demux_{barcode}.fastq.gz",
-        "demultiplexed/demux_nomatch5.fastq.gz"
-    params:
-        adapter3=samples["adapter_3"].unique().tolist(),
-        all_5barcodes=samples["barcode_5"].tolist(),
-        # all_3barcodes=samples["barcode_3"].tolist(),
-        all_3barcodes = samples["barcode_3"].fillna(".").tolist(),
-        dir=directory("demultiplexed"),
-        barcode_mismatches=config['barcode_mismatches'],
-        minimum_length=config['minimum_length'],
-        min_adapter_overlap=config['min_adapter_overlap'],
+        demultiplex_shasum_file="{project}/shasum_files/demultiplex_shasum_file.txt",
+        qc_shasum_file="{project}/shasum_files/qc_shasum_file.txt",
+        genome_shasum_file="{project}/shasum_files/genome_shasum_file.txt",
+        mapped_reads_shasum_file="{project}/shasum_files/mapped_reads_shasum_file.txt",
     shell:
         """
-        iCount demultiplex --mismatches {params.barcode_mismatches} --min_adapter_overlap {params.min_adapter_overlap} --minimum_length {params.minimum_length} {input.fastq_file} {params.adapter3} {params.all_5barcodes} --barcodes3 {params.all_3barcodes} --out_dir {params.dir}
+        shasum {input.demultiplex} > {output.demultiplex_shasum_file}
+        shasum {input.qc} > {output.qc_shasum_file}
+        shasum {input.genome} > {output.genome_shasum_file}
+        shasum {input.mapped_reads} > {output.mapped_reads_shasum_file}
         """
 
-# rule move_demultiplex:
-#     input:
-#         directory("demultiplexed/")
-#     output:
-#         directory("{project}/demultiplexed/".format(project=config['project']))
-#     run:
-#         shutil.copytree(input, output)
-
-# -M {log.metrics} 2> {log.log}
-# log:
-# metrics = "{project}/metrics/demultiplex_metrics.txt",
-# log = "{project}/logs/demultiplex_metrics.txt"
-
-#==============================================================================#
-#                       Read quality trimming and QC
-#==============================================================================#
-
-# shell("set -euo pipefail")
-
-rule fastqc_raw:
+rule shasum_check:
     input:
-        config['raw_fastq_file']
+        demultiplex_shasum_file="{project}/shasum_files/demultiplex_shasum_file.txt",
+        qc_shasum_file="{project}/shasum_files/qc_shasum_file.txt",
+        genome_shasum_file="{project}/shasum_files/genome_shasum_file.txt",
+        mapped_reads_shasum_file="{project}/shasum_files/mapped_reads_shasum_file.txt",
     output:
-        html="qc/fastqc/raw_fastq_file_fastqc.html",
-        zip="qc/fastqc/raw_fastq_file_fastqc.zip" # the suffix _fastqc.zip is necessary for multiqc to find the file. If not using multiqc, you are free to choose an arbitrary filename
-    wrapper:
-        "0.38.0/bio/fastqc"
-
-
-rule fastqc:
-    input:
-        "demultiplexed/demux_{barcode}.fastq.gz"
-    output:
-        html="{project}/qc/fastqc/{barcode}_fastqc.html",
-        zip="{project}/qc/fastqc/{barcode}_fastqc.zip" # the suffix _fastqc.zip is necessary for multiqc to find the file. If not using multiqc, you are free to choose an arbitrary filename
-    log:
-        "{project}/logs/fastqc/{barcode}_fastqc.txt"
-    wrapper:
-        "0.36.0/bio/fastqc"
-
-
-# Include Temporal file
-rule quality_trim:
-    input:
-        "demultiplexed/demux_{barcode}.fastq.gz"
-    output:
-        trimmed_reads="{project}/trimmed/demux_{barcode}_trimmed.fastq.gz",
-        metrics="{project}/metrics/{barcode}_trimmed.txt"
-    params:
-        qual_trim=config['qual_trim'],
-        minimum_length=config['minimum_length'],
-        adapter=samples["adapter_3"].unique().tolist(),
-
-        overlap=config['overlap'],
-        untrimmed_output=config['untrimmed_output'],
-        error_rate=config['error_rate'],
-    log:
-        "{project}/logs/trimmed/{barcode}_trimmed.txt"
+        demultiplex_shasum_check = "{project}/shasum_files/demultiplex_shasum_check.txt",
+        qc_shasum_check="{project}/shasum_files/qc_shasum_check.txt",
+        genome_shasum_check="{project}/shasum_files/genome_shasum_check.txt",
+        mapped_reads_shasum_check="{project}/shasum_files/mapped_reads_shasum_check.txt",
     shell:
         """
-        iCount cutadapt --qual_trim {params.qual_trim} --untrimmed_output {params.untrimmed_output} --minimum_length {params.minimum_length} --file_log 2 --file_logpath {log} --results_file {output.metrics} --reads_trimmed {output.trimmed_reads} {input} {params.adapter}
-        """
-        ## Unused parameters: --overlap {params.overlap}
-
-
-rule fastqc_trimmed:
-    input:
-        "{project}/trimmed/demux_{barcode}_trimmed.fastq.gz"
-    output:
-        html="{project}/qc/fastqc/{barcode}_trimmed_fastqc.html",
-        zip="{project}/qc/fastqc/{barcode}_trimmed_fastqc.zip" # the suffix _fastqc.zip is necessary for multiqc to find the file. If not using multiqc, you are free to choose an arbitrary filename
-    log:
-        "{project}/logs/fastqc/{barcode}_trimmed_fastqc.log"
-    wrapper:
-        "0.36.0/bio/fastqc"
-
-
-#==============================================================================#
-#                       Download annotation and index genome
-#==============================================================================#
-
-
-# if the genome is not in the config file will fail with a hint to include path to fasta file and annotation. This to validation of tabular sample file!!
-
-# genomes_path: "iCount_genomes"
-# Missing input files(Using '~' in your paths is not allowed as such platform specific syntax is not resolved by Snakemake. In general, try sticking to relative paths for everything inside the working directory.) for rule all:
-
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~* Check for custom genomes *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-# Capture iCount available genomes
-species_out = subprocess.Popen(["iCount species --source ensembl -r 88"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-stdout,stderr = species_out.communicate()
-available_genomes=stdout.decode('utf-8').rstrip()
-available_genomes=re.split('available: ',str(available_genomes))[-1].split(',')
-
-all_genomes=samples["mapto"].unique()
-custom_genomes=np.setdiff1d(all_genomes, available_genomes)
-download_genomes=np.setdiff1d(all_genomes, custom_genomes)
-
-
-# Custom genomes path from config file
-def custom_fasta(wildcards):
-    return config['custom_genome'][wildcards]['genome_fasta']
-
-def custom_gtf(wildcards):
-    return config['custom_genome'][wildcards]['annotation']
-
-
-
-
-# Funcion from icount (call it!!)
-def decompress_to_tempfile(fname, context='misc'):
-    """
-    Decompress files ending with .gz to a temporary file and return filename.
-    If file does nto end with .gz, juts return fname.
-    Parameters
-    ----------
-    fname : str
-        Path to file to open.
-    context : str
-        Name of temporary subfolder where temporary file is created.
-    Returns
-    -------
-    str
-        Path to decompressed file.
-    """
-    if fname.endswith('.gz'):
-        tmp_dir = os.path.join(context)
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-
-        suffix = '_{:s}'.format(os.path.basename(fname))
-        fout = tempfile.NamedTemporaryFile(suffix=suffix, dir=tmp_dir, delete=False)
-        fin = gzip.open(fname, 'r')
-        shutil.copyfileobj(fin, fout)
-        fin.close()
-        fout.close()
-        return fout.name
-
-    return fname
-
-
-# Tested with homo_sapiens, mus_musculus; and custom hg19, hg38, mm10, mm15.
-rule download_genome:
-    output:
-        genome_fasta="{genomes_path}/{genome}/{genome}.fa.gz",
-        genome_index="{genomes_path}/{genome}/{genome}.fa.gz.fai",
-        gtf="{genomes_path}/{genome}/{genome}.gtf.gz",
-    params:
-        release=config['release'],
-    run:
-        GENOME=wildcards.genome
-        print ("Adquiring genome: %s \n" % (GENOME))
-
-
-        if GENOME in download_genomes:
-            print ("Downloading iCount available genome:", GENOME)
-            print ("Downloading genomes could take some time depending on your conection")
-            shell("iCount genome --genome {output.genome_fasta} --source ensembl {wildcards.genome} {params.release} --chromosomes MT 19")      # For testing include --chromosomes MT 19
-            shell("iCount annotation --annotation {output.gtf} --source ensembl {wildcards.genome} {params.release}")
-
-        elif GENOME in config['custom_genome'].keys():
-            fasta_in = custom_fasta(GENOME)
-            gtf_in = custom_gtf(GENOME)
-
-            # Move genome data
-            shutil.copy(fasta_in, output.genome_fasta)
-            shutil.copy(gtf_in, output.gtf)
-
-            # Create fasta index
-            temp = decompress_to_tempfile(fasta_in)
-            pysam.faidx(temp)  # pylint: disable=no-member
-            shutil.move(temp + '.fai', output.genome_index)
-
-        else:
-            print ("Your genome %s in the annotation table %s is not in the iCount available genomes %s \n\n" % (GENOME, config["samples"], available_genomes))
-            print ("Please, check misspelled genome or include custom genome %s fasta sequence and annotation GTF file in the config file:" % (GENOME))
-            print (yaml.dump(config, default_flow_style=False))
-
-
-rule indexstar_genome:
-    input:
-        genome_fasta="{genomes_path}/{genome}/{genome}.fa.gz",
-        gtf="{genomes_path}/{genome}/{genome}.gtf.gz",
-    threads:
-        int(config['index_threads'])
-    params:
-        overhang=config['overhang'],
-    output:
-        directory("{genomes_path}/{genome}/star_index/"),
-    shell:
-        """
-        iCount indexstar --overhang {params.overhang} --annotation {input.gtf} \
-        --threads {threads} --genome_sasparsed 2 {input.genome_fasta} {output}
+        echo "Checking test files integrity and reproducibility."
+        echo "--------------------------------------------------"
+        shasum --check {input.demultiplex_shasum_file} 2>&1 | tee {output.demultiplex_shasum_check}
+        shasum --check {input.qc_shasum_file} 2>&1 | tee {output.qc_shasum_check}
+        shasum --check {input.genome_shasum_file} 2>&1 | tee {output.genome_shasum_check}
+        shasum --check {input.mapped_reads_shasum_file} 2>&1 | tee {output.mapped_reads_shasum_check}
         """
 
 
-rule segment:
-    input:
-        gtf="{genomes_path}/{genome}/{genome}.gtf.gz",
-        genome_fai="{genomes_path}/{genome}/{genome}.fa.gz.fai"
-    output:
-        segment="{genomes_path}/{genome}/segment/{genome}_segment.gtf",
-        landmarks="{genomes_path}/{genome}/segment/landmarks.bed.gz",
-    shell:
-        """
-        iCount segment {input.gtf} {output.segment} {input.genome_fai} 
-        """
-
-#==============================================================================#
-#                       Map reads
-#==============================================================================#
-
-
-def get_gtf_path(wildcards):
-    return ("{0}/{1}/{1}.gtf.gz".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
-
-def get_star_index_path(wildcards):
-    return ("{0}/{1}/star_index/".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
-
-def get_segment_path(wildcards):
-    return ("{0}/{1}/segment/{1}_segment.gtf".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
-
-def get_templates_dir(wildcards):
-    return ("{0}/{1}/segment/".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
-
-
-rule map_reads:
-    input:
-        trimmed_reads="{project}/trimmed/demux_{barcode}_trimmed.fastq.gz",
-        gtf = get_gtf_path,
-    output:
-        "{project}/mapped/{barcode}/Aligned.sortedByCoord.out.bam"
-    params:
-        star_index = directory(get_star_index_path),
-        outdir=directory("{project}/mapped/{barcode}/"),
-        multimax=config['multimax'],
-    log:
-        "{project}/logs/mapstar/{barcode}_mapstar.log"
-    shell:
-        """
-        iCount mapstar --annotation {input.gtf} --multimax {params.multimax} \
-        {input.trimmed_reads} {params.star_index} {params.outdir}
-        """
 
 
 #==============================================================================#
