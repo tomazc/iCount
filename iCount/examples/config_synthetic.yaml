@@ -39,21 +39,19 @@ raw_fastq_file: "data/merge_my_script.fq.gz"
 # Set the desidred output of the pipeline.
 
 ## Completeness output
-# If "minimum" is present only crosslinks, significant crosslinks and clusters
-# will be calculated.
-# On the other hand if marked as "complete" all the crosslinks and  significant
-# crosslinks will be annotated (default).
-completeness_output: "minimum"
+# If "minimum" is set only crosslinks, significant crosslinks and clusters will be calculated.
+# On the other hand if marked as "complete" all the crosslinks and significant crosslinks will be annotated
+# and bedgraph output file will be generated (default).
+completeness_output: "complete"
 
 ## Grouped replicates completeness output
-# If "minimum" is present only merged crosslinks, significant crosslinks and
-# clusters will be calculated.
-# On the other hand if marked as "complete" all merged the crosslinks and
-# significant crosslinks will be annotated (default).
-grouped_completeness_output: "minimum"
+# If "minimum" is set only merged crosslinks, significant crosslinks and clusters will be calculated.
+# On the other hand if marked as "complete" all merged the crosslinks, significant crosslinks will be annotated
+# and bedgraph output file will be generated (default).
+group_completeness_output: "minimum"
 
 # Transform crosslink 6bed to UCSC bedgraph (false or true; default false)
-bedgraph_UCSC: true
+bedgraph_UCSC: false
 
 
 #=============================     Parameters     =============================#

@@ -2,13 +2,135 @@
 logdir = os.path.join(os.getcwd(), config["logdir"])
 os.makedirs(logdir, exist_ok=True)
 
-# Print project
-print("Procesing project:", config['project'], "\n")
-
 
 # this container defines the underlying OS for each job when using the workflow
 # with --use-conda --use-singularity
 container: "docker://continuumio/miniconda3"
+
+
+##### Completeness Options #####
+def all_xlsites(wilcards):
+    xlsites_output = list()
+    if config["completeness_output"] == "minimum":
+        # xlsites_output.extend(expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.bed", project=config['project'], barcode=samples.index))
+        # xlsites_output.extend(expand("{project}/sig_xlsites/{barcode}/{barcode}.sig_sites.bed", project=config['project'], barcode=samples.index))
+        xlsites_output.extend(expand("{project}/clusters/{barcode}/{barcode}.clusters.bed", project=config['project'],
+                                     barcode=samples.index))
+    elif config["completeness_output"] == "complete":
+        # xlsites_output.extend(expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.bed", project=config['project'], barcode=samples.index))
+        xlsites_output.extend(
+            expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.summary_gene.tsv", project=config['project'],
+                   barcode=samples.index))
+        xlsites_output.extend(expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.annotated_sites_biotype.tab",
+                                     project=config['project'], barcode=samples.index))
+        xlsites_output.extend(expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.annotated_sites_gene_id.tab",
+                                     project=config['project'], barcode=samples.index))
+        xlsites_output.extend(
+            expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.bedgraph", project=config['project'],
+                   barcode=samples.index))
+        xlsites_output.extend(
+            expand("{project}/xlsites/{barcode}/rnamaps/", project=config['project'], barcode=samples.index))
+        # xlsites_output.extend(expand("{project}/sig_xlsites/{barcode}/{barcode}.sig_sites.bed", project=config['project'], barcode=samples.index))
+        xlsites_output.extend(
+            expand("{project}/sig_xlsites/{barcode}/{barcode}.sig_sites.summary_gene.tsv", project=config['project'],
+                   barcode=samples.index))
+        xlsites_output.extend(expand("{project}/sig_xlsites/{barcode}/{barcode}.sig_sites.annotated.biotype.tab",
+                                     project=config['project'], barcode=samples.index))
+        xlsites_output.extend(expand("{project}/sig_xlsites/{barcode}/{barcode}.sig_sites.annotated.gene_id.tab",
+                                     project=config['project'], barcode=samples.index))
+        xlsites_output.extend(expand("{project}/clusters/{barcode}/{barcode}.clusters.bed", project=config['project'],
+                                     barcode=samples.index))
+    else:
+        sys.exit("completeness_output option in configfile needs to be set as minimum or complete ")
+
+    return xlsites_output
+
+
+def all_group(wilcards):
+    group_output = list()
+    if config["group_completeness_output"] == "minimum":
+        group_output.extend(
+            expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed", project=config['project'],
+                   group=samples["group"].dropna().unique()))
+        group_output.extend(
+            expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.bed", project=config['project'],
+                   group=samples["group"].dropna().unique()))
+        group_output.extend(
+            expand("{project}/groups/{group}/clusters/{group}.group.clusters.bed", project=config['project'],
+                   group=samples["group"].dropna().unique()), )
+    elif config["group_completeness_output"] == "complete":
+        group_output.extend(
+            expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.bed", project=config['project'],
+                   group=samples["group"].dropna().unique()))
+        group_output.extend(
+            expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.annotated_group_biotype.tab",
+                   project=config['project'], group=samples["group"].dropna().unique()))
+        group_output.extend(
+            expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.annotated_group_gene_id.tab",
+                   project=config['project'], group=samples["group"].dropna().unique()))
+        group_output.extend(expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.summary_gene.tsv",
+                                   project=config['project'], group=samples["group"].dropna().unique()))
+        # group_output.extend(expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.summary_type.tsv", project=config['project'], group=samples["group"].dropna().unique()))
+        # group_output.extend(expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.summary_subtype.tsv", project=config['project'], group=samples["group"].dropna().unique()))
+        group_output.extend(
+            expand("{project}/groups/{group}/xlsites/{group}.group.unique.xl.bedgraph", project=config['project'],
+                   group=samples["group"].dropna().unique()), )
+        group_output.extend(expand("{project}/groups/{group}/rnamaps/", project=config['project'],
+                                   group=samples["group"].dropna().unique()))
+
+        group_output.extend(
+            expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.bed", project=config['project'],
+                   group=samples["group"].dropna().unique()))
+        group_output.extend(expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.biotype.tab",
+                                   project=config['project'], group=samples["group"].dropna().unique()))
+        group_output.extend(expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.annotated.gene_id.tab",
+                                   project=config['project'], group=samples["group"].dropna().unique()))
+        group_output.extend(expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_gene.tsv",
+                                   project=config['project'], group=samples["group"].dropna().unique()))
+        group_output.extend(expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_type.tsv",
+                                   project=config['project'], group=samples["group"].dropna().unique()))
+        group_output.extend(expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_type.tsv",
+                                   project=config['project'], group=samples["group"].dropna().unique()))
+        group_output.extend(expand("{project}/groups/{group}/sig_xlsites/{group}.group.sig_sites.summary_subtype.tsv",
+                                   project=config['project'], group=samples["group"].dropna().unique()))
+
+        group_output.extend(
+            expand("{project}/groups/{group}/clusters/{group}.group.clusters.bed", project=config['project'],
+                   group=samples["group"].dropna().unique()), )
+
+    else:
+        sys.exit("group_completeness_output option in configfile needs to be set as minimum or complete ")
+
+    return group_output
+
+def all_input(wildcards):
+    """
+    Function defining all requested inputs for the rule all.
+    """
+    final_output = []
+
+    if config["bedgraph_UCSC"]:
+        final_output.extend(expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.UCSC.bedgraph", project=config['project'], barcode=samples.index))
+
+    if config["create_integrity_test"]:
+        final_output.extend(expand("{project}/shasum_files/demultiplex_shasum_file.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/qc_shasum_file.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/genome_shasum_file.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/mapped_reads_shasum_file.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/xlsites_shasum_file.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/group_shasum_file.txt", project=config['project']))
+
+    if config["integrity_test_check"]:
+        final_output.extend(expand("{project}/shasum_files/demultiplex_shasum_check.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/qc_shasum_check.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/genome_shasum_check.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/mapped_reads_shasum_check.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/xlsites_shasum_check.txt", project=config['project']))
+        final_output.extend(expand("{project}/shasum_files/group_shasum_check.txt", project=config['project']))
+
+    print("ALL_OUTPUT_PRINT@@@@@@@@@@@@@@@@", final_output)
+    return final_output
+
 
 ##### Helper functions #####
 
