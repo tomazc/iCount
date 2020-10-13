@@ -128,7 +128,6 @@ def all_input(wildcards):
         final_output.extend(expand("{project}/shasum_files/xlsites_shasum_check.txt", project=config['project']))
         final_output.extend(expand("{project}/shasum_files/group_shasum_check.txt", project=config['project']))
 
-    print("ALL_OUTPUT_PRINT@@@@@@@@@@@@@@@@", final_output)
     return final_output
 
 

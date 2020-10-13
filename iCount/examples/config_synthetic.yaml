@@ -60,8 +60,8 @@ bedgraph_UCSC: false
 
 
 #~~~~~~~~~~~~~~~~ iCount genomes ~~~~~~~~~~~~~~~~#
-## iCount genomes will be automatically downloaded from NCBI if any of the following
-# accepted species terms are used. There are 87 species available:
+## iCount genomes will be automatically downloaded from NCBI if any of the following accepted species terms are used.
+# There are 87 species available:
 # ailuropoda_melanoleuca,anas_platyrhynchos,ancestral_alleles,anolis_carolinensis,astyanax_mexicanus,
 # bos_taurus,caenorhabditis_elegans,callithrix_jacchus,canis_familiaris,cavia_porcellus,chlorocebus_sabaeus,
 # choloepus_hoffmanni,ciona_intestinalis,ciona_savignyi,danio_rerio,dasypus_novemcinctus,dipodomys_ordii,
@@ -72,10 +72,11 @@ bedgraph_UCSC: false
 # mus_musculus_aj,mus_musculus_akrj,mus_musculus_balbcj,mus_musculus_c3hhej,mus_musculus_c57bl6nj,mus_musculus_casteij,
 # mus_musculus_cbaj,mus_musculus_dba2j,mus_musculus_fvbnj,mus_musculus_lpj,mus_musculus_nodshiltj,mus_musculus_nzohlltj,
 # mus_musculus_pwkphj,mus_musculus_wsbeij,mus_spretus_spreteij,mustela_putorius_furo,myotis_lucifugus,nomascus_leucogenys,
-# ochotona_princeps,oreochromis_niloticus,ornithorhynchus_anatinus,oryctolagus_cuniculus,oryzias_latipes,otolemur_garnettii,
-# ovis_aries,pan_troglodytes,papio_anubis,pelodiscus_sinensis,petromyzon_marinus,poecilia_formosa,pongo_abelii,procavia_capensis,
-# pteropus_vampyrus,rattus_norvegicus,saccharomyces_cerevisiae,sarcophilus_harrisii,sorex_araneus,sus_scrofa,taeniopygia_guttata,
-# takifugu_rubripes,tarsius_syrichta,tetraodon_nigroviridis,tupaia_belangeri,tursiops_truncatus,vicugna_pacos,xenopus_tropicalis,xiphophorus_maculatus
+# ochotona_princeps,oreochromis_niloticus,ornithorhynchus_anatinus,oryctolagus_cuniculus,oryzias_latipes,
+# ovis_aries,pan_troglodytes,papio_anubis,pelodiscus_sinensis,petromyzon_marinus,poecilia_formosa,pongo_abelii,
+# procavia_capensis,pteropus_vampyrus,rattus_norvegicus,saccharomyces_cerevisiae,sarcophilus_harrisii,sorex_araneus,
+# sus_scrofa,taeniopygia_guttata,takifugu_rubripes,tarsius_syrichta,tetraodon_nigroviridis,tupaia_belangeri,
+# otolemur_garnettii, tursiops_truncatus,vicugna_pacos,xenopus_tropicalis,xiphophorus_maculatus
 
 # Update releases script and Icount annotation and genome doesn't accept "--releases" word
 # Current version of iCount is tested to work with human and mouse genomes only.
@@ -243,7 +244,7 @@ colormap: "Greys"
 imgfmt: "png"
 
 
-#======================== Computing  Cluster     =============================#
+#========================   Computing  Cluster    =============================#
 
 # Log directory to store invidual jobs output and error when run on a cluster
 logdir: "logs_cluster"
