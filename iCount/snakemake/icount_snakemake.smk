@@ -19,7 +19,7 @@
 # Step one: Activate conda environment with Snakemake, iCount and dependencies installed
 # Create new environment
 # conda env create --name iCount_pipeline2 --file envs/environment_iCount.yaml
-# conda activate iCount_pipeline2
+# conda activate iCount_pipeline3
 # pip install ./iCount/
 # Check the install
 # iCount
@@ -106,17 +106,19 @@ validate(samples, schema="schemas/samples.schema.yaml")
 if len(samples["adapter_3"].unique().tolist()) > 1:
     sys.exit("iCount pipeline only accepts a unique 3' adapter")
 
-if len(samples.index) != len(samples["sample_name"].unique().tolist()):
+elif len(samples.index) != len(samples["sample_name"].unique().tolist()):
     sys.exit("iCount pipeline only accepts a unique sample names")
 
 # Merge 5'barcode and 3'barcode to create a table index (full barcode)
-cols = ['barcode_5', 'barcode_3']
-samples["full_barcode"] = samples[cols].apply(lambda x: '_'.join(x.dropna()), axis=1)
-samples=samples.set_index(["full_barcode"], drop = False)
-
+else:
+    cols = ['barcode_5', 'barcode_3']
+    samples["full_barcode"] = samples[cols].apply(lambda x: '_'.join(x.dropna()), axis=1)
+    samples=samples.set_index(["full_barcode"], drop = False)
 
 # Print project
 print("Procesing project:", config['project'], "\n")
+# Print Sample annotation
+print ("Sample annotation:", samples, "\n"),
 
 
 
@@ -141,12 +143,31 @@ localrules: all
 
 rule all:
     input:
+        expand("demultiplexed/demux_{barcode}.fastq.gz", barcode=samples.index),
         "demultiplexed/demux_nomatch5.fastq.gz",
+        expand("{project}/qc/fastqc/raw_fastq_file_fastqc.html", project=config['project']),
+        expand("{project}/qc/fastqc/raw_fastq_file_fastqc.zip", project=config['project']),
 
+        expand("{project}/qc/fastqc/{barcode}_fastqc.html", project=config['project'], barcode=samples.index),
+        expand("{project}/qc/fastqc/{barcode}_fastqc.zip", project=config['project'], barcode=samples.index),
+
+        #expand("{project}/trimmed/demux_{barcode}_trimmed.fastq.gz", project=config['project'], barcode=samples.index),
+
+        expand("{project}/qc/fastqc/{barcode}_qtrimmed_fastqc.html", project=config['project'], barcode=samples.index),
+        expand("{project}/qc/fastqc/{barcode}_qtrimmed_trimmed_fastqc.zip", project=config['project'], barcode=samples.index),
         all_input,
         all_xlsites,
         all_group
 
+
+
+
+
+
+#expand("demultiplexed/demux_{barcode}.fastq.gz", barcode=samples.index),
+
+
+# expand("{project}/trimmed/demux_{barcode}_untrimmed.fastq.gz", project=config['project'], barcode=samples.index),
 # old rule all not used - remove
 # "demultiplexed/demux_nomatch5.fastq.gz",
 # expand("{genomes_path}/{genome}/{genome}.fa.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
@@ -162,8 +183,8 @@ rule all:
 # expand("{project}/qc/fastqc/{barcode}_fastqc.zip", project=config['project'], barcode=samples.index, ),
 #
 # expand("{project}/trimmed/demux_{barcode}_trimmed.fastq.gz", project=config['project'], barcode=samples.index),
-# expand("{project}/qc/fastqc/{barcode}_trimmed_fastqc.html", project=config['project'], barcode=samples.index),
-# expand("{project}/qc/fastqc/{barcode}_trimmed_fastqc.zip", project=config['project'], barcode=samples.index),
+# expand("{project}/qc/fastqc/{barcode}_qtrimmed_fastqc.html", project=config['project'], barcode=samples.index),
+# expand("{project}/qc/fastqc/{barcode}_qtrimmed_trimmed_fastqc.zip", project=config['project'], barcode=samples.index),
 # expand("{project}/mapped/{barcode}/Aligned.sortedByCoord.out.bam", project=config['project'], barcode=samples.index),
 
 # expand("{project}/xlsites/{barcode}/{barcode}.unique.xl.bed", project=config['project'], barcode=samples.index),
@@ -250,9 +271,9 @@ rule all:
 rule shasum_create:
     input:
         demultiplex=expand("demultiplexed/demux_{barcode}.fastq.gz", barcode=samples.index),
-        qc=["qc/fastqc/raw_fastq_file_fastqc.html",
+        qc=["{project}/qc/fastqc/raw_fastq_file_fastqc.html",
             expand("{project}/qc/fastqc/{barcode}_fastqc.html", project=config['project'], barcode=samples.index),
-            expand("{project}/qc/fastqc/{barcode}_trimmed_fastqc.html", project=config['project'], barcode=samples.index)],
+            expand("{project}/qc/fastqc/{barcode}_qtrimmed_fastqc.html", project=config['project'], barcode=samples.index)],
         genome=[expand("{genomes_path}/{genome}/{genome}.fa.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
                 expand("{genomes_path}/{genome}/{genome}.fa.gz.fai", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
                 expand("{genomes_path}/{genome}/{genome}.gtf.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),

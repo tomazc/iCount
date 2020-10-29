@@ -44,7 +44,7 @@ rule download_genome:
         if GENOME in download_genomes:
             print ("Downloading iCount available genome:", GENOME)
             print ("Downloading genomes could take some time depending on your conection")
-            shell("iCount genome --genome {output.genome_fasta} --chromosomes {params.chromosomes} --source {params.source} {wildcards.genome} {params.release}")      # For testing include --chromosomes MT 19
+            shell("iCount genome --genome {output.genome_fasta} --chromosomes {params.chromosomes} --source {params.source} {wildcards.genome} {params.release} --chromosomes 20")      # For testing include --chromosomes MT 19
             shell("iCount annotation --annotation {output.gtf} --source {params.source} {wildcards.genome} {params.release}")
 
         elif GENOME in config['custom_genome'].keys():

@@ -62,7 +62,7 @@ rule annotate_xlsites:
         gene_id="{project}/xlsites/{barcode}/{barcode}.unique.xl.annotated_sites_gene_id.tab",
     params:
         templates_dir = get_templates_dir,
-        segment = get_segment_path,
+        segment = get_segment_regions,
         #out_dir = "{project}/annotated/",
     shell:
         """
@@ -79,7 +79,7 @@ rule summary:
         subtype="{project}/xlsites/{barcode}/{barcode}.unique.xl.summary_subtype.tsv"
     params:
         templates_dir=get_templates_dir,
-        segment = get_segment_path,
+        segment = get_segment_regions,
         out_dir="{project}/xlsites/{barcode}/",
         rename_gene="{project}/xlsites/{barcode}/summary_gene.tsv",
         rename_type="{project}/xlsites/{barcode}/summary_type.tsv",

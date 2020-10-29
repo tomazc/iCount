@@ -6,12 +6,12 @@
 
 rule map_reads:
     input:
-        trimmed_reads="{project}/trimmed/demux_{barcode}_trimmed.fastq.gz",
+        trimmed_reads="{project}/trimmed/demux_{barcode}_qtrimmed.fastq.gz",
         gtf = get_gtf_path,
+        star_index = get_star_index_folder,
     output:
         "{project}/mapped/{barcode}/Aligned.sortedByCoord.out.bam"
     params:
-        star_index = directory(get_star_index_path),
         outdir=directory("{project}/mapped/{barcode}/"),
         multimax=config['multimax'],
     log:
@@ -19,6 +19,6 @@ rule map_reads:
     shell:
         """
         iCount mapstar --annotation {input.gtf} --multimax {params.multimax} \
-        {input.trimmed_reads} {params.star_index} {params.outdir}
+        {input.trimmed_reads} {input.star_index} {params.outdir}
         """
 
