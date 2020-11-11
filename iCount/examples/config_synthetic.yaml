@@ -8,7 +8,7 @@
 # Define name of the project. Output files will be saved under "project" folder.
 
 ## Project directory name
-project: "synthetic"
+project: "synthetic_chr20"
 
 
 #===============================     Samples     ==============================#
@@ -25,14 +25,15 @@ project: "synthetic"
 
 # Sample table input accepts tsv or txt
 #samples: "data/hnRNPC_reduced.tsv"
-samples: "data/samples_synthetic.txt"
+samples: "data/samples_synthetic_chr20.txt"
 
 
 #========================    Raw sequencing data   =============================#
 
 # Raw fastq file to demultiplex and analyse
 #raw_fastq_file: "data/hnRNPC.fq.gz"
-raw_fastq_file: "data/merge_my_script.fq.gz"
+raw_fastq_file: "data/merge_chr20_2652426_2664336_GTAAC.fq.gz"
+#raw_fastq_file: "data/merge_my_script.fq.gz"
 
 
 #============================     Desired output     ===========================#
@@ -150,7 +151,7 @@ minimum_length: 17
 # adapter to be found (default: None)
 overlap:
 # Write reads that do not contain any adapter to this file path (default: None)
-untrimmed_output:
+# untrimmed_output:
 # Maximum allowed error rate (no. of errors divided by the length
 # of the matching region) (default: None)
 error_rate: 0.1
@@ -204,7 +205,7 @@ max_barcodes: 10000
 #~~~~~~~~~~~~~~~~ iCount significant cross links  ~~~~~~~~~~~~~~~~#
 # Peaks (significant crosslinks low FDR) configuration
 # Find positions with high density of cross-linked sites.
-#
+# More info on "iCount peaks --help" or check manual
 # There are two typical variants of this analysis, depending on the parameters:
 #
 #* Gene-wise analysis, where:
@@ -216,6 +217,29 @@ max_barcodes: 10000
 #    * group_by = transcript_id
 #  [--merge_features] [--half_window] [--fdr]
 
+# Features from annotation to consider: gene, CDS, intron, UTR3, UTR5, ncRNA or intergenic.  If None, ['gene'] is used.
+# Sometimes, it is advised to use ['gene', 'intergenic'] (default: gene)
+features: "gene"
+# Attribute by which cross-link positions are grouped (default: gene_id)
+group_by_sig_xl: "gene_id"
+# Treat all features as one when grouping. Has no effect when only one feature is given in features parameter
+# (default: False)
+merge_features: false
+# Half-window size (default: 3)
+half_window: 3
+# FDR threshold (default: 0.05)
+fdr: 0.05
+# Number of permutations when calculating random distribution (default: 100)
+perms: 100
+# Seed for random generator (default: 42)
+rnd_seed: 42
+#  -prog, --report_progress
+#                        Report analysis progress (default: False)
+#  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+#  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
+#  -P , --file_logpath   Path to log file.
+#  -M , --results_file   File into which to store Metrics.
+#
 
 #~~~~~~~~~~~~~~~~ iCount cluster of cross links  ~~~~~~~~~~~~~~~~#
 # Merge adjacent peaks into clusters and sum cross-links within clusters.

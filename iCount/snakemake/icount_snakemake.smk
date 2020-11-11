@@ -2,7 +2,7 @@
 #                        iCount Snakemake workflow
 #==============================================================================#
 # Authors # Igor Ruiz de los Mozos, Charlotte Capitanchik, Tomaz Curk
-# Last updated: September 2020
+# Last updated: November 2020
 
 
 # Install Locally
@@ -14,11 +14,19 @@
 # TMP_ROOT = os.environ.get('ICOUNT_TMP_ROOT', 'a directory you have access to')
 # TMP_ROOT = os.environ.get('ICOUNT_TMP_ROOT', '/Users/mozosi/Programs/temp_iCount')
 
-# Check the install
 
 # Step one: Activate conda environment with Snakemake, iCount and dependencies installed
 # Create new environment
-# conda env create --name iCount_pipeline2 --file envs/environment_iCount.yaml
+conda create -c conda-forge -c bioconda -n iCount_pipeline3
+conda activate iCount_pipeline3
+conda install -c conda-forge mamba
+conda install --yes --file snakemake/envs/environment_iCount.yaml
+pip install ./iCount/
+# Check the install
+iCount
+
+
+# conda env create --name iCount_pipeline2 --file snakemake/envs/environment_iCount.yaml
 # conda activate iCount_pipeline3
 # pip install ./iCount/
 # Check the install
