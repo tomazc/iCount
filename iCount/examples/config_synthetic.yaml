@@ -107,7 +107,9 @@ custom_genome:
     genome_fasta: "custom/custom2.fa.gz"
     # gtf file with transcripts
     annotation: "custom/custom2.gtf.gz"
-
+#  Arabidopsis_thaliana:
+#    genome_fasta: "custom/Arabidopsis_thaliana/Arabidopsis_thaliana.TAIR10.dna_sm.toplevel.fa.gz"
+#    annotation: "custom/Arabidopsis_thaliana/Arabidopsis_thaliana_mod.gtf"
 # Custom genome example annotation. Name directory, fasta sequence and annotation using the same acromyn ("hg19")
 # as in the example:
 #custom_genome:

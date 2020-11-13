@@ -1,4 +1,4 @@
 sample_name	method	protein	cells_tissue	condition	mapto	barcode_5	barcode_3	adapter_3	linker	comments	group	New
-synthetic_1	iCLIP	synthetic	HEK293	synthetic_1	homo_sapiens	NNNNGTAACNNN	NNATT	AGATCGGAAGAGCGGTTCAG	L3-NNATT	L3-NNATT	WildType	
-synthetic_2	iCLIP	synthetic	HEK293	synthetic_2	homo_sapiens	NNNNGTAACNNN	NNAGG	AGATCGGAAGAGCGGTTCAG	L3-NNAGG	L3-NNAGG	WildType	
-synthetic_3	iCLIP	synthetic	HEK293	synthetic_3	homo_sapiens	NNNNGTAACNNN	NNTTA	AGATCGGAAGAGCGGTTCAG	L3-NNTTA	L3-NNTTA	WildType	
+synthetic_1	iCLIP	synthetic	HEK293	synthetic_1	homo_sapiens	NNNNGTAACNNN	NNATT	AGATCGGAAGAGCGGTTCAG	L3-NNATT	L3-NNATT	WildType
+synthetic_2	iCLIP	synthetic	HEK293	synthetic_2	homo_sapiens	NNNNGTAACNNN	NNAGG	AGATCGGAAGAGCGGTTCAG	L3-NNAGG	L3-NNAGG	WildType
+synthetic_3	iCLIP	synthetic	HEK293	synthetic_3	homo_sapiens	NNNNGTAACNNN	NNTTA	AGATCGGAAGAGCGGTTCAG	L3-NNTTA	L3-NNTTA	WildType

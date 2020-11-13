@@ -194,7 +194,7 @@ def get_star_index_folder(wildcards):
     return ("{0}/{1}/star_index/".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
 
 def get_segment_path(wildcards):
-    return ("{0}/{1}/segment/homo_sapiens_segment.gtf".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
+    return ("{0}/{1}/segment/{1}_segment.gtf".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
 
 def get_segment_regions(wildcards):
     return ("{0}/{1}/segment/regions.gtf.gz".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))

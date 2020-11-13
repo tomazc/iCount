@@ -16,14 +16,14 @@
 
 
 # Step one: Activate conda environment with Snakemake, iCount and dependencies installed
-# Create new environment
-conda create -c conda-forge -c bioconda -n iCount_pipeline3
-conda activate iCount_pipeline3
-conda install -c conda-forge mamba
-conda install --yes --file snakemake/envs/environment_iCount.yaml
-pip install ./iCount/
-# Check the install
-iCount
+# # Create new environment
+# conda create -c conda-forge -c bioconda -n iCount_pipeline3
+# conda activate iCount_pipeline3
+# conda install -c conda-forge mamba
+# conda install --yes --file snakemake/envs/environment_iCount.yaml
+# pip install ./iCount/
+# # Check the install
+# iCount
 
 
 # conda env create --name iCount_pipeline2 --file snakemake/envs/environment_iCount.yaml
