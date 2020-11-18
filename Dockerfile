@@ -24,38 +24,36 @@ RUN conda install -c bioconda -y bedtools
 ### RNA-star
 RUN conda install -c bioconda -y star
 
-#################
-#### iCount
-#################
+### numpy
 
-#RUN useradd -m -d /home/icuser icuser
-
-#RUN chown -R icuser.icuser /home/icuser
-
-#USER icuser
-#WORKDIR /home/icuser
-#RUN virtualenv -p python3 /home/icuser/.icountenv
 
 #USER root
 # to speed-up building of Docker images
 #RUN /home/icuser/.icountenv/bin/pip install numpy pandas pysam pybedtools numpydoc matplotlib
 
-#ADD . /home/icuser/iCount_src
-#RUN chown -R icuser.icuser /home/icuser
+#################
+#### iCount
+#################
 
-#USER icuser
-#WORKDIR /home/icuser/iCount_src
+RUN useradd -m -d /home/icuser icuser
+RUN chown -R icuser.icuser /home/icuser
 
-#RUN ../.icountenv/bin/pip install -e .[docs,test]
+USER icuser
+WORKDIR /home/icuser
+RUN mkdir /home/icuser/storage
+RUN git clone https://github.com/tomazc/iCount.git --branch snakemake
 
-#USER root
-#RUN echo "source /home/icuser/.icountenv/bin/activate" >> /etc/bash.bashrc
-#USER icuser
+RUN conda create -c conda-forge -c bioconda -n iCount_pipeline3 -y
+RUN conda init bash
+RUN exec bash # restart shell
+RUN conda activate iCount_pipeline3
+RUN conda install -c conda-forge mamba -y
+RUN conda env update --file iCount/iCount/snakemake/envs/environment_iCount.yaml # needs ~ 4 GB RAM, otherwise killed
 
-#RUN mkdir /home/icuser/storage
+USER root
+RUN echo "conda activate iCount_pipeline3" >> /etc/bash.bashrc
 
-#ENV PATH /home/icuser/bin:$PATH
-
-#WORKDIR /home/icuser
-
-#CMD ["/bin/bash"]
+USER icuser
+ENV PATH /home/icuser/bin:$PATH
+WORKDIR /home/icuser
+CMD ["/bin/bash"]

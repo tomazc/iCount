@@ -4,11 +4,11 @@ channels:
 
 dependencies:
   - snakemake =5.5.4
-  - python =3.6
+  - python =3.8
   - jinja2 =2.10.1
   - networkx =2.3
   - bcftools =1.9
-  - samtools =1.9
+  - samtools
   - bwa =0.7.17
   - pysam = 0.14
   - cutadapt =2.4
