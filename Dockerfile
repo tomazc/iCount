@@ -38,8 +38,8 @@ RUN chown -R icuser.icuser /home/icuser
 USER icuser
 WORKDIR /home/icuser
 RUN mkdir /home/icuser/storage
-#RUN git clone https://github.com/tomazc/iCount.git --branch snakemake
-COPY . /home/icuser/iCount
+RUN git clone https://github.com/tomazc/iCount.git --branch snakemake
+#COPY . /home/icuser/iCount
 
 RUN conda create -c conda-forge -c bioconda -n iCount_pipeline3 -y
 RUN conda init bash
