@@ -1,4 +1,5 @@
-FROM continuumio/anaconda3
+FROM continuumio/anaconda3:2020.07
+
 MAINTAINER Tomaz Curk <tomazc@gmail.com>
 
 # suppress prompt for tzdata
@@ -8,9 +9,10 @@ ENV TZ=Europe/Ljubljana
 # thanks to https://github.com/bschiffthaler/ngs/blob/master/base/Dockerfile
 # and https://github.com/AveraSD/ngs-docker-star/blob/master/Dockerfile
 
-SHELL ["/bin/bash", "--login", "-c"]
-
 RUN apt-get install -y vim
+RUN apt-get install -y nano
+
+SHELL ["/bin/bash", "--login", "-c"]
 
 RUN conda update -n base -c defaults conda -y
 RUN conda install -c conda-forge mamba -y
@@ -19,27 +21,17 @@ RUN conda config --add channels defaults
 RUN conda config --add channels bioconda
 RUN conda config --add channels conda-forge
 
-### samtools
-#RUN conda install -c bioconda -y "samtools>=1.10"
-
-### bedtools, need at least version 2.26, where merge command reports strand
-# RUN conda install -c bioconda -y bedtools
-
-### RNA-star
-# RUN conda install -c bioconda -y star
-
 #################
 #### iCount
 #################
 
 RUN useradd -m -d /home/icuser icuser
+ADD . /home/icuser/iCount
 RUN chown -R icuser.icuser /home/icuser
 
 USER icuser
 WORKDIR /home/icuser
 RUN mkdir /home/icuser/storage
-RUN git clone https://github.com/tomazc/iCount.git --branch snakemake
-#COPY . /home/icuser/iCount
 
 RUN conda create -c conda-forge -c bioconda -n iCount_pipeline3 -y
 RUN conda init bash
