@@ -143,6 +143,12 @@ def custom_fasta(wildcards):
 def custom_gtf(wildcards):
     return config['custom_genome'][wildcards]['annotation']
 
+def download_chromosome(genome_fasta, source, genome, release, chromosomes):
+    if (config['chromosomes'] != "None"):
+        return ("iCount genome --genome {0} --chromosomes {4} --source {1} {2} {3}".format(genome_fasta, source, genome, release, chromosomes))
+    else:
+        return ("iCount genome --genome {0} --source {1} {2} {3}".format(genome_fasta, source, genome, release, chromosomes))
+
 
 # Function from icount (call it!!)
 def decompress_to_tempfile(fname, context='misc'):
@@ -202,3 +208,37 @@ def get_segment_regions(wildcards):
 def get_templates_dir(wildcards):
     return ("{0}/{1}/segment/".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
 
+
+# Sig xlsites helper functions
+
+def is_empty(fname):
+    print(fname + " file is empty.")
+    return os.stat(str(fname)).st_size == 0
+
+# Create a new empty file.
+def createNewFile(fname):
+    file_object = open(fname, 'w')
+    # file_object.write('File is created.')
+    print(fname + " has been created. ")
+
+
+# Group helper functions
+
+def files2group(wildcards):
+    barcode_group = samples.loc[samples['group'] == wildcards.group, "full_barcode"].values[0:].tolist()
+    xlsites_list=[]
+    for barcode in barcode_group:
+        xlsites_list.append("{project}/xlsites/{barcode}/{barcode}.unique.xl.bed".format(project=config['project'], barcode=barcode))
+    return (xlsites_list)
+
+def bedgraph_group_description(wildcards):
+    return ("{project}_group_{group}_{protein}_{method}_{mapto}".format(project=config['project'], group=wildcards.group, mapto=samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0], method=samples.loc[samples['group'] == wildcards.group, "method"].unique()[0],	protein=samples.loc[samples['group'] == wildcards.group, "protein"].unique()[0],	cells_tissue=samples.loc[samples['group'] == wildcards.group, "cells_tissue"].unique()[0],	condition=samples.loc[samples['group'] == wildcards.group, "condition"].unique()[0]))
+
+def get_group_segment_path(wildcards):
+    return ("{0}/{1}/segment/{1}_segment.gtf".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
+
+def get_group_templates_dir(wildcards):
+    return ("{0}/{1}/segment/".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
+
+def get_group_landmark_path(wildcards):
+    return ("{0}/{1}/segment/landmarks.bed.gz".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
