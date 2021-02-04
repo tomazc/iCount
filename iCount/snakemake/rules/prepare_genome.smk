@@ -7,7 +7,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~* Check for custom genomes *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Capture iCount available genomes
-# --chromosomes 21 MT
+# --chromosomes 21 MT Include Chromosome from config file!!
 # -r 88
 args = ["iCount species --source ensembl -r 88"]
 # if config["release"]:
@@ -44,7 +44,7 @@ rule download_genome:
         if GENOME in download_genomes:
             print ("Downloading iCount available genome:", GENOME)
             print ("Downloading genomes could take some time depending on your conection")
-            shell("iCount genome --genome {output.genome_fasta} --chromosomes {params.chromosomes} --source {params.source} {wildcards.genome} {params.release} --chromosomes 20")      # For testing include --chromosomes MT 19
+            shell (download_chromosome(output.genome_fasta, params.source, GENOME, params.release, params.chromosomes))
             shell("iCount annotation --annotation {output.gtf} --source {params.source} {wildcards.genome} {params.release}")
 
         elif GENOME in config['custom_genome'].keys():
