@@ -128,7 +128,7 @@ if len(samples["adapter_3"].unique().tolist()) > 1:
     sys.exit("iCount pipeline only accepts a unique 3' adapter")
 
 elif len(samples.index) != len(samples["sample_name"].unique().tolist()):
-    sys.exit("iCount pipeline only accepts a unique sample names")
+    sys.exit("iCount pipeline only accepts unique sample names")
 
 # Merge 5'barcode and 3'barcode to create a table index (full barcode)
 else:

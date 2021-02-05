@@ -20,7 +20,7 @@ rule demultiplex:
     input:
         fastq_file=config['raw_fastq_file'],
     output:
-        #expand("demultiplexed/demux_{barcode}.fastq.gz", barcode=samples.index),
+        expand("demultiplexed/demux_{barcode}.fastq.gz", barcode=samples.index),
         "demultiplexed/demux_nomatch5.fastq.gz"
     params:
         adapter3=samples["adapter_3"].unique().tolist(),
