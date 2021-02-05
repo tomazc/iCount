@@ -2,13 +2,6 @@
 #                       Group analysis
 #==============================================================================#
 
-def files2group(wildcards):
-    barcode_group = samples.loc[samples['group'] == wildcards.group, "full_barcode"].values[0:].tolist()
-    xlsites_list=[]
-    for barcode in barcode_group:
-        xlsites_list.append("{project}/xlsites/{barcode}/{barcode}.unique.xl.bed".format(project=config['project'], barcode=barcode))
-    return (xlsites_list)
-
 
 rule group:
     input:
@@ -21,11 +14,6 @@ rule group:
         """
         iCount group {output.group} {input}
         """
-
-def bedgraph_group_description(wildcards):
-    return ("{project}_group_{group}_{protein}_{method}_{mapto}".format(project=config['project'], group=wildcards.group, mapto=samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0], method=samples.loc[samples['group'] == wildcards.group, "method"].unique()[0],	protein=samples.loc[samples['group'] == wildcards.group, "protein"].unique()[0],	cells_tissue=samples.loc[samples['group'] == wildcards.group, "cells_tissue"].unique()[0],	condition=samples.loc[samples['group'] == wildcards.group, "condition"].unique()[0]))
-
-
 
 rule group_bedgraph:
     input:
@@ -44,12 +32,6 @@ rule group_bedgraph:
         shell("iCount bedgraph --name \"{params.name}.group.unique.xl.bedgraph\" --description \"{params.description}\" --visibility \"{params.visibility}\" --priority \"{params.priority}\" --color \"{params.color}\" --alt_color \"{params.alt_color}\" --max_height_pixels \"{params.max_height_pixels}\" {input.group_xlsites} {output.group_bedgraph}")
 
 
-
-def get_group_segment_path(wildcards):
-    return ("{0}/{1}/segment/{1}_segment.gtf".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
-
-def get_group_templates_dir(wildcards):
-    return ("{0}/{1}/segment/".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
 
 rule annotate_group_xlsites:
     input:
@@ -88,9 +70,6 @@ rule summary_group:
         mv {params.group_rename_type} {output.group_type}
         mv {params.group_rename_subtype} {output.group_subtype}
         """
-
-def get_group_segment_path(wildcards):
-    return ("{0}/{1}/segment/{1}_segment.gtf".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
 
 rule group_sig_xlsites:
     input:
@@ -149,14 +128,11 @@ rule summary_group_sig:
             createNewFile(output.group_type)
             createNewFile(output.group_subtype)
         else:
-            shell("iCount summary --templates_dir {params.templates_dir} {params.segment} {input.sig_xlsites} {params.out_dir}")
+            shell("iCount summary --templates_dir {params.templates_dir} {params.segment} {input.group_sig_xlsites} {params.out_dir}")
             shell("mv {params.group_rename_gene} {output.group_gene}")
             shell("mv {params.group_rename_type} {output.group_type}")
             shell("mv {params.group_rename_subtype} {output.group_subtype}")
 
-
-def get_group_landmark_path(wildcards):
-    return ("{0}/{1}/segment/landmarks.bed.gz".format(config['genomes_path'], samples.loc[samples['group'] == wildcards.group, "mapto"].unique()[0]))
 
 rule group_clusters:
     input:

@@ -3,7 +3,6 @@
 #==============================================================================#
 
 
-
 rule map_reads:
     input:
         trimmed_reads="{project}/trimmed/demux_{barcode}_qtrimmed.fastq.gz",

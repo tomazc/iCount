@@ -29,17 +29,6 @@ rule sig_xlsites:
 
 # iCount peaks iCount_genomes/homo_sapiens/segment/regions.gtf.gz synthetic_chr20/xlsites/NNNNGTAACNNN_NNAGG/NNNNGTAACNNN_NNAGG.unique.xl.bed synthetic_chr20/sig_xlsites/NNNNGTAACNNN_NNAGG/NNNNGTAACNNN_NNAGG.sig_sites.bed --scores synthetic_chr20/sig_xlsites/NNNNGTAACNNN_NNAGG/NNNNGTAACNNN_NNAGG.scores.tsv --features gene --group_by gene_id --half_window 3 --fdr 0.05 --perms 100 --rnd_seed 42 --file_logpath synthetic_chr20/logs/sig_xlsites/NNNNGTAACNNN_NNAGG.xlsites.log --results_file synthetic_chr20/sig_xlsites/NNNNGTAACNNN_NNAGG/NNNNGTAACNNN_NNAGG.sig_sites_metrics.txt
 
-def is_empty(fname):
-    print(fname + " file is empty.")
-    return os.stat(str(fname)).st_size == 0
-
-
-# Create a new empty file.
-def createNewFile(fname):
-    file_object = open(fname, 'w')
-    # file_object.write('File is created.')
-    print(fname + " has been created. ")
-
 
 rule annotate_sig_xlsites:
     input:

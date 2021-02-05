@@ -40,7 +40,7 @@ raw_fastq_file: "data/merge_chr20_2652426_2664336_GTAAC.fq.gz"
 # Set the desidred output of the pipeline.
 
 ## Completeness output
-# If "minimum" is set only crosslinks, significant crosslinks and clusters will be calculated.
+# If "minimum" is set, only crosslinks, significant crosslinks and clusters will be calculated.
 # On the other hand if marked as "complete" all the crosslinks and significant crosslinks will be annotated
 # and bedgraph output file will be generated (default).
 completeness_output: "complete"
@@ -88,11 +88,12 @@ genomes_path: "iCount_genomes"
 # Annotation release on ensembl !!! Update to latest release
 release: 88
 
-# Processing the entire genome is computationally very expensive. For this reason, we are limiting the tutorial example
-# to chromosomes 21 and MT. !!!!! Include validation
-chromosomes: 21 MT
-# Source of data. Only ENSEMBL or GENCODE are available (default: gencode)!!!!! Include validation!! gencode doesn't work
-source: ensembl
+# If given, do not download the whole genome, but listed chromosomes only. (default: None)"
+# chromosomes: "20, MT"
+chromosomes: "None"
+
+# Source of data. Only ensembl or gencode are available (default: ensembl) !! gencode doesn't work
+source: "ensembl"
 
 # Alternatively, you can use you custom genome including acronym_name, fasta sequence (genome_fasta) and gtf file
 #  (annotation) paths
@@ -107,9 +108,7 @@ custom_genome:
     genome_fasta: "custom/custom2.fa.gz"
     # gtf file with transcripts
     annotation: "custom/custom2.gtf.gz"
-#  Arabidopsis_thaliana:
-#    genome_fasta: "custom/Arabidopsis_thaliana/Arabidopsis_thaliana.TAIR10.dna_sm.toplevel.fa.gz"
-#    annotation: "custom/Arabidopsis_thaliana/Arabidopsis_thaliana_mod.gtf"
+
 # Custom genome example annotation. Name directory, fasta sequence and annotation using the same acromyn ("hg19")
 # as in the example:
 #custom_genome:
@@ -279,10 +278,13 @@ logdir: "logs_cluster"
 #=====================    Workflow integrity check   ==========================#
 
 # Create integrity and reproducibility test, boolean 'true' or 'false' (default: false).
-create_integrity_test: false
+create_integrity_test: true
 # Check integrity and reproducibility test, boolean 'true' or 'false' (default: false).
-integrity_test_check: true
+integrity_test_check: false
 
+# Processing the entire genome is computationally very expensive. For this reason, we are limiting the tutorial example
+# to chromosome 20 (default: 20).
+chromosomes: 20
 
 ### Project test directory name
 #project: "integrity_test"

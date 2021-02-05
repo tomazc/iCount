@@ -2,7 +2,7 @@
 #                        iCount Snakemake workflow
 #==============================================================================#
 # Authors # Igor Ruiz de los Mozos, Charlotte Capitanchik, Tomaz Curk
-# Last updated: November 2020
+# Last updated: January  2021
 
 
 # Install Locally
@@ -32,13 +32,19 @@
 # Check the install
 # iCount
 
+# Install Locally with docker
+#================
+# docker build -t icount .
+# docker run --user icuser -ti icount bash --login
+
+
 # Run Locally
 #================
 
 # Step two: To run locally use command:
 # snakemake -k -p --snakefile demultiplex_snakefile.smk --use-conda
 # snakemake -k -p --cores 4 --snakefile demultiplex_snakefile.smk --use-conda
-# snakemake -k -p --cores 4 --snakefile '/Users/mozosi/Dropbox (UCL-MN Team)/GitHub/iCount/iCount/snakemake/icount_snakemake.smk' --use-conda --configfile config_synthetic.yaml
+# snakemake -k -p --cores 4 --snakefile '/Users/mozosi/Dropbox (UCL-MN Team)/GitHub/iCount_pre_docker/iCount/snakemake/icount_snakemake.smk' --use-conda --configfile config_synthetic.yaml
 # dag workflow
 # snakemake --snakefile demultiplex_snakefile.smk --use-conda --dag 2> /dev/null | dot -T png > workflow_bysample.png
 # snakemake --snakefile demultiplex_snakefile.smk --use-conda --rulegraph 2> /dev/null | dot -T png > workflow.png
@@ -62,6 +68,13 @@
 # source activate iCount_pipeline2
 # cd /camp/lab/ulej/working/Igor/Programs
 # pip install ./iCount/
+
+# Install CEITEC
+#================
+# module add anaconda3-2019.10
+# git clone https://github.com/tomazc/iCount.git --branch snakemake
+# conda env create -n iCount_pipeline2 --file ~/Programs/iCount/conda_iCount.yaml
+# source activate iCount_pipeline2
 
 # Run Cluster
 #================
@@ -123,10 +136,10 @@ else:
     samples["full_barcode"] = samples[cols].apply(lambda x: '_'.join(x.dropna()), axis=1)
     samples=samples.set_index(["full_barcode"], drop = False)
 
-# Print project
-print("Procesing project:", config['project'], "\n")
-# Print Sample annotation
-print ("Sample annotation:", samples, "\n"),
+# # Print project
+# print("Procesing project:", config['project'], "\n")
+# # Print Sample annotation
+# print ("Sample annotation:", samples, "\n"),
 
 
 

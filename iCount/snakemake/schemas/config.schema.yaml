@@ -38,6 +38,15 @@ properties:
     minimum: 59
     maximum: 88
     default: 88
+  chromosomes:
+    type: ["null", "integer", "string"]
+    description: "If given, do not download the whole genome, but listed chromosomes only. (default: None)"
+    default: "None"
+  source:
+    type: string
+    description: "Source of data. Only ensembl or gencode are available (default: ensembl)"
+    enum: ["ensembl", "gencode"]
+    default: "ensembl"
   custom_genome:
     type: object
     description: "Alternatively, you can use you custom genome including acronym_name, fasta sequence (genome_fasta)
