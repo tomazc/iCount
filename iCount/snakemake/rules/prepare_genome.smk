@@ -78,6 +78,7 @@ rule indexstar_genome:
         directory("{genomes_path}/{genome}/star_index/"),
     shell:
         """
+        mkdir {output}
         iCount indexstar --overhang {params.overhang} --annotation {input.gtf} \
         --threads {threads} --genome_sasparsed 2 {input.genome_fasta} {output}
         """
@@ -92,6 +93,5 @@ rule segment:
         landmarks="{genomes_path}/{genome}/segment/landmarks.bed.gz",
     shell:
         """
-        iCount segment {input.gtf} {output.segment} {input.genome_fai} 
+        iCount segment {input.gtf} {output.segment} {input.genome_fai}
         """
-
