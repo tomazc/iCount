@@ -8,7 +8,7 @@
 # Define name of the project. Output files will be saved under "project" folder.
 
 ## Project directory name
-project: "synthetic_chr20"
+project: "project_real_CLIP_subset"
 
 
 #===============================     Samples     ==============================#
@@ -25,14 +25,17 @@ project: "synthetic_chr20"
 
 # Sample table input accepts tsv or txt
 #samples: "data/hnRNPC_reduced.tsv"
-samples: "data/samples_synthetic_chr20.txt"
+samples: "data/samples_real_CLIP_subset.txt"
 
 
 #========================    Raw sequencing data   =============================#
 
 # Raw fastq file to demultiplex and analyse
 #raw_fastq_file: "data/hnRNPC.fq.gz"
-raw_fastq_file: "data/merge_chr20_2652426_2664336_GTAAC.fq.gz"
+# All CDK11 data
+#raw_fastq_file: "data/CDK11_20150611_Bz1.fastq.gz"
+# Subset of CDK11
+raw_fastq_file: "data/real_CLIP_subset.fastq.gz"
 #raw_fastq_file: "data/merge_my_script.fq.gz"
 
 
@@ -43,7 +46,7 @@ raw_fastq_file: "data/merge_chr20_2652426_2664336_GTAAC.fq.gz"
 # If "minimum" is set, only crosslinks, significant crosslinks and clusters will be calculated.
 # On the other hand if marked as "complete" all the crosslinks and significant crosslinks will be annotated
 # and bedgraph output file will be generated (default).
-completeness_output: "complete"
+completeness_output: "minimum"
 
 ## Grouped replicates completeness output
 # If "minimum" is set only merged crosslinks, significant crosslinks and clusters will be calculated.
