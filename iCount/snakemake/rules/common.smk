@@ -193,8 +193,8 @@ def bedgraph_header(wildcards):
 def get_gtf_path(wildcards):
     return ("{0}/{1}/{1}.gtf.gz".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
 
-def get_star_index_path(wildcards):
-    return ("{0}/{1}/star_index/SAindex".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
+# def get_star_index_path(wildcards):
+#     return ("{0}/{1}/star_index/SAindex".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))
 
 def get_star_index_folder(wildcards):
     return ("{0}/{1}/star_index/".format(config['genomes_path'], samples.loc[wildcards.barcode, "mapto"]))

@@ -75,10 +75,10 @@ rule indexstar_genome:
     params:
         overhang=config['overhang'],
     output:
-        directory("{genomes_path}/{genome}/star_index"),
+        directory("{genomes_path}/{genome}/star_index/"),
     shell:
         """
-        # mkdir {output}
+        mkdir -p {output}
         iCount indexstar --overhang {params.overhang} --annotation {input.gtf} \
         --threads {threads} --genome_sasparsed 2 {input.genome_fasta} {output}
         """
@@ -91,6 +91,7 @@ rule segment:
     output:
         segment="{genomes_path}/{genome}/segment/{genome}_segment.gtf",
         landmarks="{genomes_path}/{genome}/segment/landmarks.bed.gz",
+        regions="{genomes_path}/{genome}/segment/regions.gtf.gz",
     shell:
         """
         iCount segment {input.gtf} {output.segment} {input.genome_fai}

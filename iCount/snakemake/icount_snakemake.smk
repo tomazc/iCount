@@ -171,10 +171,11 @@ rule all:
         expand("{project}/qc/fastqc/raw_fastq_file_fastqc.html", project=config['project']),
         expand("{project}/qc/fastqc/raw_fastq_file_fastqc.zip", project=config['project']),
 
-        #expand("{genomes_path}/{genome}/star_index/", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
+        # expand("{genomes_path}/{genome}/star_index", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
 
         expand("{project}/qc/fastqc/{barcode}_fastqc.html", project=config['project'], barcode=samples.index),
         expand("{project}/qc/fastqc/{barcode}_fastqc.zip", project=config['project'], barcode=samples.index),
+        expand("{genomes_path}/{genome}/segment/regions.gtf.gz", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
 
         #expand("{project}/trimmed/demux_{barcode}_trimmed.fastq.gz", project=config['project'], barcode=samples.index),
 
