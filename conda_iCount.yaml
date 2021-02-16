@@ -5,7 +5,7 @@ channels:
 
 dependencies:
   - python = 3.8.6
-  - snakemake = 5.28.0
+  - snakemake = 5.32.2
   - jinja2 = 2.11.2
   - networkx = 2.5
   - bcftools = 1.11
