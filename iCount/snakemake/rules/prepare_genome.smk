@@ -75,10 +75,10 @@ rule indexstar_genome:
     params:
         overhang=config['overhang'],
     output:
-        directory("{genomes_path}/{genome}/star_index/"),
+        directory("{genomes_path}/{genome}/star_index"),
     shell:
         """
-        mkdir {output}
+        # mkdir {output}
         iCount indexstar --overhang {params.overhang} --annotation {input.gtf} \
         --threads {threads} --genome_sasparsed 2 {input.genome_fasta} {output}
         """
