@@ -48,6 +48,8 @@
 # dag workflow
 # snakemake --snakefile demultiplex_snakefile.smk --use-conda --dag 2> /dev/null | dot -T png > workflow_bysample.png
 # snakemake --snakefile demultiplex_snakefile.smk --use-conda --rulegraph 2> /dev/null | dot -T png > workflow.png
+# snakemake -k -p --unlock --cores 4 --snakefile '/Users/mozosi/Dropbox (UCL-MN Team)/GitHub/iCount_pre_docker/iCount/snakemake/icount_snakemake.smk' --use-conda --configfile config_synthetic.yaml
+# config_Blazek.yaml
 
 # Install Cluster
 #================
@@ -168,6 +170,8 @@ rule all:
         "demultiplexed/demux_nomatch5.fastq.gz",
         expand("{project}/qc/fastqc/raw_fastq_file_fastqc.html", project=config['project']),
         expand("{project}/qc/fastqc/raw_fastq_file_fastqc.zip", project=config['project']),
+
+        expand("{genomes_path}/{genome}/star_index/", genome=samples["mapto"].unique(), genomes_path=config['genomes_path']),
 
         expand("{project}/qc/fastqc/{barcode}_fastqc.html", project=config['project'], barcode=samples.index),
         expand("{project}/qc/fastqc/{barcode}_fastqc.zip", project=config['project'], barcode=samples.index),
