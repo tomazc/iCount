@@ -1,0 +1,301 @@
+
+#==============================================================================#
+#                     iCount snakemake Configuration file
+#                          Generated at (system time)
+#==============================================================================#
+
+#===============================     Project     ==============================#
+# Define name of the project. Output files will be saved under "project" folder.
+
+## Project directory name
+project: "project_real_CLIP_subset"
+
+
+#===============================     Samples     ==============================#
+# Define which samples to map and which species to map to.
+# Note that the path to the sample can be absolute or relative to the directory 
+# where the Snakefile is run. 
+
+# Path or URL to sample sheet (tsv format, TAB separated columns:
+# sample_name, method, protein, cells/tissue, condition, mapto, 5_barcode,
+# 3_barcode, 3_adapter, linker, comments, group)
+
+# If the column "group" is present (which is optional),
+# samples will be merged and output for the group calculated.
+
+# Sample table input accepts tsv or txt
+#samples: "data/hnRNPC_reduced.tsv"
+samples: "data/samples_real_CLIP_subset.txt"
+
+
+#========================    Raw sequencing data   =============================#
+
+# Raw fastq file to demultiplex and analyse
+#raw_fastq_file: "data/hnRNPC.fq.gz"
+# All CDK11 data
+#raw_fastq_file: "data/CDK11_20150611_Bz1.fastq.gz"
+# Subset of CDK11
+raw_fastq_file: "data/real_CLIP_subset.fastq.gz"
+#raw_fastq_file: "data/merge_my_script.fq.gz"
+
+
+#============================     Desired output     ===========================#
+# Set the desidred output of the pipeline.
+
+## Completeness output
+# If "minimum" is set, only crosslinks, significant crosslinks and clusters will be calculated.
+# On the other hand if marked as "complete" all the crosslinks and significant crosslinks will be annotated
+# and bedgraph output file will be generated (default).
+completeness_output: "minimum"
+
+## Grouped replicates completeness output
+# If "minimum" is set only merged crosslinks, significant crosslinks and clusters will be calculated.
+# On the other hand if marked as "complete" all merged the crosslinks, significant crosslinks will be annotated
+# and bedgraph output file will be generated (default).
+group_completeness_output: "minimum"
+
+# Transform crosslink 6bed to UCSC bedgraph (false or true; default false)
+bedgraph_UCSC: false
+
+
+#=============================     Parameters     =============================#
+# Set the parameters for each step.
+# These are set to defaults that are widely applicable to iCLIP analysis.
+
+
+#~~~~~~~~~~~~~~~~ iCount genomes ~~~~~~~~~~~~~~~~#
+## iCount genomes will be automatically downloaded from NCBI if any of the following accepted species terms are used.
+# There are 87 species available:
+# ailuropoda_melanoleuca,anas_platyrhynchos,ancestral_alleles,anolis_carolinensis,astyanax_mexicanus,
+# bos_taurus,caenorhabditis_elegans,callithrix_jacchus,canis_familiaris,cavia_porcellus,chlorocebus_sabaeus,
+# choloepus_hoffmanni,ciona_intestinalis,ciona_savignyi,danio_rerio,dasypus_novemcinctus,dipodomys_ordii,
+# drosophila_melanogaster,echinops_telfairi,equus_caballus,erinaceus_europaeus,fasta,felis_catus,
+# ficedula_albicollis,gadus_morhua,gallus_gallus,gasterosteus_aculeatus,gorilla_gorilla,homo_sapiens,
+# ictidomys_tridecemlineatus,latimeria_chalumnae,lepisosteus_oculatus,loxodonta_africana,macaca_mulatta,
+# macropus_eugenii,meleagris_gallopavo,microcebus_murinus,monodelphis_domestica,mus_musculus,mus_musculus_129s1svimj,
+# mus_musculus_aj,mus_musculus_akrj,mus_musculus_balbcj,mus_musculus_c3hhej,mus_musculus_c57bl6nj,mus_musculus_casteij,
+# mus_musculus_cbaj,mus_musculus_dba2j,mus_musculus_fvbnj,mus_musculus_lpj,mus_musculus_nodshiltj,mus_musculus_nzohlltj,
+# mus_musculus_pwkphj,mus_musculus_wsbeij,mus_spretus_spreteij,mustela_putorius_furo,myotis_lucifugus,nomascus_leucogenys,
+# ochotona_princeps,oreochromis_niloticus,ornithorhynchus_anatinus,oryctolagus_cuniculus,oryzias_latipes,
+# ovis_aries,pan_troglodytes,papio_anubis,pelodiscus_sinensis,petromyzon_marinus,poecilia_formosa,pongo_abelii,
+# procavia_capensis,pteropus_vampyrus,rattus_norvegicus,saccharomyces_cerevisiae,sarcophilus_harrisii,sorex_araneus,
+# sus_scrofa,taeniopygia_guttata,takifugu_rubripes,tarsius_syrichta,tetraodon_nigroviridis,tupaia_belangeri,
+# otolemur_garnettii, tursiops_truncatus,vicugna_pacos,xenopus_tropicalis,xiphophorus_maculatus
+
+# Update releases script and Icount annotation and genome doesn't accept "--releases" word
+# Current version of iCount is tested to work with human and mouse genomes only.
+
+# Directory where all the genomes, STAR index and iCount segment files will be stored.
+genomes_path: "iCount_genomes"
+
+# Annotation release on ensembl !!! Update to latest release
+release: 88
+
+# If given, do not download the whole genome, but listed chromosomes only. (default: None)"
+# chromosomes: "20, MT"
+chromosomes: "None"
+
+# Source of data. Only ensembl or gencode are available (default: ensembl) !! gencode doesn't work
+source: "ensembl"
+
+# Alternatively, you can use you custom genome including acronym_name, fasta sequence (genome_fasta) and gtf file
+#  (annotation) paths
+custom_genome:
+  hg19:
+    # Genomic fasta sequence
+    genome_fasta: "custom/custom.fa.gz"
+    # gtf file with transcripts
+    annotation: "custom/custom.gtf.gz"
+  hg38:
+    # Genomic fasta sequence
+    genome_fasta: "custom/custom2.fa.gz"
+    # gtf file with transcripts
+    annotation: "custom/custom2.gtf.gz"
+
+# Custom genome example annotation. Name directory, fasta sequence and annotation using the same acromyn ("hg19")
+# as in the example:
+#custom_genome:
+#  hg19:
+#    # Genomic fasta sequence
+#    genome_fasta: "iCount_genomes/hg19/hg19.fa.gz"
+#    # gtf file with transcripts
+#    annotation: "iCount_genomes/hg19/hg19.gtf.gz"
+
+
+#~~~~~~~~~~~~~~~~ iCount demultiplex  ~~~~~~~~~~~~~~~~#
+# Split FASTQ file into separate files, one for each sample barcode.
+#
+# Saved FASTQ files contain sequences where sample barcode, random
+# barcode, and adapter sequences are removed. Random barcode is moved into
+# the header line, since it is needed in later steps (removing PCR duplicates
+# and counting number of cross-link events).
+
+# Optional arguments:
+# List of 3-prime end barcodes order as the 5' barcodes (default: None)
+# barcodes3  [ ...]
+# Number of tolerated mismatches when comparing barcodes (default: 1)
+barcode_mismatches: 0
+# Minimum length of trimmed sequence to keep (default: 15)
+demultiplex_minimum_length: 17
+# Minimum length of adapter on 3' end if demultiplexing also on
+# 3' barcodes (default: 7)
+min_adapter_overlap: 7
+
+
+
+#~~~~~~~~~~~~~~~~ iCount reads quality trimm  ~~~~~~~~~~~~~~~~#
+# Remove adapter sequences and check quality from reads in FASTQ file.
+
+# Optional arguments:
+# Trim low-quality bases before adapter removal (default: None)
+qual_trim: 20
+# Discard trimmed reads that are shorter than `minimum_length` (default: None)
+minimum_length: 17
+# Required ``overlap`` overlap between read and adapter for an
+# adapter to be found (default: None)
+overlap:
+# Write reads that do not contain any adapter to this file path (default: None)
+# untrimmed_output:
+# Maximum allowed error rate (no. of errors divided by the length
+# of the matching region) (default: None)
+error_rate: 0.1
+
+
+
+#~~~~~~~~~~~~~~~~ iCount STAR aligner ~~~~~~~~~~~~~~~~#
+# Map reads to genome with STAR.
+
+# Optional arguments:
+# Overhang for STAR index
+overhang: 100
+# Number of allowed mismatches in STAR mapping (default: 2)   !!!Check iMAps!!!
+mismatches: 2
+# Number of allowed multiple hits (default: 10)
+star_multimax: 10
+# Number of threads that STAR can use for generating index (default: 1)
+index_threads: 8
+
+
+
+#~~~~~~~~~~~~~~~~ iCount cross links  ~~~~~~~~~~~~~~~~#
+# Calculate cross links. Groupby should be selected in base of the CLIP technique
+
+# Assign score of a read to either 'start', 'middle' or 'end' nucleotide (default: start)
+group_by: "start"
+# Report number of 'cDNA' or number of 'reads' (default: cDNA)
+quant: "cDNA"
+
+# Reads on same position with random barcode differing less than ``mismatches``
+#  are merged together, if their ratio is below ratio_th (default: 1)
+
+mismatches: 1
+# Ignore hits with MAPQ < mapq_th (default: 0)
+mapq_th: 0
+# Ignore reads, mapped to more than ``multimax`` places (default: 50)
+multimax: 10
+# Reads with gaps less than gap_th are treated as if they have no gap (default: 4)
+gap_th: 4
+
+# Ratio between the number of reads supporting a randomer versus the
+# number of reads supporting the most frequent randomer. All randomers
+# above this threshold are accepted as unique. Remaining are merge
+# with the rest, allowing for the specified number of mismatches (default: 0.1)
+ratio_th: 0.1
+# Skip merging similar barcodes if number of distinct barcodes at
+# position is higher that this (default: 10000)
+max_barcodes: 10000
+
+
+#~~~~~~~~~~~~~~~~ iCount significant cross links  ~~~~~~~~~~~~~~~~#
+# Peaks (significant crosslinks low FDR) configuration
+# Find positions with high density of cross-linked sites.
+# More info on "iCount peaks --help" or check manual
+# There are two typical variants of this analysis, depending on the parameters:
+#
+#* Gene-wise analysis, where:
+#    * features = gene
+#    * group_by = gene_id
+#
+#* Transcript-wise analysis where:
+#    * features = CDS, intron, UTR3, UTR5, ncRNA, intergenic
+#    * group_by = transcript_id
+#  [--merge_features] [--half_window] [--fdr]
+
+# Features from annotation to consider: gene, CDS, intron, UTR3, UTR5, ncRNA or intergenic.  If None, ['gene'] is used.
+# Sometimes, it is advised to use ['gene', 'intergenic'] (default: gene)
+features: "gene"
+# Attribute by which cross-link positions are grouped (default: gene_id)
+group_by_sig_xl: "gene_id"
+# Treat all features as one when grouping. Has no effect when only one feature is given in features parameter
+# (default: False)
+merge_features: false
+# Half-window size (default: 3)
+half_window: 3
+# FDR threshold (default: 0.05)
+fdr: 0.05
+# Number of permutations when calculating random distribution (default: 100)
+perms: 100
+# Seed for random generator (default: 42)
+rnd_seed: 42
+#  -prog, --report_progress
+#                        Report analysis progress (default: False)
+#  -S , --stdout_log     Threshold value (0-50) for logging to stdout. If 0, logging to stdout if turned OFF.
+#  -F , --file_log       Threshold value (0-50) for logging to file. If 0, logging to file if turned OFF.
+#  -P , --file_logpath   Path to log file.
+#  -M , --results_file   File into which to store Metrics.
+#
+
+#~~~~~~~~~~~~~~~~ iCount cluster of cross links  ~~~~~~~~~~~~~~~~#
+# Merge adjacent peaks into clusters and sum cross-links within clusters.
+# Distance between two peaks to merge into same cluster (default: 20)
+distance: 20
+# Distance between site and cluster to assign site to cluster (default: 3)
+slop: 3
+
+
+#~~~~~~~~~~~~~~~~  iCount rnamaps generation     ~~~~~~~~~~~~~~~~#
+# Perform RNA-maps analysis.
+
+# What kind of plot to make. Choices are distribution, heatmaps and combined (default: combined)
+plot_type: "combined"
+# Plot heatmap for top_n best covered landmarks (default: 100)
+top_n: 1000
+# Smoothing half-window. Average smoothing is used (default: 1)
+smoothing: 1
+# Number of bins. Either nbins or binsize can be defined, but not both (default: 50)
+nbins: 50
+# Bin size. Either nbins or binsize can be defined, but not both (default: None)
+binsize: 0
+# Colormap to use. Any matplotlib colormap can be used (default: Greys)
+colormap: "Greys"
+# Output image format (default: png)
+imgfmt: "png"
+
+
+#========================   Computing  Cluster    =============================#
+
+# Log directory to store invidual jobs output and error when run on a cluster
+logdir: "logs_cluster"
+
+
+#=====================    Workflow integrity check   ==========================#
+
+# Create integrity and reproducibility test, boolean 'true' or 'false' (default: false).
+create_integrity_test: true
+# Check integrity and reproducibility test, boolean 'true' or 'false' (default: false).
+integrity_test_check: false
+
+# Processing the entire genome is computationally very expensive. For this reason, we are limiting the tutorial example
+# to chromosome 20 (default: 20).
+chromosomes: 20
+
+### Project test directory name
+#project: "integrity_test"
+#
+## Sample table input accepts tsv or txt
+##samples: "data/hnRNPC_reduced.tsv"
+#samples: "data/samples_synthetic.txt"
+#
+## Raw fastq file to demultiplex and analyse
+##raw_fastq_file: "data/hnRNPC.fq.gz"
+#raw_fastq_file: "data/merge_my_script.fq.gz"

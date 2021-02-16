@@ -4,6 +4,9 @@
 # Authors # Igor Ruiz de los Mozos, Charlotte Capitanchik, Tomaz Curk
 # Last updated: January  2021
 
+# Docker
+# docker build -t icountsrc .
+# docker run -i -t icountsrc
 
 # Install Locally
 #================
