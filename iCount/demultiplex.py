@@ -212,7 +212,7 @@ def demultiplex(reads, barcodes, **kwargs):
 
 
 def run(reads, adapter, barcodes5, barcodes3=None, mismatches=1, minimum_length=15, min_adapter_overlap=7,
-        prefix='demux', out_dir='.'):
+        prefix='demux', out_dir='.', threads=1):
     """
     Demultiplex FASTQ file.
 
@@ -241,6 +241,9 @@ def run(reads, adapter, barcodes5, barcodes3=None, mismatches=1, minimum_length=
         Prefix of generated FASTQ files.
     out_dir : str
         Output folder. Use current folder if none is given.
+    threads : int
+        Number of CPU cores to use with cutadapt. This feature is only enabled with
+        versions of cutadapt greater than or equal to 1.15.
 
     Returns
     -------
@@ -284,7 +287,7 @@ def run(reads, adapter, barcodes5, barcodes3=None, mismatches=1, minimum_length=
         if not barcodes3:
             # This barcode has no 3' counterparts. Just remove the adapter and continue
             # TODO: polish the parameters for adapter removal in this case...
-            remove_adapter(reads5, adapter, overwrite=True)
+            remove_adapter(reads5, adapter, overwrite=True, threads=threads)
             continue
 
         # One must be sure that there actually are 3' barcodes on the
@@ -295,7 +298,7 @@ def run(reads, adapter, barcodes5, barcodes3=None, mismatches=1, minimum_length=
         # contain at least ``adapter_overlap`` bp of the adapter.
 
         no_adapters = os.path.join(out_dir, "no_adapter_found_{}.fastq.gz".format(barcode5))
-        remove_adapter(reads5, adapter, overwrite=True, overlap=min_adapter_overlap, untrimmed_output=no_adapters)
+        remove_adapter(reads5, adapter, overwrite=True, overlap=min_adapter_overlap, untrimmed_output=no_adapters, threads=threads)
 
         # Fix the prefix, to include 5' barcode info:
         kwargs['prefix'] = '{}_{}'.format(prefix, barcode5)
