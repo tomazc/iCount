@@ -242,9 +242,8 @@ def run(reads, adapter, barcodes5, barcodes3=None, mismatches=1, minimum_length=
     out_dir : str
         Output folder. Use current folder if none is given.
     threads : int
-        Number of CPU cores to use with cutadapt. This feature is only
-        enabled with versions of cutadapt greater than or equal to 1.15. 
-        Default: 1.
+        Number of CPU cores to use with cutadapt. This feature is only enabled with
+        versions of cutadapt greater than or equal to 1.15.
 
     Returns
     -------

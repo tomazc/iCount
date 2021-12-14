@@ -128,9 +128,8 @@ def run(reads, adapter, reads_trimmed=None, overwrite=False, qual_trim=None, min
         Maximum allowed error rate (no. of errors divided by the length
         of the matching region).
     threads : int
-        Number of CPU cores to use with cutadapt. This feature is only
-        enabled with versions of cutadapt greater than or equal to 1.15. 
-        Default: 1.
+        Number of CPU cores to use with cutadapt. This feature is only enabled with
+        versions of cutadapt greater than or equal to 1.15.
 
     Returns
     -------
